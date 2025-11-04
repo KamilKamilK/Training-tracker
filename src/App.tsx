@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Plus, Save, Trash2, TrendingUp, Calendar, Dumbbell, Eye, X } from 'lucide-react';
 
 const TrainingTracker = () => {
@@ -6,7 +6,6 @@ const TrainingTracker = () => {
   const [workouts, setWorkouts] = useState([]);
   const [measurements, setMeasurements] = useState([]);
   const [currentWorkout, setCurrentWorkout] = useState(null);
-  const [showExerciseModal, setShowExerciseModal] = useState(false);
 
   // Load data on mount
   useEffect(() => {
