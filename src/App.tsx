@@ -52,6 +52,12 @@ interface Tab {
   icon: React.FC<{ size?: number }>;
 }
 
+interface DayPlan {
+  name: string;
+  duration: string;
+  description: string[];
+}
+
 // 🔹 Szablony ćwiczeń
 const workoutTemplates: Record<WorkoutType, string[]> = {
   PUSH: [
@@ -70,14 +76,74 @@ const workoutTemplates: Record<WorkoutType, string[]> = {
   KONDYCJA: ["Wioślarz (m)", "Ski-erg (m)", "Rower (Cal)"],
 };
 
+// 🔹 Plan treningowy - Redukcja + Kondycja + Siła
+const weeklyPlan: Record<string, DayPlan> = {
+  Poniedziałek: {
+    name: "PUSH (Klatka + Barki + Nogi Przednie)",
+    duration: "70 min",
+    description: [
+      "Rozgrzewka 10 min: Wioślarz 500m, Ski-erg 500m, mobilność barków i bioder",
+      "BLOK Nogi: Przysiad Hack 4x12/10/10/8, Przysiad bułgarski 3x10/leg",
+      "BLOK Klatka: Wyciskanie Hummer 4x12/10/10/8, Wyciskanie hantli 4x12/10/10/8, Rozpiętki 3x12-15",
+      "BLOK Barki: Wyciskanie hantli nad głowę 4x12/10/10/8, Wznosy bokiem 3x12-15",
+      "Łydki: Wspięcia na palce 3x15-20",
+      "Finisher Core + Cardio: EMOM 12 min, Plank, AirBike, Russian Twist",
+    ],
+  },
+  Wtorek: {
+    name: "Basen - Pływanie + Aqua Cardio",
+    duration: "45-60 min",
+    description: [
+      "Rozgrzewka: 400m luźne pływanie, 4x50m różne style",
+      "Interwały: 6x100m (60s przerwy), 4x50m (30s przerwy), 200m spokojnie",
+      "Aqua cardio: Bieg w wodzie, skoki, bicycle kicks",
+      "Wyciszenie: 200m spokojnie + rozciąganie w wodzie",
+    ],
+  },
+  Środa: { name: "Odpoczynek lub spacer", duration: "-", description: [] },
+  Czwartek: {
+    name: "PULL (Plecy + Nogi Tylne + Pośladki)",
+    duration: "70 min",
+    description: [
+      "Rozgrzewka: Wioślarz 800m, Ski-erg 400m, mobilność",
+      "BLOK Nogi tylne: Martwy ciąg 4x12/10/10/8, Hip Thrust 4x10-12, Uginanie nóg 3x12-15",
+      "BLOK Plecy szerokość: Ściąganie szeroki podchwyt 4x12/10/10/8, V-bloczka 4x12/10/10/8",
+      "BLOK Plecy grubość: Wiosłowanie kettlem 4x10-12, Face Pulls 3x15-20",
+      "Ręce Supersety: Biceps + Triceps 3x12-15",
+      "Finisher Core + Cardio: 3 rundy Wioślarz 250m, Hanging Knee, Mountain Climbers",
+    ],
+  },
+  Piątek: {
+    name: "Basen - Regeneracja + Technika",
+    duration: "45-60 min",
+    description: [
+      "Rozgrzewka 300m luźne pływanie",
+      "10x50m technika, 500m spokojnie, 4x25m sprint",
+      "Dodatkowo pullboy i płetwy",
+      "Aqua stretching 10 min",
+    ],
+  },
+  Sobota: {
+    name: "KONDYCJA + Core (Funkcjonalność)",
+    duration: "60 min",
+    description: [
+      "Rozgrzewka 8 min: Wioślarz 500m, Ski-erg 500m, mobilność",
+      "Interwały 25 min: rower + ski-erg, 4 rundy",
+      "AMRAP 15 min: Sit-up, Martwy ciąg kettlem, Wioślarz 250m",
+      "Siła/Kondycja 15 min: 3 rundy Pchanie sanek, TRX, Wyciskanie, Wykroki",
+      "Finisher Core Killer 8 min: Plank, Dead Bug, Russian Twist, Hollow Body",
+    ],
+  },
+  Niedziela: { name: "Odpoczynek", duration: "-", description: [] },
+};
+
 const TrainingTracker = () => {
-  const [activeTab, setActiveTab] = useState<"dashboard" | "workout" | "history" | "stats">("dashboard");
+  const [activeTab, setActiveTab] = useState<"dashboard" | "workout" | "history" | "stats" | "plan">("dashboard");
   const [workouts, setWorkouts] = useState<Workout[]>([]);
   const [measurements, setMeasurements] = useState<Measurement[]>([]);
   const [currentWorkout, setCurrentWorkout] = useState<Workout | null>(null);
-  const [viewingWorkout, setViewingWorkout] = useState<Workout | null>(null);
 
-  // 🔹 Load data from window.storage
+  // 🔹 Load data
   useEffect(() => {
     const loadData = async () => {
       try {
@@ -92,7 +158,6 @@ const TrainingTracker = () => {
     loadData();
   }, []);
 
-  // 🔹 Save data to window.storage
   const saveData = async () => {
     try {
       if (!window.storage) throw new Error("Brak storage");
@@ -104,7 +169,6 @@ const TrainingTracker = () => {
     }
   };
 
-  // 🔹 Start new workout
   const startWorkout = (type: WorkoutType) => {
     const newWorkout: Workout = {
       id: Date.now(),
@@ -117,7 +181,6 @@ const TrainingTracker = () => {
     setActiveTab("workout");
   };
 
-  // 🔹 Add measurement
   const addMeasurement = () => {
     const date = prompt("Data pomiaru (YYYY-MM-DD):");
     const weight = parseFloat(prompt("Waga (kg):") || "");
@@ -127,7 +190,6 @@ const TrainingTracker = () => {
     }
   };
 
-  // 🔹 Add / update / remove set
   const addSet = (exerciseIndex: number) => {
     if (!currentWorkout) return;
     const updated: Workout = { ...currentWorkout };
@@ -170,19 +232,18 @@ const TrainingTracker = () => {
     { id: "workout", label: "Trening", icon: Plus },
     { id: "history", label: "Historia", icon: Calendar },
     { id: "stats", label: "Postępy", icon: TrendingUp },
+    { id: "plan", label: "Plan Treningowy", icon: Eye },
   ];
 
   return (
     <div className="min-h-screen bg-slate-900 text-white p-4">
       <div className="max-w-6xl mx-auto">
-        {/* Header */}
         <div className="text-center mb-6">
           <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
             💪 Dziennik Treningowy
           </h1>
         </div>
 
-        {/* Navigation */}
         <div className="flex gap-2 mb-6 justify-center">
           {tabs.map((tab) => (
             <button
@@ -199,7 +260,6 @@ const TrainingTracker = () => {
           ))}
         </div>
 
-        {/* Content */}
         <div className="bg-slate-800 rounded-xl shadow-2xl p-6">
           {/* Dashboard */}
           {activeTab === "dashboard" && (
@@ -336,10 +396,7 @@ const TrainingTracker = () => {
                         </p>
                       </div>
                       <div className="flex gap-2">
-                        <button
-                          onClick={() => setViewingWorkout(w)}
-                          className="text-blue-400 hover:text-blue-300"
-                        >
+                        <button className="text-blue-400 hover:text-blue-300">
                           <Eye size={20} />
                         </button>
                         <button
@@ -359,8 +416,6 @@ const TrainingTracker = () => {
           {activeTab === "stats" && (
             <div>
               <h2 className="text-2xl font-bold mb-4">Twoje Postępy</h2>
-
-              {/* Summary */}
               <div className="grid md:grid-cols-3 gap-4 mb-6">
                 <div className="bg-slate-700 p-4 rounded">
                   <p className="text-slate-400 text-sm">Treningi łącznie</p>
@@ -377,8 +432,6 @@ const TrainingTracker = () => {
                   </p>
                 </div>
               </div>
-
-              {/* Chart */}
               {measurements.length > 1 ? (
                 <div className="bg-slate-700 p-4 rounded">
                   <h3 className="font-semibold mb-3">Progresja wagi i talii</h3>
@@ -389,26 +442,33 @@ const TrainingTracker = () => {
                       <YAxis stroke="#94a3b8" />
                       <Tooltip />
                       <Legend />
-                      <Line
-                        type="monotone"
-                        dataKey="weight"
-                        stroke="#60a5fa"
-                        strokeWidth={2}
-                        name="Waga (kg)"
-                      />
-                      <Line
-                        type="monotone"
-                        dataKey="waist"
-                        stroke="#f87171"
-                        strokeWidth={2}
-                        name="Talia (cm)"
-                      />
+                      <Line type="monotone" dataKey="weight" stroke="#60a5fa" strokeWidth={2} name="Waga (kg)" />
+                      <Line type="monotone" dataKey="waist" stroke="#f87171" strokeWidth={2} name="Talia (cm)" />
                     </LineChart>
                   </ResponsiveContainer>
                 </div>
               ) : (
                 <p className="text-slate-400">Brak wystarczających danych, dodaj więcej pomiarów.</p>
               )}
+            </div>
+          )}
+
+          {/* Plan Treningowy */}
+          {activeTab === "plan" && (
+            <div>
+              <h2 className="text-2xl font-bold mb-4">Plan Treningowy</h2>
+              {Object.entries(weeklyPlan).map(([day, plan]) => (
+                <div key={day} className="bg-slate-700 p-4 rounded mb-3">
+                  <h3 className="font-bold text-lg">
+                    {day}: {plan.name} ({plan.duration})
+                  </h3>
+                  <ul className="list-disc list-inside mt-2 text-slate-300">
+                    {plan.description.map((item, i) => (
+                      <li key={i}>{item}</li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
             </div>
           )}
         </div>

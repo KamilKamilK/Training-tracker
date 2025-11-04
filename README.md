@@ -14,7 +14,7 @@ Projekt prywatny tworzony w celach nauki frontendu i zarządzania własnym plane
 - ⚖️ **Pomiary ciała** — waga, obwód talii, zmiany w czasie  
 - 💾 **Zapisywanie danych w przeglądarce** (LocalStorage – działa offline)  
 - 🌙 **Ciemny motyw** (TailwindCSS)  
-- 📱 **Responsywny design** – gotowe do użycia na telefonie  
+- 📱 **Responsywny design** — gotowe do użycia na telefonie  
 
 ---
 
@@ -25,6 +25,7 @@ Projekt prywatny tworzony w celach nauki frontendu i zarządzania własnym plane
 - ⚡ **Vite 7**  
 - 🎨 **Tailwind CSS 3**  
 - 🧩 **Lucide React Icons**  
+- 📊 **Recharts** — wizualizacja postępów  
 
 ---
 
@@ -38,5 +39,15 @@ cd training-tracker
 # 2. Zainstaluj zależności
 npm install
 
-# 3. Uruchom lokalny serwer
+# 3. Uruchom lokalny serwer deweloperski
 npm run dev
+
+
+Aplikacja uruchomi się pod: http://localhost:5173
+
+Zmiany w kodzie będą odświeżane automatycznie dzięki Vite
+
+🌐 Dostęp online
+
+Aplikacja jest hostowana na Vercel i dostępna pod adresem:
+https://training-tracker-18gh50gj3-kamils-projects-335f000e.vercel.app/
