@@ -1,5 +1,13 @@
 import { useState, useEffect } from "react";
 import {
+  Plus,
+  Trash2,
+  TrendingUp,
+  Calendar,
+  Dumbbell,
+  Eye,
+} from "lucide-react";
+import {
   LineChart,
   Line,
   XAxis,
@@ -10,8 +18,7 @@ import {
   Legend,
 } from "recharts";
 
-type WorkoutType = "PUSH" | "PULL" | "KONDYCJA";
-
+// 🔹 Typy
 interface Set {
   weight: string;
   reps: string;
@@ -22,6 +29,8 @@ interface Exercise {
   name: string;
   sets: Set[];
 }
+
+type WorkoutType = "PUSH" | "PULL" | "KONDYCJA";
 
 interface Workout {
   id: number;
@@ -37,46 +46,65 @@ interface Measurement {
   waist: number;
 }
 
+interface Tab {
+  id: string;
+  label: string;
+  icon: React.FC<{ size?: number }>;
+}
+
+// 🔹 Szablony ćwiczeń
 const workoutTemplates: Record<WorkoutType, string[]> = {
   PUSH: [
     "Przysiad Hack maszyna",
     "Przysiad bułgarski z hantlami",
     "Wyciskanie Hummer pozioma",
+    "Wyciskanie hantli dodatnia",
   ],
   PULL: [
     "Martwy ciąg z haków",
+    "Hip Thrust",
+    "Uginanie nóg leżąc",
     "Ściąganie szeroki podchwyt",
-    "Wiosłowanie hantlem",
+    "Wiosłowanie kettlem",
   ],
-  KONDYCJA: ["Wioślarz (m)", "Ski-erg (m)", "AirBike (Cal)"],
+  KONDYCJA: ["Wioślarz (m)", "Ski-erg (m)", "Rower (Cal)"],
 };
 
-export default function App() {
-  const [activeTab, setActiveTab] = useState<string>("dashboard");
+const TrainingTracker = () => {
+  const [activeTab, setActiveTab] = useState<"dashboard" | "workout" | "history" | "stats">("dashboard");
   const [workouts, setWorkouts] = useState<Workout[]>([]);
   const [measurements, setMeasurements] = useState<Measurement[]>([]);
   const [currentWorkout, setCurrentWorkout] = useState<Workout | null>(null);
+  const [viewingWorkout, setViewingWorkout] = useState<Workout | null>(null);
 
-  // 🔹 Ładowanie danych z localStorage
+  // 🔹 Load data from window.storage
   useEffect(() => {
-    try {
-      const w = localStorage.getItem("workouts");
-      const m = localStorage.getItem("measurements");
-      if (w) setWorkouts(JSON.parse(w));
-      if (m) setMeasurements(JSON.parse(m));
-    } catch (e) {
-      console.warn("Błąd przy ładowaniu danych:", e);
-    }
+    const loadData = async () => {
+      try {
+        const workoutsResult = await window.storage?.get("workouts");
+        const measurementsResult = await window.storage?.get("measurements");
+        if (workoutsResult?.value) setWorkouts(JSON.parse(workoutsResult.value));
+        if (measurementsResult?.value) setMeasurements(JSON.parse(measurementsResult.value));
+      } catch {
+        console.warn("Brak danych w storage, startujemy świeżo");
+      }
+    };
+    loadData();
   }, []);
 
-  // 🔹 Zapisywanie danych
-  const saveData = () => {
-    localStorage.setItem("workouts", JSON.stringify(workouts));
-    localStorage.setItem("measurements", JSON.stringify(measurements));
-    alert("✅ Dane zapisane!");
+  // 🔹 Save data to window.storage
+  const saveData = async () => {
+    try {
+      if (!window.storage) throw new Error("Brak storage");
+      await window.storage.set("workouts", JSON.stringify(workouts));
+      await window.storage.set("measurements", JSON.stringify(measurements));
+      alert("✅ Dane zapisane!");
+    } catch (e: any) {
+      alert("❌ Błąd zapisu: " + e.message);
+    }
   };
 
-  // 🔹 Rozpoczęcie nowego treningu
+  // 🔹 Start new workout
   const startWorkout = (type: WorkoutType) => {
     const newWorkout: Workout = {
       id: Date.now(),
@@ -89,241 +117,304 @@ export default function App() {
     setActiveTab("workout");
   };
 
-  // 🔹 Dodawanie serii
+  // 🔹 Add measurement
+  const addMeasurement = () => {
+    const date = prompt("Data pomiaru (YYYY-MM-DD):");
+    const weight = parseFloat(prompt("Waga (kg):") || "");
+    const waist = parseFloat(prompt("Talia (cm):") || "");
+    if (date && !isNaN(weight) && !isNaN(waist)) {
+      setMeasurements([...measurements, { date, weight, waist }]);
+    }
+  };
+
+  // 🔹 Add / update / remove set
   const addSet = (exerciseIndex: number) => {
     if (!currentWorkout) return;
-    const updated = structuredClone(currentWorkout);
+    const updated: Workout = { ...currentWorkout };
     updated.exercises[exerciseIndex].sets.push({ weight: "", reps: "", rir: "" });
     setCurrentWorkout(updated);
   };
 
-  // 🔹 Edycja serii
-  const updateSet = (
-    exerciseIndex: number,
-    setIndex: number,
-    field: keyof Set,
-    value: string
-  ) => {
+  const updateSet = (exIdx: number, setIdx: number, field: keyof Set, value: string) => {
     if (!currentWorkout) return;
-    const updated = structuredClone(currentWorkout);
-    updated.exercises[exerciseIndex].sets[setIndex][field] = value;
+    const updated: Workout = { ...currentWorkout };
+    updated.exercises[exIdx].sets[setIdx][field] = value;
     setCurrentWorkout(updated);
   };
 
-  // 🔹 Zakończenie treningu
+  const removeSet = (exIdx: number, setIdx: number) => {
+    if (!currentWorkout) return;
+    const updated: Workout = { ...currentWorkout };
+    updated.exercises[exIdx].sets.splice(setIdx, 1);
+    setCurrentWorkout(updated);
+  };
+
   const finishWorkout = () => {
     if (!currentWorkout) return;
-    setWorkouts((prev) => [...prev, currentWorkout]);
+    setWorkouts([...workouts, currentWorkout]);
     setCurrentWorkout(null);
     setActiveTab("history");
     alert("✅ Trening zapisany!");
   };
 
-  // 🔹 Pomiar
-  const addMeasurement = () => {
-    const date = prompt("Data pomiaru (YYYY-MM-DD):") || "";
-    const weightStr = prompt("Waga (kg):") || "0";
-    const waistStr = prompt("Talia (cm):") || "0";
-    const weight = parseFloat(weightStr);
-    const waist = parseFloat(waistStr);
-    if (date && weight && waist) {
-      setMeasurements((prev) => [...prev, { date, weight, waist }]);
+  const deleteWorkout = (id: number) => {
+    if (confirm("Usunąć ten trening?")) {
+      setWorkouts(workouts.filter((w) => w.id !== id));
     }
   };
 
+  const getLastWorkout = (type: WorkoutType) => workouts.filter((w) => w.type === type).slice(-1)[0];
+
+  const tabs: Tab[] = [
+    { id: "dashboard", label: "Start", icon: Dumbbell },
+    { id: "workout", label: "Trening", icon: Plus },
+    { id: "history", label: "Historia", icon: Calendar },
+    { id: "stats", label: "Postępy", icon: TrendingUp },
+  ];
+
   return (
     <div className="min-h-screen bg-slate-900 text-white p-4">
-      <div className="max-w-3xl mx-auto">
-        <h1 className="text-3xl font-bold text-center mb-6">
-          💪 Dziennik Treningowy
-        </h1>
-
-        {/* 🔹 Nawigacja */}
-        <div className="flex gap-2 justify-center mb-4">
-          <button
-            onClick={() => setActiveTab("dashboard")}
-            className={`px-3 py-2 rounded ${
-              activeTab === "dashboard" ? "bg-blue-600" : "bg-slate-700"
-            }`}
-          >
-            Start
-          </button>
-          <button
-            onClick={() => setActiveTab("history")}
-            className={`px-3 py-2 rounded ${
-              activeTab === "history" ? "bg-blue-600" : "bg-slate-700"
-            }`}
-          >
-            Historia
-          </button>
-          <button
-            onClick={() => setActiveTab("stats")}
-            className={`px-3 py-2 rounded ${
-              activeTab === "stats" ? "bg-blue-600" : "bg-slate-700"
-            }`}
-          >
-            Statystyki
-          </button>
+      <div className="max-w-6xl mx-auto">
+        {/* Header */}
+        <div className="text-center mb-6">
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
+            💪 Dziennik Treningowy
+          </h1>
         </div>
 
-        {/* 🔹 Dashboard */}
-        {activeTab === "dashboard" && (
-          <div className="flex flex-col gap-3">
-            {(["PUSH", "PULL", "KONDYCJA"] as WorkoutType[]).map((type) => (
-              <button
-                key={type}
-                onClick={() => startWorkout(type)}
-                className="bg-blue-500 hover:bg-blue-600 py-3 rounded-lg"
-              >
-                Rozpocznij {type}
-              </button>
-            ))}
+        {/* Navigation */}
+        <div className="flex gap-2 mb-6 justify-center">
+          {tabs.map((tab) => (
             <button
-              onClick={addMeasurement}
-              className="bg-green-500 hover:bg-green-600 py-3 rounded-lg"
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id as any)}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium ${
+                activeTab === tab.id
+                  ? "bg-blue-600 text-white shadow-lg"
+                  : "bg-slate-700 text-slate-300 hover:bg-slate-600"
+              }`}
             >
-              Dodaj pomiar
+              <tab.icon size={18} /> {tab.label}
             </button>
-            <button
-              onClick={saveData}
-              className="bg-purple-500 hover:bg-purple-600 py-3 rounded-lg"
-            >
-              Zapisz dane
-            </button>
-          </div>
-        )}
+          ))}
+        </div>
 
-        {/* 🔹 Trening */}
-        {activeTab === "workout" && currentWorkout && (
-          <div>
-            <h2 className="text-2xl font-semibold mb-4">
-              Trening {currentWorkout.type} ({currentWorkout.date})
-            </h2>
-            {currentWorkout.exercises.map((ex, i) => (
-              <div key={i} className="mb-6">
-                <h3 className="text-xl mb-2">{ex.name}</h3>
-                {ex.sets.map((s, j) => (
-                  <div key={j} className="flex gap-2 mb-2">
-                    <input
-                      type="text"
-                      placeholder="kg"
-                      value={s.weight}
-                      onChange={(e) =>
-                        updateSet(i, j, "weight", e.target.value)
-                      }
-                      className="bg-slate-800 rounded p-1 w-16 text-center"
-                    />
-                    <input
-                      type="text"
-                      placeholder="powt."
-                      value={s.reps}
-                      onChange={(e) => updateSet(i, j, "reps", e.target.value)}
-                      className="bg-slate-800 rounded p-1 w-16 text-center"
-                    />
-                    <input
-                      type="text"
-                      placeholder="RIR"
-                      value={s.rir}
-                      onChange={(e) => updateSet(i, j, "rir", e.target.value)}
-                      className="bg-slate-800 rounded p-1 w-16 text-center"
-                    />
-                  </div>
-                ))}
+        {/* Content */}
+        <div className="bg-slate-800 rounded-xl shadow-2xl p-6">
+          {/* Dashboard */}
+          {activeTab === "dashboard" && (
+            <div className="space-y-4">
+              <div className="grid md:grid-cols-3 gap-4">
+                {Object.keys(workoutTemplates).map((type) => {
+                  const last = getLastWorkout(type as WorkoutType);
+                  return (
+                    <div key={type} className="bg-slate-700 p-4 rounded-lg hover:bg-slate-600">
+                      <h3 className="text-xl font-bold mb-2">{type}</h3>
+                      {last && (
+                        <p className="text-slate-400 mb-2">
+                          Ostatnio: {new Date(last.date).toLocaleDateString("pl-PL")}
+                        </p>
+                      )}
+                      <button
+                        onClick={() => startWorkout(type as WorkoutType)}
+                        className="w-full bg-blue-600 py-2 rounded hover:bg-blue-700"
+                      >
+                        Rozpocznij
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+              <div className="mt-4 flex gap-4">
                 <button
-                  onClick={() => addSet(i)}
-                  className="bg-slate-700 px-3 py-1 rounded"
+                  onClick={addMeasurement}
+                  className="bg-purple-600 px-4 py-2 rounded hover:bg-purple-700"
                 >
-                  + seria
+                  Dodaj pomiar
+                </button>
+                <button
+                  onClick={saveData}
+                  className="bg-green-600 px-4 py-2 rounded hover:bg-green-700"
+                >
+                  Zapisz Dane
                 </button>
               </div>
-            ))}
-            <button
-              onClick={finishWorkout}
-              className="bg-green-600 hover:bg-green-700 w-full py-3 rounded-lg"
-            >
-              Zakończ trening
-            </button>
-          </div>
-        )}
-
-        {/* 🔹 Historia */}
-        {activeTab === "history" && (
-          <div>
-            <h2 className="text-2xl mb-4 font-semibold">Historia treningów</h2>
-            {workouts.length === 0 && <p>Brak zapisanych treningów.</p>}
-            {workouts.map((w) => (
-              <div
-                key={w.id}
-                className="border border-slate-700 rounded p-3 mb-3"
-              >
-                <p>
-                  {w.type} — {w.date}
-                </p>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* 🔹 Statystyki */}
-        {activeTab === "stats" && (
-          <div>
-            <h2 className="text-2xl mb-4 font-semibold">📊 Statystyki</h2>
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-              <div className="bg-slate-800 p-4 rounded">
-                <p className="text-slate-400 text-sm">Treningi łącznie</p>
-                <p className="text-2xl font-bold">{workouts.length}</p>
-              </div>
-              <div className="bg-slate-800 p-4 rounded">
-                <p className="text-slate-400 text-sm">Pomiarów łącznie</p>
-                <p className="text-2xl font-bold">{measurements.length}</p>
-              </div>
-              <div className="bg-slate-800 p-4 rounded">
-                <p className="text-slate-400 text-sm">Ostatnia waga</p>
-                <p className="text-2xl font-bold">
-                  {measurements.length > 0
-                    ? `${measurements[measurements.length - 1].weight} kg`
-                    : "—"}
-                </p>
-              </div>
             </div>
+          )}
 
-            {/* Wykres */}
-            {measurements.length > 1 ? (
-              <div className="bg-slate-800 p-4 rounded">
-                <h3 className="font-semibold mb-3">Progresja wagi i talii</h3>
-                <ResponsiveContainer width="100%" height={300}>
-                  <LineChart data={measurements}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
-                    <XAxis dataKey="date" stroke="#94a3b8" />
-                    <YAxis stroke="#94a3b8" />
-                    <Tooltip />
-                    <Legend />
-                    <Line
-                      type="monotone"
-                      dataKey="weight"
-                      stroke="#60a5fa"
-                      strokeWidth={2}
-                      name="Waga (kg)"
-                    />
-                    <Line
-                      type="monotone"
-                      dataKey="waist"
-                      stroke="#f87171"
-                      strokeWidth={2}
-                      name="Talia (cm)"
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
+          {/* Workout */}
+          {activeTab === "workout" && (
+            <div>
+              {!currentWorkout ? (
+                <div className="text-center py-12">
+                  <Dumbbell size={64} className="mx-auto text-slate-600 mb-4" />
+                  <p className="text-slate-400">Wybierz trening z zakładki "Start"</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center">
+                    <h2 className="text-2xl font-bold">{currentWorkout.type}</h2>
+                    <button
+                      onClick={finishWorkout}
+                      className="bg-green-600 px-6 py-2 rounded hover:bg-green-700"
+                    >
+                      Zakończ Trening
+                    </button>
+                  </div>
+                  {currentWorkout.exercises.map((ex, i) => (
+                    <div key={i} className="bg-slate-700 p-4 rounded-lg">
+                      <div className="flex justify-between items-center mb-2">
+                        <h3 className="font-bold">{ex.name}</h3>
+                        <button
+                          onClick={() => addSet(i)}
+                          className="flex items-center gap-1 bg-blue-600 px-2 py-1 rounded hover:bg-blue-700 text-sm"
+                        >
+                          <Plus size={16} /> Seria
+                        </button>
+                      </div>
+                      {ex.sets.map((s, j) => (
+                        <div key={j} className="flex gap-2 items-center mb-2">
+                          <input
+                            type="number"
+                            value={s.weight}
+                            onChange={(e) => updateSet(i, j, "weight", e.target.value)}
+                            placeholder="kg"
+                            className="bg-slate-800 px-2 py-1 rounded w-16 text-center"
+                          />
+                          <input
+                            type="number"
+                            value={s.reps}
+                            onChange={(e) => updateSet(i, j, "reps", e.target.value)}
+                            placeholder="powt."
+                            className="bg-slate-800 px-2 py-1 rounded w-16 text-center"
+                          />
+                          <input
+                            type="number"
+                            value={s.rir}
+                            onChange={(e) => updateSet(i, j, "rir", e.target.value)}
+                            placeholder="RIR"
+                            className="bg-slate-800 px-2 py-1 rounded w-16 text-center"
+                          />
+                          <button
+                            onClick={() => removeSet(i, j)}
+                            className="ml-auto text-red-400 hover:text-red-300"
+                          >
+                            <Trash2 size={18} />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  ))}
+                  <textarea
+                    value={currentWorkout.notes}
+                    onChange={(e) =>
+                      setCurrentWorkout({ ...currentWorkout, notes: e.target.value })
+                    }
+                    placeholder="Notatki..."
+                    className="w-full bg-slate-700 p-2 rounded mt-2"
+                  />
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* History */}
+          {activeTab === "history" && (
+            <div>
+              <h2 className="text-2xl font-bold mb-4">Historia treningów</h2>
+              {workouts.length === 0 && <p className="text-slate-400">Brak treningów</p>}
+              {workouts
+                .slice()
+                .reverse()
+                .map((w) => (
+                  <div key={w.id} className="bg-slate-700 p-4 rounded mb-2">
+                    <div className="flex justify-between">
+                      <div>
+                        <p className="font-bold">{w.type}</p>
+                        <p className="text-slate-400 text-sm">
+                          {new Date(w.date).toLocaleDateString("pl-PL")}
+                        </p>
+                      </div>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => setViewingWorkout(w)}
+                          className="text-blue-400 hover:text-blue-300"
+                        >
+                          <Eye size={20} />
+                        </button>
+                        <button
+                          onClick={() => deleteWorkout(w.id)}
+                          className="text-red-400 hover:text-red-300"
+                        >
+                          <Trash2 size={20} />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+            </div>
+          )}
+
+          {/* Stats */}
+          {activeTab === "stats" && (
+            <div>
+              <h2 className="text-2xl font-bold mb-4">Twoje Postępy</h2>
+
+              {/* Summary */}
+              <div className="grid md:grid-cols-3 gap-4 mb-6">
+                <div className="bg-slate-700 p-4 rounded">
+                  <p className="text-slate-400 text-sm">Treningi łącznie</p>
+                  <p className="text-3xl font-bold">{workouts.length}</p>
+                </div>
+                <div className="bg-slate-700 p-4 rounded">
+                  <p className="text-slate-400 text-sm">Pomiarów łącznie</p>
+                  <p className="text-3xl font-bold">{measurements.length}</p>
+                </div>
+                <div className="bg-slate-700 p-4 rounded">
+                  <p className="text-slate-400 text-sm">Ostatnia waga</p>
+                  <p className="text-3xl font-bold">
+                    {measurements.length > 0 ? `${measurements[measurements.length - 1].weight} kg` : "—"}
+                  </p>
+                </div>
               </div>
-            ) : (
-              <p className="text-slate-400">
-                Brak wystarczających danych, dodaj więcej pomiarów.
-              </p>
-            )}
-          </div>
-        )}
+
+              {/* Chart */}
+              {measurements.length > 1 ? (
+                <div className="bg-slate-700 p-4 rounded">
+                  <h3 className="font-semibold mb-3">Progresja wagi i talii</h3>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <LineChart data={measurements}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+                      <XAxis dataKey="date" stroke="#94a3b8" />
+                      <YAxis stroke="#94a3b8" />
+                      <Tooltip />
+                      <Legend />
+                      <Line
+                        type="monotone"
+                        dataKey="weight"
+                        stroke="#60a5fa"
+                        strokeWidth={2}
+                        name="Waga (kg)"
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey="waist"
+                        stroke="#f87171"
+                        strokeWidth={2}
+                        name="Talia (cm)"
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              ) : (
+                <p className="text-slate-400">Brak wystarczających danych, dodaj więcej pomiarów.</p>
+              )}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
-}
+};
+
+export default TrainingTracker;
