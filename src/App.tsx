@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { Plus, Save, Calendar, Dumbbell, TrendingUp } from "lucide-react";
 
 type WorkoutType = "PUSH" | "PULL" | "KONDYCJA";
 
