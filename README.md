@@ -1,73 +1,42 @@
-# React + TypeScript + Vite
+# 💪 Dziennik Treningowy
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Aplikacja webowa do śledzenia treningów, progresu i pomiarów ciała.  
+Zbudowana w oparciu o **React + TypeScript + Vite + TailwindCSS**.  
+Projekt prywatny tworzony w celach nauki frontendu i zarządzania własnym planem treningowym.
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## 🚀 Funkcjonalności
 
-## React Compiler
+- 🏋️ **Rejestrowanie treningów** — PUSH / PULL / KONDYCJA  
+- 📅 **Historia treningów** — przegląd zapisanych sesji  
+- 📈 **Postępy** — liczba treningów w tygodniu/miesiącu + progres pomiarów  
+- ⚖️ **Pomiary ciała** — waga, obwód talii, zmiany w czasie  
+- 💾 **Zapisywanie danych w przeglądarce** (LocalStorage – działa offline)  
+- 🌙 **Ciemny motyw** (TailwindCSS)  
+- 📱 **Responsywny design** – gotowe do użycia na telefonie  
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+---
 
-## Expanding the ESLint configuration
+## 🧰 Stack technologiczny
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+- ⚛️ **React 18**  
+- 💙 **TypeScript**  
+- ⚡ **Vite 7**  
+- 🎨 **Tailwind CSS 3**  
+- 🧩 **Lucide React Icons**  
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+---
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+## 🧑‍💻 Uruchomienie lokalne
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+```bash
+# 1. Sklonuj repozytorium
+git clone https://github.com/<twoje_nazwisko>/training-tracker.git
+cd training-tracker
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+# 2. Zainstaluj zależności
+npm install
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+# 3. Uruchom lokalny serwer
+npm run dev
