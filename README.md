@@ -47,7 +47,7 @@ Aplikacja uruchomi się pod: http://localhost:5173
 
 Zmiany w kodzie będą odświeżane automatycznie dzięki Vite
 
-🌐 Dostęp online
+## 🧑‍💻 Dostęp online
 
 Aplikacja jest hostowana na Vercel i dostępna pod adresem:
 https://training-tracker-18gh50gj3-kamils-projects-335f000e.vercel.app/
