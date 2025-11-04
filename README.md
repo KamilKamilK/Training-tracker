@@ -42,10 +42,13 @@ npm install
 # 3. Uruchom lokalny serwer deweloperski
 npm run dev
 
+```
 
 Aplikacja uruchomi się pod: http://localhost:5173
 
 Zmiany w kodzie będą odświeżane automatycznie dzięki Vite
+
+---
 
 ## 🧑‍💻 Dostęp online
 
