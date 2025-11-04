@@ -1,0 +1,8 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Dodatkowy styl bazowy — ciemne tło i białe fonty */
+body {
+  @apply bg-slate-900 text-white;
+}
