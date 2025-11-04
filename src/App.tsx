@@ -1,4 +1,14 @@
 import { useState, useEffect } from "react";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  Legend,
+} from "recharts";
 
 type WorkoutType = "PUSH" | "PULL" | "KONDYCJA";
 
@@ -128,6 +138,7 @@ export default function App() {
           💪 Dziennik Treningowy
         </h1>
 
+        {/* 🔹 Nawigacja */}
         <div className="flex gap-2 justify-center mb-4">
           <button
             onClick={() => setActiveTab("dashboard")}
@@ -155,6 +166,7 @@ export default function App() {
           </button>
         </div>
 
+        {/* 🔹 Dashboard */}
         {activeTab === "dashboard" && (
           <div className="flex flex-col gap-3">
             {(["PUSH", "PULL", "KONDYCJA"] as WorkoutType[]).map((type) => (
@@ -181,6 +193,7 @@ export default function App() {
           </div>
         )}
 
+        {/* 🔹 Trening */}
         {activeTab === "workout" && currentWorkout && (
           <div>
             <h2 className="text-2xl font-semibold mb-4">
@@ -233,6 +246,7 @@ export default function App() {
           </div>
         )}
 
+        {/* 🔹 Historia */}
         {activeTab === "history" && (
           <div>
             <h2 className="text-2xl mb-4 font-semibold">Historia treningów</h2>
@@ -247,6 +261,66 @@ export default function App() {
                 </p>
               </div>
             ))}
+          </div>
+        )}
+
+        {/* 🔹 Statystyki */}
+        {activeTab === "stats" && (
+          <div>
+            <h2 className="text-2xl mb-4 font-semibold">📊 Statystyki</h2>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+              <div className="bg-slate-800 p-4 rounded">
+                <p className="text-slate-400 text-sm">Treningi łącznie</p>
+                <p className="text-2xl font-bold">{workouts.length}</p>
+              </div>
+              <div className="bg-slate-800 p-4 rounded">
+                <p className="text-slate-400 text-sm">Pomiarów łącznie</p>
+                <p className="text-2xl font-bold">{measurements.length}</p>
+              </div>
+              <div className="bg-slate-800 p-4 rounded">
+                <p className="text-slate-400 text-sm">Ostatnia waga</p>
+                <p className="text-2xl font-bold">
+                  {measurements.length > 0
+                    ? `${measurements[measurements.length - 1].weight} kg`
+                    : "—"}
+                </p>
+              </div>
+            </div>
+
+            {/* Wykres */}
+            {measurements.length > 1 ? (
+              <div className="bg-slate-800 p-4 rounded">
+                <h3 className="font-semibold mb-3">Progresja wagi i talii</h3>
+                <ResponsiveContainer width="100%" height={300}>
+                  <LineChart data={measurements}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+                    <XAxis dataKey="date" stroke="#94a3b8" />
+                    <YAxis stroke="#94a3b8" />
+                    <Tooltip />
+                    <Legend />
+                    <Line
+                      type="monotone"
+                      dataKey="weight"
+                      stroke="#60a5fa"
+                      strokeWidth={2}
+                      name="Waga (kg)"
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="waist"
+                      stroke="#f87171"
+                      strokeWidth={2}
+                      name="Talia (cm)"
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            ) : (
+              <p className="text-slate-400">
+                Brak wystarczających danych, dodaj więcej pomiarów.
+              </p>
+            )}
           </div>
         )}
       </div>
