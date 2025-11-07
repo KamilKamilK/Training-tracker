@@ -71,49 +71,46 @@ const TrainingTracker = () => {
     }
   };
 
-  const workoutTemplates: Record<string, string[]> = {
-    PUSH: [
-      '1. Przysiad Hack maszyna',
-      '2. Wyciskanie Hummer pozioma',
-      '3. Wyciskanie hantli nad głowę',
-      '4. Przysiad bułgarski',
-      '5. Wspięcia na palce',
-      '6. Wznosy bokiem hantli',
-      '7. Wyciskanie hantli dodatnia',
-      '8. Rozpiętki butterfly',
-      'Plank (2x MAX)',
-      'Triceps - górny wyciąg'
-    ],
-    PULL: [
-      '1. Martwy ciąg z haków',
-      '2. Ściąganie szeroki podchwyt',
-      '3. Wiosłowanie kettlem',
-      '4. Ściąganie V-bloczek',
-      '5. Uginanie nóg leżąc',
-      '6. Hip Thrust',
-      '7. Face Pulls',
-      '8. Biceps - młotek',
-      '8. Triceps - francuskie',
-      '9. Biceps - dolny wyciąg',
-      '9. Triceps - górny wyciąg',
-      'AirBike 30Cal'
-    ],
-    KONDYCJA: [
-      'Rower 10Cal (4 rundy)',
-      'Ski-erg 250m (4 rundy)',
-      'AMRAP - Sit-up x15',
-      'AMRAP - Martwy ciąg kettla x15',
-      'AMRAP - Wioślarz 500m',
-      'AMRAP - Rundy total',
-      'Pchanie sanek 20m',
-      'Przyciąganie sanek 20m',
-      'Wyciskanie klatka 14/10',
-      'Wykroki 20m worek 10kg',
-      'Core - Plank 60s',
-      'Core - Dead Bug x20',
-      'Core - Russian Twist x40'
-    ]
-  };
+const workoutTemplates: Record<string, string[]> = {
+  PUSH: [
+    '1. Przysiad Hack maszyna – 12/10/10/8/8',
+    '2. Wyciskanie Hummer na ławeczce poziomej – 12/10/10/8/8',
+    '3. Wyciskanie hantli nad głowę siedząc – 12/10/10/8/8',
+    '4. Przysiad bułgarski z hantlami – 3x8–10 na nogę',
+    '5. Wspięcia na palce (na stojąco / Smith) – 3x12–15',
+    '6. Wznosy bokiem hantli (barki) – 3x12–15',
+    '7. Wyciskanie hantli na ławeczce dodatniej – 12/10/10/8/8',
+    '8. Rozpiętki na maszynie butterfly – 3x12–15',
+    '9. Wyciskanie francuskie hantlem (triceps) – 3x10–12',
+    '10. Prostowanie przedramion na wyciągu (triceps) – 3x12–15',
+    '🔥 Core: Plank – 2 serie na max, 1 min przerwy'
+  ],
+  PULL: [
+    '1. Martwy ciąg z haków – 12/10/10/8/8',
+    '2. Ściąganie szerokiego uchwytu podchwytem do klatki – 12/10/10/8/8',
+    '3. Wiosłowanie kettlem w oparciu o ławeczkę – 4x10–12',
+    '4. Ściąganie V-bloczka górnego (chwyt młotkowy) – 12/10/10/8/8',
+    '5. Uginanie nóg na maszynie leżąc – 3x12–15',
+    '6. Hip Thrust (maszyna / sztanga) – 3x8–10',
+    '7. Face Pulls (tył barków) – 3x12–15',
+    '8. Uginanie przedramion z hantlami (biceps klasyczny) – 3x10–12',
+    '9. Uginanie młotkowe (biceps) – 3x10–12',
+    '10. Uginanie na dolnym wyciągu (biceps izolacja) – 3x12–15',
+    '🔥 AirBike – 30 Cal'
+  ],
+  KONDYCJA: [
+    '• 4 rundy Rower stacjonarny – 10 Cal',
+    '• ... Ski-erg – 250 m',
+    '• AMRAP 15 min Sit-up x15',
+    '• ... 15 min Martwy ciąg z kettlem x15',
+    '• ... 15 min Wioślarz – 500 m',
+    '• 3 rundy Pchanie sanek – 20m (20kg x2)',
+    '• ... Przyciąganie sanek TRX – 20m (20kg x2)',
+    '• ... Wyciskanie klatka – 14x2 / 10 powt.',
+    '• ... Wykroki – 20m (bag 10kg)',
+    '🔥 Core:  https://www.youtube.com/watch?v=uUKAYkQZXko'
+  ]
+};
 
   const startWorkout = (type: string) => {
     const newWorkout: Workout = {
@@ -348,10 +345,27 @@ const TrainingTracker = () => {
                     KONDYCJA
                   </h3>
                   <p className="text-sm text-slate-400 mb-3">Funkcjonalność + Core</p>
-                  <ul className="text-sm space-y-1 text-slate-300">
-                    {workoutTemplates.KONDYCJA.map((ex, i) => (
-                      <li key={i}>• {ex}</li>
-                    ))}
+                 <ul className="text-sm space-y-1 text-slate-300">
+                    {workoutTemplates.KONDYCJA.map((ex, i) => {
+                      const isLink = ex.includes('http');
+                      if (isLink) {
+                        const [label, url] = ex.split('https://');
+                        return (
+                          <li key={i}>
+                            • {label}
+                            <a
+                              href={`https://${url}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-400 hover:underline ml-1"
+                            >
+                              Otwórz w YouTube
+                            </a>
+                          </li>
+                        );
+                      }
+                      return <li key={i}>• {ex}</li>;
+                    })}
                   </ul>
                 </div>
               </div>
