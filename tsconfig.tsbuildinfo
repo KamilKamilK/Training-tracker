@@ -1,0 +1,1 @@
+{"root":["./src/App.tsx","./src/global.d.ts","./src/main.tsx","./src/dataconnect-generated/index.d.ts","./src/dataconnect-generated/react/index.d.ts","./src/lib/firebaseConfig.ts","./src/lib/saveWorkout.ts"],"version":"5.9.3"}

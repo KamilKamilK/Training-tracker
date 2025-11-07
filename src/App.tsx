@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Save, Trash2, TrendingUp, Calendar, Dumbbell, Eye, X } from 'lucide-react';
+import { addDoc, collection } from "firebase/firestore";
+import { db } from "./lib/firebaseConfig.js";
 
 interface WorkoutSet {
   weight: string;
@@ -152,14 +154,30 @@ const workoutTemplates: Record<string, string[]> = {
     setCurrentWorkout(updated);
   };
 
-  const finishWorkout = () => {
+  const finishWorkout = async () => {
     if (!currentWorkout) return;
-    
-    const updatedWorkouts = [...workouts, currentWorkout];
-    setWorkouts(updatedWorkouts);
-    setCurrentWorkout(null);
-    setActiveTab('history');
-    alert('✅ Trening zapisany!');
+
+    try {
+      // 🔹 Zapis lokalny (tak jak wcześniej)
+      const updatedWorkouts = [...workouts, currentWorkout];
+      setWorkouts(updatedWorkouts);
+      setCurrentWorkout(null);
+      setActiveTab('history');
+
+      // 🔹 Dodatkowy zapis do Firestore
+      await addDoc(collection(db, "workouts"), {
+        type: currentWorkout.type,
+        date: currentWorkout.date,
+        notes: currentWorkout.notes,
+        exercises: currentWorkout.exercises,
+        createdAt: new Date().toISOString()
+      });
+
+      alert('✅ Trening zapisany lokalnie i w bazie!');
+    } catch (error) {
+      console.error("❌ Błąd przy zapisie do bazy:", error);
+      alert("❌ Błąd zapisu do bazy. Sprawdź konsolę.");
+    }
   };
 
   const addMeasurement = () => {
