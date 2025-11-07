@@ -81,7 +81,7 @@ const TrainingTracker = () => {
       '6. Wznosy bokiem hantli',
       '7. Wyciskanie hantli dodatnia',
       '8. Rozpiętki butterfly',
-      'Plank (czas)',
+      'Plank (2x MAX)',
       'Triceps - górny wyciąg'
     ],
     PULL: [
@@ -96,22 +96,22 @@ const TrainingTracker = () => {
       '8. Triceps - francuskie',
       '9. Biceps - dolny wyciąg',
       '9. Triceps - górny wyciąg',
-      'AirBike (Cal)'
+      'AirBike 30Cal'
     ],
     KONDYCJA: [
-      'Rower 10Cal (rundy)',
-      'Ski-erg 250m (rundy)',
-      'AMRAP - Sit-up',
-      'AMRAP - Martwy ciąg kettla',
+      'Rower 10Cal (4 rundy)',
+      'Ski-erg 250m (4 rundy)',
+      'AMRAP - Sit-up x15',
+      'AMRAP - Martwy ciąg kettla x15',
       'AMRAP - Wioślarz 500m',
       'AMRAP - Rundy total',
       'Pchanie sanek 20m',
       'Przyciąganie sanek 20m',
-      'Wyciskanie klatka',
-      'Wykroki 20m',
-      'Core - Plank',
-      'Core - Dead Bug',
-      'Core - Russian Twist'
+      'Wyciskanie klatka 14/10',
+      'Wykroki 20m worek 10kg',
+      'Core - Plank 60s',
+      'Core - Dead Bug x20',
+      'Core - Russian Twist x40'
     ]
   };
 
