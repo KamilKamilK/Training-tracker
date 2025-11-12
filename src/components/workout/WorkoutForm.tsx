@@ -6,7 +6,12 @@ import { Save } from 'lucide-react';
 interface WorkoutFormProps {
   workout: Workout;
   onAddSet: (exerciseIndex: number) => void;
-  onUpdateSet: (exIdx: number, setIdx: number, field: string, value: string) => void;
+  onUpdateSet: (
+    exIdx: number,
+    setIdx: number,
+    field: 'weight' | 'reps' | 'rir',
+    value: string
+  ) => void;
   onRemoveSet: (exIdx: number, setIdx: number) => void;
   onFinishWorkout: () => void;
 }

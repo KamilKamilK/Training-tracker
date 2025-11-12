@@ -7,7 +7,7 @@ interface ExerciseItemProps {
   exercise: Exercise;
   exerciseIndex: number;
   onAddSet: () => void;
-  onUpdateSet: (setIdx: number, field: string, value: string) => void;
+  onUpdateSet: (setIdx: number, field: 'weight' | 'reps' | 'rir', value: string) => void;
   onRemoveSet: (setIdx: number) => void;
 }
 

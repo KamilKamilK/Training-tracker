@@ -11,7 +11,7 @@ export interface Exercise {
 }
 
 export interface Workout {
-  id: number;
+  id: string;
   type: string;
   date: string;
   exercises: Exercise[];
@@ -21,6 +21,7 @@ export interface Workout {
 }
 
 export interface Measurement {
+  id?: string;
   date: string;
   weight: number;
   waist: number;

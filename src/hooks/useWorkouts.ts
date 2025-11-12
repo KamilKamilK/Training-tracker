@@ -1,21 +1,15 @@
 import { useState } from 'react';
 import { Workout, WorkoutTemplate } from '../types/index.js';
-import { useStorage } from './useStorage.js';
-import { saveWorkoutToFirebase } from './../utils/firebaseHelpers.js';
 
 export const useWorkouts = () => {
-  const { workouts, setWorkouts, saveData } = useStorage();
   const [currentWorkout, setCurrentWorkout] = useState<Workout | null>(null);
 
   const startWorkout = (template: WorkoutTemplate) => {
     const newWorkout: Workout = {
-      id: Date.now(),
+      id: '', // zostanie nadane przez Firestore
       type: template.name,
-      date: new Date().toISOString().split('T')[0],
-      exercises: template.exercises.map(name => ({
-        name,
-        sets: [],
-      })),
+      date: new Date().toISOString(),
+      exercises: template.exercises.map(name => ({ name, sets: [] })),
       notes: '',
       completed: false,
     };
@@ -29,10 +23,10 @@ export const useWorkouts = () => {
     setCurrentWorkout(updated);
   };
 
-  const updateSet = (exIdx: number, setIdx: number, field: string, value: string) => {
+  const updateSet = (exIdx: number, setIdx: number, field: 'weight' | 'reps' | 'rir', value: string) => {
     if (!currentWorkout) return;
     const updated = { ...currentWorkout };
-    updated.exercises[exIdx].sets[setIdx][field as 'weight' | 'reps' | 'rir'] = value;
+    updated.exercises[exIdx].sets[setIdx][field] = value;
     setCurrentWorkout(updated);
   };
 
@@ -43,24 +37,16 @@ export const useWorkouts = () => {
     setCurrentWorkout(updated);
   };
 
-  const finishWorkout = async () => {
-    if (!currentWorkout) return;
-    const finished = { ...currentWorkout, completed: true, date: new Date().toISOString() };
-    const newList = [...workouts, finished];
-    setWorkouts(newList);
-    saveData();
-
-    await saveWorkoutToFirebase(finished);
+  const finishWorkout = () => {
+    if (!currentWorkout) return null;
+    const finished: Workout = { 
+      ...currentWorkout, 
+      completed: true, 
+      date: new Date().toISOString() 
+    };
     setCurrentWorkout(null);
+    return finished; // zwracamy trening zamiast go zapisywać
   };
 
-  return {
-    currentWorkout,
-    workouts,
-    startWorkout,
-    addSet,
-    updateSet,
-    removeSet,
-    finishWorkout,
-  };
+  return { currentWorkout, startWorkout, addSet, updateSet, removeSet, finishWorkout };
 };

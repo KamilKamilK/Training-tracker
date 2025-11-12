@@ -1,5 +1,5 @@
 import React from 'react';
-import { Save, Plus } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { Workout, Measurement, WorkoutTemplate } from './../../types/index.js';
 
 interface DashboardTabProps {
@@ -7,7 +7,7 @@ interface DashboardTabProps {
   measurements: Measurement[];
   templates: WorkoutTemplate[];
   onStartWorkout: (template: WorkoutTemplate) => void;
-  onSaveData: () => void;
+  // onSaveData: (workout: Workout) => Promise<void>;
   onAddMeasurement: () => void;
 }
 
@@ -16,7 +16,7 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({
   measurements,
   templates,
   onStartWorkout,
-  onSaveData,
+  // onSaveData,
   onAddMeasurement
 }) => {
   const getLastWorkout = (templateName: string): Workout | undefined => {
@@ -27,13 +27,13 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({
     <div className="space-y-6">
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-2xl font-bold">Rozpocznij Trening</h2>
-        <button
+        {/* <button
           onClick={onSaveData}
           className="flex items-center gap-2 bg-green-600 hover:bg-green-700 px-4 py-2 rounded-lg font-medium transition-all"
         >
           <Save size={18} />
           Zapisz Dane
-        </button>
+        </button> */}
       </div>
       
       <div className="grid md:grid-cols-3 gap-4">
