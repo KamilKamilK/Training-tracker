@@ -4,7 +4,7 @@ import { TabType } from '../../types/index.js';
 interface Tab {
   id: TabType;
   label: string;
-  icon: React.ElementType;
+  icon: React.ComponentType<{ size?: number }>;
 }
 
 interface TabNavigationProps {

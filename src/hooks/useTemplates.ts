@@ -1,49 +1,43 @@
-import { useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { WorkoutTemplate } from '../types/index.js';
 import { defaultWorkoutTemplates } from '../constants/workoutTemplates.js';
-import { useLocalStorage } from './useLocalStorage.js';
+import { LocalStorageService } from '../services/storage/localStorage.service.js';
+import { STORAGE_KEYS } from '../constants/config.js';
 
-/**
- * Hook zarządzający szablonami treningowymi.
- * Łączy szablony domyślne i użytkownika, z obsługą CRUD + localStorage.
- */
 export function useTemplates() {
-  // 🔹 Stan custom templates w localStorage
-  const [customTemplates, setCustomTemplates, clearCustomTemplates] = useLocalStorage<WorkoutTemplate[]>(
-    'customTemplates',
-    []
+  const [customTemplates, setCustomTemplates] = useState<WorkoutTemplate[]>([]);
+
+  useEffect(() => {
+    const stored = LocalStorageService.get<WorkoutTemplate[]>(STORAGE_KEYS.customTemplates, []);
+    setCustomTemplates(stored);
+  }, []);
+
+  useEffect(() => {
+    LocalStorageService.set(STORAGE_KEYS.customTemplates, customTemplates);
+  }, [customTemplates]);
+
+  const allTemplates = useMemo(
+    () => [...defaultWorkoutTemplates, ...customTemplates],
+    [customTemplates]
   );
 
-  // 🔹 Wszystkie szablony (domyślne + niestandardowe)
-  const allTemplates = useMemo(() => [...defaultWorkoutTemplates, ...customTemplates], [customTemplates]);
+  const addTemplate = useCallback((template: WorkoutTemplate) => {
+    setCustomTemplates(prev => [
+      ...prev,
+      { ...template, isCustom: true, createdAt: new Date().toISOString() },
+    ]);
+  }, []);
 
-  // 🔹 Dodaj nowy szablon
-  const addTemplate = useCallback(
-    (template: WorkoutTemplate) => {
-      setCustomTemplates(prev => [...prev, { ...template, isCustom: true, createdAt: new Date().toISOString() }]);
-    },
-    [setCustomTemplates]
-  );
+  const updateTemplate = useCallback((updated: WorkoutTemplate) => {
+    setCustomTemplates(prev =>
+      prev.map(t => (t.id === updated.id ? { ...updated, isCustom: true } : t))
+    );
+  }, []);
 
-  // 🔹 Aktualizuj szablon
-  const updateTemplate = useCallback(
-    (updated: WorkoutTemplate) => {
-      setCustomTemplates(prev =>
-        prev.map(t => (t.id === updated.id ? { ...updated, isCustom: true } : t))
-      );
-    },
-    [setCustomTemplates]
-  );
+  const deleteTemplate = useCallback((id: string) => {
+    setCustomTemplates(prev => prev.filter(t => t.id !== id));
+  }, []);
 
-  // 🔹 Usuń szablon
-  const deleteTemplate = useCallback(
-    (id: string) => {
-      setCustomTemplates(prev => prev.filter(t => t.id !== id));
-    },
-    [setCustomTemplates]
-  );
-
-  // 🔹 Duplikuj szablon
   const duplicateTemplate = useCallback(
     (id: string) => {
       const original =
@@ -61,13 +55,8 @@ export function useTemplates() {
 
       setCustomTemplates(prev => [...prev, duplicated]);
     },
-    [customTemplates, setCustomTemplates]
+    [customTemplates]
   );
-
-  // 🔹 Reset custom templates
-  const resetCustomTemplates = useCallback(() => {
-    clearCustomTemplates();
-  }, [clearCustomTemplates]);
 
   return {
     allTemplates,
@@ -77,6 +66,5 @@ export function useTemplates() {
     updateTemplate,
     deleteTemplate,
     duplicateTemplate,
-    resetCustomTemplates,
   };
 }

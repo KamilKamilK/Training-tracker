@@ -69,7 +69,7 @@ export const defaultWorkoutTemplates: WorkoutTemplate[] = [
     icon: '🧘‍♀️',
     exercises: [
       'Cat-Cow – 2 min',
-      'Child’s Pose – 1 min',
+      'Childs Pose – 1 min',
       'Shoulder Circles – 3x20',
       'Leg Swings – 3x15 (na nogę)',
       'Neck Rolls – 3x10',

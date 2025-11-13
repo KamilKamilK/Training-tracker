@@ -1,6 +1,6 @@
 import React from 'react';
-import { Workout } from '../../types/index.js';
-import { WorkoutForm } from '../workout/WorkoutForm.js';
+import { Workout } from '../../../types/index.js';
+import { WorkoutForm } from '../../workout/WorkoutForm.js';
 
 interface WorkoutTabProps {
   currentWorkout: Workout | null;

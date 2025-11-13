@@ -1,7 +1,6 @@
-// src/components/tabs/TemplatesTab.tsx
 import React, { useState } from 'react';
 import { Plus, Edit, Trash2, Copy, Save, X } from 'lucide-react';
-import { WorkoutTemplate } from '../../types/index.js';
+import { WorkoutTemplate } from '../../../types/index.js';
 
 interface TemplatesTabProps {
   templates: WorkoutTemplate[];
@@ -14,7 +13,6 @@ interface TemplatesTabProps {
 }
 
 export const TemplatesTab: React.FC<TemplatesTabProps> = ({
-//   templates,
   defaultTemplates,
   customTemplates,
   onAddTemplate,
@@ -305,5 +303,3 @@ export const TemplatesTab: React.FC<TemplatesTabProps> = ({
     </div>
   );
 };
-
-export default TemplatesTab;
