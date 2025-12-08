@@ -33,7 +33,7 @@ Projekt prywatny tworzony w celach nauki frontendu i zarządzania własnym plane
 
 ```bash
 # 1. Sklonuj repozytorium
-git clone https://github.com/<twoje_nazwisko>/training-tracker.git
+git clone https://github.com/KamilKamilK/Training-tracker.git
 cd training-tracker
 
 # 2. Zainstaluj zależności
@@ -53,4 +53,4 @@ Zmiany w kodzie będą odświeżane automatycznie dzięki Vite
 ## 🧑‍💻 Dostęp online
 
 Aplikacja jest hostowana na Vercel i dostępna pod adresem:
-https://training-tracker-18gh50gj3-kamils-projects-335f000e.vercel.app/
+https://training-tracker-six.vercel.app/
