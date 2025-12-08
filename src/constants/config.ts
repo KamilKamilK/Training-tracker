@@ -12,4 +12,5 @@ export const STORAGE_KEYS = {
   workouts: 'workouts',
   measurements: 'measurements',
   settings: 'userSettings',
+  currentWorkoutDraft: 'currentWorkoutDraft',
 };
