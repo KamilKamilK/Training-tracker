@@ -4,6 +4,9 @@ import { WorkoutForm } from '../../workout/WorkoutForm.js';
 
 interface WorkoutTabProps {
   currentWorkout: Workout | null;
+  isFinishing: boolean;
+  error: string | null;
+  onDismissError: () => void;
   onAddSet: (exerciseIndex: number) => void;
   onUpdateSet: (exIdx: number, setIdx: number, field: 'weight' | 'reps' | 'rir', value: string) => void;
   onRemoveSet: (exIdx: number, setIdx: number) => void;
@@ -12,6 +15,9 @@ interface WorkoutTabProps {
 
 export const WorkoutTab: React.FC<WorkoutTabProps> = ({
   currentWorkout,
+  isFinishing,
+  error,
+  onDismissError,
   onAddSet,
   onUpdateSet,
   onRemoveSet,
@@ -28,6 +34,9 @@ export const WorkoutTab: React.FC<WorkoutTabProps> = ({
   return (
     <WorkoutForm
       workout={currentWorkout}
+      isFinishing={isFinishing}
+      error={error}
+      onDismissError={onDismissError}
       onAddSet={onAddSet}
       onUpdateSet={onUpdateSet}
       onRemoveSet={onRemoveSet}

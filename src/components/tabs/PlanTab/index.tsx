@@ -1,8 +1,9 @@
 // components/tabs/PlanTab/index.tsx
 import React from "react";
 import { Save, Trash2, RefreshCw, CheckCircle, AlertCircle } from "lucide-react";
-import { WorkoutTemplate } from "../../../types/index.js";
-import { useWeekPlan, DayOfWeek } from "../../../hooks/useWeekPlan.js";
+import { DayOfWeek, WorkoutTemplate } from "../../../types/index.js";
+import { useWeekPlan } from "../../../hooks/useWeekPlan.js";
+import { ErrorBanner } from "../../common/ErrorBanner.js";
 
 interface PlanTabProps {
   templates: WorkoutTemplate[];
@@ -24,6 +25,8 @@ export const PlanTab: React.FC<PlanTabProps> = ({ templates }) => {
     isLoading,
     isSaving,
     lastSaved,
+    error,
+    clearError,
     updateDay,
     clearDay,
     clearAllDays,
@@ -69,6 +72,8 @@ export const PlanTab: React.FC<PlanTabProps> = ({ templates }) => {
 
   return (
     <div className="space-y-6">
+      {error && <ErrorBanner message={error} onDismiss={clearError} />}
+
       {/* Header z akcjami */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>

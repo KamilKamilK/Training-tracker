@@ -37,7 +37,7 @@ export const TemplatesTab: React.FC<TemplatesTabProps> = ({
     createdAt: new Date().toISOString(),
   });
 
-  const handleInputChange = (field: keyof WorkoutTemplate, value: any) => {
+  const handleInputChange = <K extends keyof WorkoutTemplate>(field: K, value: WorkoutTemplate[K]) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
@@ -143,7 +143,7 @@ export const TemplatesTab: React.FC<TemplatesTabProps> = ({
               <label className="block text-sm mb-1 text-slate-300">Kategoria</label>
               <select
                 value={formData.category}
-                onChange={e => handleInputChange('category', e.target.value)}
+                onChange={e => handleInputChange('category', e.target.value as WorkoutTemplate['category'])}
                 className="w-full bg-slate-800 rounded-lg p-2 border border-slate-600 focus:border-blue-500"
               >
                 <option value="strength">Siła</option>
@@ -157,7 +157,7 @@ export const TemplatesTab: React.FC<TemplatesTabProps> = ({
               <label className="block text-sm mb-1 text-slate-300">Poziom</label>
               <select
                 value={formData.difficulty}
-                onChange={e => handleInputChange('difficulty', e.target.value)}
+                onChange={e => handleInputChange('difficulty', e.target.value as WorkoutTemplate['difficulty'])}
                 className="w-full bg-slate-800 rounded-lg p-2 border border-slate-600 focus:border-blue-500"
               >
                 <option value="beginner">Początkujący</option>

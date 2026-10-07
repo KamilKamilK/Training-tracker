@@ -11,6 +11,6 @@
     "forceConsistentCasingInFileNames": true,
     "noEmit": true
   },
-  "include": ["src", "src/vite-env.d.ts"],
+  "include": ["src", "tests"],
   "exclude": ["node_modules", "dist"]
 }

@@ -1,19 +1,71 @@
 rules_version = '2';
 
+// The app has no backend, so these rules are the security boundary: only the data
+// owner (a signed-in account whose uid has a document in `owners`) can read or write,
+// and every write is checked for shape and types. Measurement ranges mirror
+// VALIDATION_RULES.measurement in src/constants/validation.ts.
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // This rule allows anyone with your Firestore database reference to view, edit,
-    // and delete all data in your Firestore database. It is useful for getting
-    // started, but it is configured to expire after 30 days because it
-    // leaves your app open to attackers. At that time, all client
-    // requests to your Firestore database will be denied.
-    //
-    // Make sure to write security rules for your app before that time, or else
-    // all client requests to your Firestore database will be denied until you Update
-    // your rules
-    match /{document=**} {
-      allow read, write: if request.time < timestamp.date(2025, 12, 7);
+    function isOwner() {
+      return request.auth != null
+        && exists(/databases/$(database)/documents/owners/$(request.auth.uid));
+    }
+
+    function isValidWorkout(data) {
+      return data.keys().hasAll(['type', 'date', 'exercises', 'notes'])
+        && data.keys().hasOnly(['type', 'date', 'exercises', 'notes', 'duration', 'completed'])
+        && data.type is string && data.type.size() > 0 && data.type.size() <= 100
+        && data.date is string && data.date.size() <= 40
+        && data.exercises is list && data.exercises.size() <= 50
+        && data.notes is string && data.notes.size() <= 2000
+        && (!('duration' in data) || (data.duration is number && data.duration >= 0))
+        && (!('completed' in data) || data.completed is bool);
+    }
+
+    function isValidMeasurement(data) {
+      return data.keys().hasAll(['date', 'weight', 'waist'])
+        && data.keys().hasOnly(['date', 'weight', 'waist', 'bodyFat', 'photos'])
+        && data.date is string && data.date.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+        && data.weight is number && data.weight >= 30 && data.weight <= 300
+        && data.waist is number && data.waist >= 50 && data.waist <= 200
+        && (!('bodyFat' in data) || (data.bodyFat is number && data.bodyFat >= 0 && data.bodyFat <= 100))
+        && (!('photos' in data) || (data.photos is list && data.photos.size() <= 10));
+    }
+
+    function isValidDay(plan, day) {
+      return !(day in plan) || plan[day] == null || (plan[day] is string && plan[day].size() <= 100);
+    }
+
+    function isValidWeekPlan(data) {
+      return data.keys().hasOnly(['plan', 'updatedAt'])
+        && data.updatedAt is string && data.updatedAt.size() <= 40
+        && data.plan is map
+        && data.plan.keys().hasOnly(['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'])
+        && isValidDay(data.plan, 'monday') && isValidDay(data.plan, 'tuesday')
+        && isValidDay(data.plan, 'wednesday') && isValidDay(data.plan, 'thursday')
+        && isValidDay(data.plan, 'friday') && isValidDay(data.plan, 'saturday')
+        && isValidDay(data.plan, 'sunday');
+    }
+
+    // Created by the owner in the Firebase console; the app only checks its existence.
+    match /owners/{uid} {
+      allow get: if request.auth != null && request.auth.uid == uid;
+    }
+
+    match /workouts/{workoutId} {
+      allow read, delete: if isOwner();
+      allow create, update: if isOwner() && isValidWorkout(request.resource.data);
+    }
+
+    match /measurements/{measurementId} {
+      allow read, delete: if isOwner();
+      allow create, update: if isOwner() && isValidMeasurement(request.resource.data);
+    }
+
+    match /weekPlans/{planId} {
+      allow read: if isOwner();
+      allow create, update: if isOwner() && isValidWeekPlan(request.resource.data);
     }
   }
 }

@@ -1,25 +1,24 @@
 import { collection, doc, getDocs, addDoc, deleteDoc } from 'firebase/firestore';
 import { db } from '../../lib/firebaseConfig.js';
 import { Measurement } from '../../types/index.js';
+import { parseMeasurement } from '../../utils/parse.utils.js';
 
 const COLLECTION_NAME = 'measurements';
 
 export class MeasurementsService {
   private static collection = collection(db, COLLECTION_NAME);
 
+  /** Returns valid measurements; documents with an unexpected shape are skipped and reported by id. */
   static async getAll(): Promise<Measurement[]> {
     try {
       const snapshot = await getDocs(this.collection);
-      return snapshot.docs.map(doc => {
-        const data = doc.data() as Omit<Measurement, 'id'>;
-        return {
-          id: doc.id,
-          date: data.date,
-          weight: data.weight,
-          waist: data.waist,
-          bodyFat: data.bodyFat,
-          photos: data.photos,
-        };
+      return snapshot.docs.flatMap(document => {
+        const measurement = parseMeasurement(document.id, document.data());
+        if (!measurement) {
+          console.warn('MeasurementsService.getAll: skipped invalid document', document.id);
+          return [];
+        }
+        return [measurement];
       });
     } catch (err) {
       console.error('MeasurementsService.getAll error:', err);

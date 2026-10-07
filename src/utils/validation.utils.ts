@@ -1,18 +1,5 @@
-import { Workout, Measurement, WorkoutTemplate } from '../types/index.js';
+import { Workout, WorkoutTemplate } from '../types/index.js';
 import { VALIDATION_RULES } from '../constants/validation.js';
-
-export const validateMeasurement = (m: Partial<Measurement>): boolean => {
-  if (!m.date || !m.weight || !m.waist) return false;
-  
-  const { minWeight, maxWeight, minWaist, maxWaist } = VALIDATION_RULES.measurement;
-  
-  return (
-    m.weight >= minWeight &&
-    m.weight <= maxWeight &&
-    m.waist >= minWaist &&
-    m.waist <= maxWaist
-  );
-};
 
 export const validateWorkout = (w: Partial<Workout>): boolean => {
   if (!w.type || !w.date || !w.exercises) return false;

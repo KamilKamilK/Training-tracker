@@ -2,9 +2,13 @@ import React from 'react';
 import { Workout } from '../../types/index.js';
 import { ExerciseItem } from './ExerciseItem.js';
 import { Save } from 'lucide-react';
+import { ErrorBanner } from '../common/ErrorBanner.js';
 
 interface WorkoutFormProps {
   workout: Workout;
+  isFinishing: boolean;
+  error: string | null;
+  onDismissError: () => void;
   onAddSet: (exerciseIndex: number) => void;
   onUpdateSet: (
     exIdx: number,
@@ -18,6 +22,9 @@ interface WorkoutFormProps {
 
 export const WorkoutForm: React.FC<WorkoutFormProps> = ({
   workout,
+  isFinishing,
+  error,
+  onDismissError,
   onAddSet,
   onUpdateSet,
   onRemoveSet,
@@ -37,12 +44,15 @@ export const WorkoutForm: React.FC<WorkoutFormProps> = ({
       />
     ))}
 
+    {error && <ErrorBanner message={error} onDismiss={onDismissError} />}
+
     <div className="mt-6 flex justify-center">
       <button
         onClick={onFinishWorkout}
-        className="bg-green-600 hover:bg-green-700 px-6 py-2 rounded-lg flex items-center gap-2"
+        disabled={isFinishing}
+        className="bg-green-600 hover:bg-green-700 disabled:bg-gray-600 px-6 py-2 rounded-lg flex items-center gap-2"
       >
-        <Save size={18} /> Zakończ trening
+        <Save size={18} /> {isFinishing ? 'Zapisywanie...' : 'Zakończ trening'}
       </button>
     </div>
   </div>
