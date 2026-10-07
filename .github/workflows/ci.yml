@@ -1,9 +1,8 @@
 name: CI
 
+# Runs only on demand (Actions → CI → Run workflow) while the GitHub Actions minutes limit is reached.
 on:
-  push:
-    branches: [main]
-  pull_request:
+  workflow_dispatch:
 
 jobs:
   verify:
