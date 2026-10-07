@@ -48,7 +48,7 @@ Praca bez dotykania danych produkcyjnych: ustaw `VITE_USE_EMULATORS=true` w `.en
 | `npm run test:rules` | testy `firestore.rules` na emulatorze Firestore |
 | `npm run emulators` | emulatory Authentication i Firestore do pracy lokalnej |
 
-CI (`.github/workflows/ci.yml`) uruchamia lint, build, testy jednostkowe i testy reguł dla każdego pull requesta i pushu do `main`.
+CI (`.github/workflows/ci.yml`) wykonuje lint, build, testy jednostkowe i testy reguł; uruchamiane jest ręcznie w zakładce Actions (limit minut GitHub Actions).
 
 ---
 
@@ -72,4 +72,4 @@ Aplikacja jest hostowana na Vercel: https://training-tracker-six.vercel.app/ —
 
 ## 🤝 Praca nad projektem
 
-Zasady jakości dla ludzi i agentów AI: [AGENTS.md](AGENTS.md). Znane problemy: [docs/KNOWN_ISSUES.md](docs/KNOWN_ISSUES.md).
+Zasady jakości dla ludzi i agentów AI: [AGENTS.md](AGENTS.md). Znane problemy: [docs/KNOWN_ISSUES.md](docs/KNOWN_ISSUES.md). Wizja i plan rozwoju: [docs/ROADMAP.md](docs/ROADMAP.md).

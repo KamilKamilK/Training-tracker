@@ -15,6 +15,7 @@ Repozytorium miało tylko `README.md`, który opisuje też stan nieaktualny (zap
 | Instrukcje agentów i standard jakości | Jak pracować w repozytorium? | [AGENTS.md](../../AGENTS.md); `CLAUDE.md` tylko go importuje |
 | Decyzja (ADR) | Dlaczego tak? | `docs/adr/`, indeks [DECISIONS.md](../DECISIONS.md) |
 | Zadania | Co zostało do zrobienia? | [KNOWN_ISSUES.md](../KNOWN_ISSUES.md) |
+| Wizja i plan rozwoju | Dokąd zmierza produkt i w jakiej kolejności? | [ROADMAP.md](../ROADMAP.md) |
 | Testy manualne | Jak sprawdzić aplikację ręcznie? | [MANUAL_TESTING_CHECKLIST.md](../MANUAL_TESTING_CHECKLIST.md) |
 | Referencja i uruchomienie | Jaki stack, jakie komendy? | [README.md](../../README.md) |
 

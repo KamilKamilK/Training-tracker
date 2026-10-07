@@ -107,4 +107,4 @@ npm test            # testy jednostkowe Vitest
 npm run test:rules  # testy firestore.rules na emulatorze (wymaga Javy)
 ```
 
-Te same kroki uruchamia CI (`.github/workflows/ci.yml`) dla pull requestów i pushu do `main`. Zmianę widoczną dla użytkownika sprawdź w `npm run dev` z emulatorami (`VITE_USE_EMULATORS=true`, `npm run emulators` — [README](README.md#-uruchomienie-lokalne)) według [MANUAL_TESTING_CHECKLIST.md](docs/MANUAL_TESTING_CHECKLIST.md). Przy samej zmianie dokumentacji sprawdź odnośniki i zgodność opisanych poleceń z `package.json`.
+Te same kroki zawiera CI (`.github/workflows/ci.yml`), uruchamiane tylko ręcznie (Actions → CI → Run workflow) — dlatego lokalne uruchomienie przed pushem jest obowiązkowe. Zmianę widoczną dla użytkownika sprawdź w `npm run dev` z emulatorami (`VITE_USE_EMULATORS=true`, `npm run emulators` — [README](README.md#-uruchomienie-lokalne)) według [MANUAL_TESTING_CHECKLIST.md](docs/MANUAL_TESTING_CHECKLIST.md). Przy samej zmianie dokumentacji sprawdź odnośniki i zgodność opisanych poleceń z `package.json`.
