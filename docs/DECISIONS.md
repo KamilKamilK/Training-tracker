@@ -15,3 +15,4 @@ Indeks decyzji. Każda decyzja ma krótki dokument ADR w [`adr/`](adr/).
 |---|---|---|
 | [0001](adr/0001-documentation-and-agents.md) | Dokumentacja: jeden cel na dokument, jeden fakt w jednym miejscu; wspólne instrukcje agentów w `AGENTS.md` | Przyjęta 2026-10-07 |
 | [0002](adr/0002-spa-firebase.md) | SPA React + TypeScript bez własnego backendu; dane w Cloud Firestore, szkic treningu w LocalStorage | Przyjęta 2026-10-07 |
+| [0003](adr/0003-owner-authentication.md) | Logowanie Google; dostęp do danych tylko dla właściciela z kolekcji `owners`; walidacja zapisów w `firestore.rules` | Przyjęta 2026-10-07 |
