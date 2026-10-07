@@ -6,24 +6,12 @@ Jedyne źródło prawdy o nienaprawionych błędach, długu technicznym i lukach
 
 ### Wysoki priorytet
 
-- **#1 — Reguły Firestore wygasły, a dostęp nie wymaga logowania**
-- **#2 — Zakończony trening ginie przy nieudanym zapisie**
-
-### Średni priorytet
-
-- **#3 — Błędy zapisu i odczytu są niewidoczne dla użytkownika**
-- **#4 — Mutowanie stanu React i propsów**
-- **#5 — Brak testów automatycznych**
-- **#6 — Dane z Firestore i formularza pomiaru bez walidacji**
+- **#1 — Reguły i logowanie nie są wdrożone w projekcie Firebase**
 
 ### Niski priorytet
 
-- **#7 — Błędy ESLint w repozytorium**
-- **#8 — Brak CI**
-- **#9 — README opisuje nieaktualny stan i brak `.env.example`**
-- **#10 — Nieużywane SDK Firebase Data Connect**
-- **#11 — Informacyjne `console.log` w kodzie produkcyjnym**
-- **#12 — Bundle powyżej 500 kB**
+- **#10 — Nieużywany katalog SDK Firebase Data Connect**
+- **#13 — Nieużywany kod pomocniczy**
 
 ### Zasady prowadzenia
 
@@ -39,15 +27,6 @@ Jedyne źródło prawdy o nienaprawionych błędach, długu technicznym i lukach
 
 | # | Temat | Szczegóły | Priorytet | Wykonanie |
 |---|-------|-----------|-----------|-----------|
-| 1 | **Reguły Firestore wygasły, a dostęp nie wymaga logowania** | **Stan:** `firestore.rules` to reguła startowa `allow read, write: if request.time < timestamp.date(2025, 12, 7)` — po tej dacie odrzuca wszystkie żądania, a wcześniej dawała pełny dostęp każdemu ze znajomością konfiguracji z bundla. Aplikacja nie ma Firebase Authentication (`src/lib/firebaseConfig.ts`), dokumenty nie mają właściciela. **Zrobić:** logowanie Firebase Authentication, dokumenty pod `users/{uid}/…` lub z polem `ownerId`, reguły dopuszczające tylko właściciela i walidujące pola zapisu, migracja istniejących danych (zgoda właściciela). **Gotowe, gdy:** reguły odrzucają żądanie bez logowania i z cudzym `uid`, co potwierdzają testy na emulatorze; wdrożone reguły w konsoli są zgodne z plikiem. | Wysoki | 🖐️💻 Mieszane — włączenie Authentication i wdrożenie reguł w konsoli Firebase wymaga właściciela |
-| 2 | **Zakończony trening ginie przy nieudanym zapisie** | **Stan:** `handleFinishWorkout` w `src/components/TrainingTracker.tsx` wywołuje `finishWorkout()` (`src/hooks/useWorkouts.ts`), który czyści stan i szkic w LocalStorage, a dopiero potem `saveWorkout` (`src/hooks/useFirebaseStorage.ts`), który połyka błąd. Przy braku sieci lub odrzuceniu przez reguły trening przepada bez komunikatu. **Zrobić:** szkic usuwać dopiero po udanym zapisie, błąd przekazać do UI. **Gotowe, gdy:** przy wymuszonym błędzie zapisu trening zostaje w zakładce „Trening”, użytkownik widzi komunikat, a test jednostkowy to potwierdza. | Wysoki | 💻 Programistyczne |
-| 3 | **Błędy zapisu i odczytu są niewidoczne dla użytkownika** | **Stan:** `useFirebaseStorage.ts` i `useMeasurements.ts` łapią wyjątki i tylko logują je w konsoli; `useWeekPlan.ts` używa `alert`. Nieudany odczyt wygląda jak pusta historia. **Zrobić:** stan błędu w hookach i wspólny komponent komunikatu w `src/components/common/`. **Gotowe, gdy:** każdy hook Firestore zwraca stan błędu, UI pokazuje go spójnie, brak pustych lub tylko logujących `catch`. | Średni | 💻 Programistyczne |
-| 4 | **Mutowanie stanu React i propsów** | **Stan:** `addSet`, `updateSet`, `removeSet` w `src/hooks/useWorkouts.ts` robią płytką kopię i zmieniają zagnieżdżone `exercises[].sets` (`push`, `splice`, przypisanie). `getLastMeasurement` w `src/utils/measurement.utils.ts` sortuje tablicę z propsów w miejscu, odwracając kolejność stanu `measurements` posortowanego rosnąco w `useMeasurements.ts`. **Zrobić:** niemutowalne aktualizacje. **Gotowe, gdy:** testy jednostkowe potwierdzają, że wejściowe obiekty są niezmienione po każdej z tych operacji. | Średni | 💻 Programistyczne |
-| 5 | **Brak testów automatycznych** | **Stan:** `package.json` nie ma skryptu `test` ani narzędzi testowych; reguł Firestore nikt nie testuje. **Zrobić:** Vitest + Testing Library dla `utils/` i hooków, `@firebase/rules-unit-testing` z emulatorem dla `firestore.rules`, skrypt `npm test`, wpis w części „Weryfikacja” `AGENTS.md`. **Gotowe, gdy:** `npm test` uruchamia testy jednostkowe i reguł, a celowe naruszenie (np. odwrócony warunek reguły) daje czerwony wynik. | Średni | 💻 Programistyczne |
-| 6 | **Dane z Firestore i formularza pomiaru bez walidacji** | **Stan:** serwisy w `src/services/firebase/` rzutują `doc.data()` przez `as` bez sprawdzenia pól; `promptForMeasurement` w `src/utils/measurement.utils.ts` pobiera dane przez `prompt()` i nie sprawdza formatu daty ani zakresu wartości, choć `src/constants/validation.ts` i `src/utils/validation.utils.ts` istnieją. **Zrobić:** walidacja przy odczycie w serwisie i formularz pomiaru z walidacją zamiast `prompt()`. **Gotowe, gdy:** dokument z błędnym kształtem nie trafia do stanu (test), a niepoprawny pomiar jest odrzucany z komunikatem przy polu. | Średni | 💻 Programistyczne |
-| 7 | **Błędy ESLint w repozytorium** | **Stan:** `npm run lint` zgłasza 4 błędy i 1 ostrzeżenie: `any` w `src/hooks/useModels.ts` i `src/components/tabs/TemplatesTab/index.tsx`, nieużywane importy w generowanym `src/dataconnect-generated/react/index.d.ts` (katalog nie jest w `globalIgnores` w `eslint.config.js`), brakująca zależność `useEffect` w `src/hooks/useWorkouts.ts`. **Gotowe, gdy:** `npm run lint` kończy się bez błędów i ostrzeżeń. | Niski | 💻 Programistyczne |
-| 8 | **Brak CI** | **Stan:** brak `.github/workflows/` i git hooków; lint i build uruchamiane tylko ręcznie. **Zrobić:** workflow z `npm ci`, `npm run lint`, `npm run build` (i `npm test` po #5). **Gotowe, gdy:** pull request z błędem lint lub kompilacji ma czerwony status. | Niski | 💻 Programistyczne |
-| 9 | **README opisuje nieaktualny stan i brak `.env.example`** | **Stan:** `README.md` podaje zapis w LocalStorage i React 18, a dane są w Firestore ([ADR-0002](adr/0002-spa-firebase.md)) i projekt używa React 19; brak listy zmiennych `VITE_*` z `src/lib/firebaseConfig.ts`. **Gotowe, gdy:** README zgadza się z `package.json` i ADR-0002, a `.env.example` zawiera wszystkie zmienne bez wartości. | Niski | 💻 Programistyczne |
-| 10 | **Nieużywane SDK Firebase Data Connect** | **Stan:** `src/dataconnect-generated/` i zależność `@dataconnect/generated` w `package.json` nie są importowane przez kod aplikacji. **Gotowe, gdy:** katalog i zależność są usunięte, a `npm run build` przechodzi. | Niski | 💻 Programistyczne |
-| 11 | **Informacyjne `console.log` w kodzie produkcyjnym** | **Stan:** hooki (`useFirebaseStorage.ts`, `useMeasurements.ts`, `useWeekPlan.ts`) logują sukcesy operacji emoji-komunikatami. **Gotowe, gdy:** w `src/` (poza kodem generowanym) zostają tylko `console.error`/`console.warn` w serwisach, a reguła ESLint `no-console` to egzekwuje. | Niski | 💻 Programistyczne |
-| 12 | **Bundle powyżej 500 kB** | **Stan:** `npm run build` ostrzega o chunku ok. 580 kB (Firebase i Recharts w jednym pliku). **Zrobić:** leniwe ładowanie zakładki „Postępy” (`React.lazy`). **Gotowe, gdy:** build nie zgłasza ostrzeżenia o rozmiarze chunku. | Niski | 💻 Programistyczne |
+| 1 | **Reguły i logowanie nie są wdrożone w projekcie Firebase** | **Stan:** kod i `firestore.rules` realizują [ADR-0003](adr/0003-owner-authentication.md), a testy reguł przechodzą na emulatorze; reguły z repozytorium nie są wdrażane automatycznie, a dostawca Google, autoryzowana domena hostingu i dokument `owners/{uid}` w projekcie `training-tracker-6d13b` wymagają konfiguracji w konsoli. Do tego czasu produkcja nie wpuści właściciela do danych. **Zrobić:** kroki z [README](../README.md#-konfiguracja-firebase-jednorazowo-konsola-firebase). **Gotowe, gdy:** właściciel loguje się na produkcji i widzi swoje dane, a konto spoza `owners` widzi ekran braku dostępu. | Wysoki | 🖐️ Manualne — konsola Firebase i `firebase deploy` wymagają konta właściciela |
+| 10 | **Nieużywany katalog SDK Firebase Data Connect** | **Stan:** `src/dataconnect-generated/` nie jest importowany, a zależność `@dataconnect/generated` została usunięta z `package.json`; katalog jest wyłączony z ESLint w `eslint.config.js`. **Gotowe, gdy:** katalog i jego wpis w `globalIgnores` są usunięte, a `npm run build` przechodzi. | Niski | 💻 Programistyczne |
+| 13 | **Nieużywany kod pomocniczy** | **Stan:** `validateWorkout` i `validateTemplate` (`src/utils/validation.utils.ts`), `isToday` i `getTimeAgo` (`src/utils/date.utils.ts`) oraz typ `window.storage` (`src/global.d.ts`) nie mają wywołań; hook `useModal` jest w pliku `src/hooks/useModels.ts`. Formularz szablonu (`src/components/tabs/TemplatesTab/index.tsx`) nie stosuje limitów z `VALIDATION_RULES.template`. **Gotowe, gdy:** nieużywany kod jest usunięty albo podłączony (walidacja szablonu z komunikatem przy polu i testem), a plik hooka nazywa się jak hook. | Niski | 💻 Programistyczne |

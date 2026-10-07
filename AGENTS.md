@@ -33,7 +33,7 @@ Instrukcje dla agentów (Claude Code, Codex i inne) oraz osób pracujących nad 
 ### 4. Bezpieczeństwo
 
 - Aplikacja nie ma własnego backendu: granicą bezpieczeństwa są reguły `firestore.rules`, nie kod frontendu. Każde ograniczenie w UI (walidacja, ukrycie akcji) wymaga odpowiednika w regułach.
-- Reguły Firestore dają dostęp wyłącznie uwierzytelnionemu właścicielowi danych i walidują kształt oraz typy pól zapisu. Reguła czasowa ani `allow read, write: if true` nie są dopuszczalne.
+- Reguły Firestore dają dostęp wyłącznie właścicielowi danych ([ADR-0003](docs/adr/0003-owner-authentication.md)) i walidują kształt oraz typy pól zapisu. Reguła czasowa ani `allow read, write: if true` nie są dopuszczalne. Nowa kolekcja wymaga reguły z walidacją i testów reguł.
 - Konfiguracja Firebase tylko przez zmienne `VITE_*` z `.env` (nie commitowany); wartości `VITE_*` trafiają do bundla, więc nigdy nie umieszczaj w nich prawdziwych sekretów (klucze serwisowe, tokeny).
 - Nie renderuj danych użytkownika jako HTML (`dangerouslySetInnerHTML`); polegaj na escapingu Reacta.
 - Złagodzenie polityki (reguły, audyt zależności `npm audit`, nagłówki hostingu) wymaga decyzji właściciela repozytorium.
@@ -59,7 +59,7 @@ Instrukcje dla agentów (Claude Code, Codex i inne) oraz osób pracujących nad 
 
 ### 8. Testy
 
-- Poprawkę i nową funkcję pokryj testami adekwatnymi do zmiany: logika w `src/utils/` i hookach — testy jednostkowe; reguły Firestore — testy na emulatorze. Do czasu dodania narzędzi testowych ([KNOWN_ISSUES](docs/KNOWN_ISSUES.md)) opisz w commit message, jak zweryfikowano zmianę.
+- Poprawkę i nową funkcję pokryj testami adekwatnymi do zmiany: logika w `src/utils/`, hookach i komponentach — testy Vitest obok kodu (`*.test.ts(x)`); reguły Firestore — `tests/rules/` na emulatorze. Zmiana reguły ma przypadek pozytywny i negatywny.
 - Zmiana zachowania widocznego dla użytkownika dodaje w tym samym zadaniu przypadki do [MANUAL_TESTING_CHECKLIST.md](docs/MANUAL_TESTING_CHECKLIST.md) (warunki wstępne, kroki, oczekiwany wynik).
 - Test nie utrwala błędu: gdy wykrywa realny problem, napraw kod, nie test.
 - Zweryfikuj, że problem zniknął (odtwórz go przed zmianą, potwierdź brak po zmianie), zamiast zakładać, że poprawka działa.
@@ -93,16 +93,18 @@ Instrukcje dla agentów (Claude Code, Codex i inne) oraz osób pracujących nad 
 ## Zakres repozytorium
 
 - Jednostronicowa aplikacja (SPA) do rejestrowania treningów, planu tygodnia, szablonów i pomiarów ciała. Stack i architektura: [ADR-0002](docs/adr/0002-spa-firebase.md); uruchomienie: [README.md](README.md).
-- Struktura `src/`: `types/` (model danych), `services/` (Firestore i LocalStorage), `hooks/` (stan i operacje), `components/` (`common/`, `tabs/<Zakładka>/`, `workout/`), `utils/` (czyste funkcje), `constants/`.
-- Konfiguracja Firebase: `firebase.json`, `firestore.rules`, `firestore.indexes.json`, projekt w `.firebaserc`.
+- Struktura `src/`: `types/` (model danych), `services/` (Firebase Auth, Firestore i LocalStorage), `hooks/` (stan i operacje), `components/` (`common/`, `tabs/<Zakładka>/`, `workout/`), `utils/` (czyste funkcje, w tym walidacja odczytu w `parse.utils.ts`), `constants/` (m.in. komunikaty błędów w `messages.ts`).
+- Konfiguracja Firebase: `firebase.json` (także emulatory), `firestore.rules`, `firestore.indexes.json`, projekt w `.firebaserc`; zmienne środowiskowe w `.env.example`.
 
 ## Weryfikacja
 
-Repozytorium nie ma git hooków ani CI. Przed commitem zmian w kodzie uruchom:
+Repozytorium nie ma git hooków. Przed commitem zmian w kodzie uruchom:
 
 ```bash
-npm run lint    # ESLint (typescript-eslint, react-hooks)
-npm run build   # tsc -b (typecheck) + vite build
+npm run lint        # ESLint (typescript-eslint, react-hooks, no-console)
+npm run build       # tsc -b (typecheck) + vite build
+npm test            # testy jednostkowe Vitest
+npm run test:rules  # testy firestore.rules na emulatorze (wymaga Javy)
 ```
 
-Zmiana nie może dodać nowych błędów lint ani błędów kompilacji; istniejące błędy są w [KNOWN_ISSUES.md](docs/KNOWN_ISSUES.md). Zmianę widoczną dla użytkownika sprawdź w `npm run dev` według [MANUAL_TESTING_CHECKLIST.md](docs/MANUAL_TESTING_CHECKLIST.md). Przy samej zmianie dokumentacji sprawdź odnośniki i zgodność opisanych poleceń z `package.json`.
+Te same kroki uruchamia CI (`.github/workflows/ci.yml`) dla pull requestów i pushu do `main`. Zmianę widoczną dla użytkownika sprawdź w `npm run dev` z emulatorami (`VITE_USE_EMULATORS=true`, `npm run emulators` — [README](README.md#-uruchomienie-lokalne)) według [MANUAL_TESTING_CHECKLIST.md](docs/MANUAL_TESTING_CHECKLIST.md). Przy samej zmianie dokumentacji sprawdź odnośniki i zgodność opisanych poleceń z `package.json`.

@@ -8,10 +8,10 @@ Aplikacja to prywatny dziennik treningowy jednego użytkownika, używany główn
 
 ## Decyzja
 
-- **Frontend:** React 19, TypeScript (`strict`), Vite, Tailwind CSS 3, Recharts, ikony `lucide-react`; budowany statycznie (`npm run build`) i hostowany na Vercel.
-- **Dane:** Cloud Firestore (`europe-central2`), kolekcje `workouts`, `measurements`, `weekPlans`. Dostęp wyłącznie przez SDK `firebase` w warstwie `src/services/firebase/`.
+- **Frontend:** React 19, TypeScript (`strict`), Vite, Tailwind CSS 3, ikony `lucide-react`; budowany statycznie (`npm run build`) i hostowany na Vercel.
+- **Dane:** Cloud Firestore (`europe-central2`), kolekcje `workouts`, `measurements`, `weekPlans`. Dostęp wyłącznie przez SDK `firebase` w warstwie `src/services/firebase/`, która waliduje dokumenty przy odczycie (`src/utils/parse.utils.ts`).
 - **Dane lokalne:** LocalStorage przez `LocalStorageService` — szkic bieżącego treningu i szablony użytkownika (`STORAGE_KEYS`).
-- **Bezpieczeństwo:** brak backendu, więc granicą bezpieczeństwa są reguły `firestore.rules`; konfiguracja Firebase przez zmienne `VITE_*`.
+- **Bezpieczeństwo:** brak backendu, więc granicą bezpieczeństwa są reguły `firestore.rules` (dostęp: [ADR-0003](0003-owner-authentication.md)); konfiguracja Firebase przez zmienne `VITE_*`.
 - **Warstwy:** `types` → `services` → `hooks` → `components`; komponenty nie wołają Firestore bezpośrednio.
 
 ## Rozważane warianty
@@ -25,7 +25,6 @@ Aplikacja to prywatny dziennik treningowy jednego użytkownika, używany główn
 ## Konsekwencje
 
 - Każda reguła dostępu i walidacji danych musi być w `firestore.rules` — kod frontendu można ominąć.
-- Dostęp tylko dla właściciela wymaga uwierzytelnienia (Firebase Authentication).
 - Zmiana kształtu dokumentów wymaga zgodności z danymi już zapisanymi w Firestore.
 
 ## Warunek rewizji
