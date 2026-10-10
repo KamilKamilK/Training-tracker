@@ -67,9 +67,3 @@ Zasady dostępu: [ADR-0003](docs/adr/0003-owner-authentication.md).
 ## 🌐 Dostęp online
 
 Aplikacja jest hostowana na Vercel: https://training-tracker-six.vercel.app/ — zmienne `VITE_*` z `.env.example` ustaw w ustawieniach projektu Vercel.
-
----
-
-## 🤝 Praca nad projektem
-
-Zasady jakości dla ludzi i agentów AI: [AGENTS.md](AGENTS.md). Znane problemy: [docs/KNOWN_ISSUES.md](docs/KNOWN_ISSUES.md). Wizja i plan rozwoju: [docs/ROADMAP.md](docs/ROADMAP.md).
