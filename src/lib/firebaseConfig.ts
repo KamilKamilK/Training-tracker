@@ -24,6 +24,8 @@ export const db = initializeFirestore(app, {
   localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }),
 });
 export const auth = getAuth(app);
+// Verification and password reset e-mails from Firebase are sent in Polish.
+auth.languageCode = "pl";
 
 // Local development (`npm run emulators`) and end-to-end tests (`npm run test:e2e`) run against
 // the emulators, so production data is never touched. The flag is replaced at build time, so a

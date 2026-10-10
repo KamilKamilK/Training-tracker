@@ -36,8 +36,11 @@ const weekPlan = {
 
 let env: RulesTestEnvironment;
 
-const ownerDb = () => env.authenticatedContext(OWNER).firestore();
-const strangerDb = () => env.authenticatedContext(STRANGER).firestore();
+const VERIFIED = { email_verified: true };
+
+const ownerDb = () => env.authenticatedContext(OWNER, VERIFIED).firestore();
+const unverifiedOwnerDb = () => env.authenticatedContext(OWNER, { email_verified: false }).firestore();
+const strangerDb = () => env.authenticatedContext(STRANGER, VERIFIED).firestore();
 const anonymousDb = () => env.unauthenticatedContext().firestore();
 
 beforeAll(async () => {
@@ -96,6 +99,14 @@ describe('access', () => {
     await assertFails(getDoc(doc(strangerDb(), 'owners', OWNER)));
     await assertFails(setDoc(doc(strangerDb(), 'owners', STRANGER), {}));
     await assertFails(getDocs(collection(ownerDb(), 'owners')));
+  });
+
+  it('denies the owner account until its e-mail address is verified', async () => {
+    const db = unverifiedOwnerDb();
+    await assertFails(getDocs(collection(db, 'workouts')));
+    await assertFails(getDoc(doc(db, 'measurements', 'm1')));
+    await assertFails(addDoc(collection(db, 'workouts'), workout));
+    await assertFails(setDoc(doc(db, 'weekPlans', 'default_week_plan'), weekPlan));
   });
 
   it('denies collections without rules', async () => {

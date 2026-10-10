@@ -1,14 +1,17 @@
 rules_version = '2';
 
 // The app has no backend, so these rules are the security boundary: only the data
-// owner (a signed-in account whose uid has a document in `owners`) can read or write,
+// owner (a signed-in account with a verified e-mail whose uid has a document in `owners`) can read or write,
 // and every write is checked for shape and types. Measurement ranges mirror
 // VALIDATION_RULES.measurement in src/constants/validation.ts.
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    // Accounts created with e-mail and password must confirm the address first; Google accounts
+    // are verified by Google.
     function isOwner() {
       return request.auth != null
+        && request.auth.token.email_verified == true
         && exists(/databases/$(database)/documents/owners/$(request.auth.uid));
     }
 

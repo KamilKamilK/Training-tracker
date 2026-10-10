@@ -33,7 +33,7 @@ test.afterEach(() => {
 
 test('the built app loads and shows the sign-in screen', async ({ page }) => {
   await page.goto('/');
-  await expect(page.getByRole('button', { name: 'Zaloguj przez Google' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Kontynuuj z Google' })).toBeVisible();
 });
 
 test('an account outside owners sees no data', async ({ page }) => {
@@ -156,6 +156,6 @@ test('signing out removes the local data cache', async ({ page }) => {
 
   // Signing out reloads the app, so wait for the new page load before checking the cache.
   await Promise.all([page.waitForEvent('load'), page.getByRole('button', { name: 'Wyloguj' }).click()]);
-  await expect(page.getByRole('button', { name: 'Zaloguj przez Google' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Kontynuuj z Google' })).toBeVisible();
   expect(await cacheNames()).toEqual([]);
 });

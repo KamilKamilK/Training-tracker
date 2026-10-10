@@ -90,7 +90,7 @@ Wszystkie decyzje potrzebne do etapów 1–3 są przyjęte (2026-10-10):
 | [0010](adr/0010-web-app-architecture.md), [0011](adr/0011-environments-hosting-monitoring.md) | Architektura aplikacji webowej; emulatory i produkcja, Vercel |
 | [0012](adr/0012-personal-and-health-data.md) | Dobrowolne, zrozumiałe zgody; dane o zdrowiu tylko dla własnego trenera; eksport i usunięcie konta |
 
-Backlog decyzji: otwieranie aplikacji bez sieci ([ADR-0013](adr/0013-offline-app-shell.md), odłożona razem z wersją mobilną); plan Blaze (warunki w ADR-0009); model cenowy i operator płatności — przed etapem 5.
+Backlog decyzji: zdjęcia sylwetki (Cloud Storage na planie Blaze albo inny dostawca); drugi dostawca chmury, np. Azure z kolejką zadań — gdy pojawi się praca w tle (wysyłka e-maili, eksporty, przeliczanie statystyk), wymaga nowego ADR; otwieranie aplikacji bez sieci ([ADR-0013](adr/0013-offline-app-shell.md), odłożona razem z wersją mobilną); plan Blaze (warunki w ADR-0009); model cenowy i operator płatności — przed etapem 5.
 
 ## Etapy
 
@@ -99,7 +99,7 @@ Rozmiar: S — kilka dni, M — 1–2 tygodnie, L — 3+ tygodnie pracy jednej o
 | Etap | Zakres | Gotowe, gdy | Rozmiar |
 |---|---|---|---|
 | **0. Fundament** | Schematy Zod, routing, nasłuchy danych, cache offline i podział kodu według funkcji — wdrożone ([ADR-0010](adr/0010-web-app-architecture.md)); testy E2E Playwright na emulatorach i na zbudowanej wersji — wdrożone (`e2e/`, [ADR-0011](adr/0011-environments-hosting-monitoring.md)) | Scenariusze z checklisty mają testy E2E, aplikacja działa offline na otwartej stronie | M |
-| **1. Wiele kont, nowy model danych** | Ekran „Zaloguj / Zarejestruj” (Google albo e-mail z hasłem, potwierdzenie adresu, reset hasła); profil i zgody; dane w `users/{uid}/…`; biblioteka ćwiczeń; serie liczbowe; szablony w Firestore; migracja obecnych danych | Dwa konta nie widzą swoich danych (testy reguł A/B), konto bez potwierdzonego adresu nie ma dostępu, dane właściciela przeniesione bez strat | L |
+| **1. Wiele kont, nowy model danych** | Ekran „Zaloguj / Zarejestruj” (Google albo e-mail z hasłem, potwierdzenie adresu, reset hasła) — wdrożony; profil i zgody; dane w `users/{uid}/…`; biblioteka ćwiczeń; serie liczbowe; szablony w Firestore; migracja obecnych danych | Dwa konta nie widzą swoich danych (testy reguł A/B), konto bez potwierdzonego adresu nie ma dostępu, dane właściciela przeniesione bez strat | L |
 | **2. Postęp** | Wyniki z poprzedniego razu przy ćwiczeniu; wykresy e1RM, rekordy, objętość tygodniowa, regularność; trend wagi; minutnik przerwy | Podopieczny widzi postęp dla dowolnego ćwiczenia z historii; obliczenia mają testy jednostkowe | M |
 | **3. Trener** | Rola trenera; zaproszenia linkiem (reguły Firestore); lista podopiecznych z sygnałami; kreator planu wielotygodniowego z kopiowaniem i progresją; przypisanie planu; „zadane / wykonane”; komentarze; check-iny; import CSV/Excel | Pilotaż: 2–3 trenerów prowadzi realnych podopiecznych przez 4 tygodnie bez arkusza | L |
 | **4. Mobile — odłożony** | Do wznowienia decyzją właściciela ([ADR-0004](adr/0004-firebase-multi-user.md)); wtedy PWA, a później Capacitor | — | M |

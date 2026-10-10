@@ -38,3 +38,27 @@ export const rejectWorkoutWrites = () => {
 };
 
 export const restoreRules = () => loadRules(RULES);
+
+const AUTH_ADMIN = `http://127.0.0.1:9099/identitytoolkit.googleapis.com/v1/projects/${PROJECT_ID}`;
+
+/** Opens the verification link the auth emulator "sent" to the address. */
+export const confirmEmail = async (email: string) => {
+  const response = await fetch(`http://127.0.0.1:9099/emulator/v1/projects/${PROJECT_ID}/oobCodes`);
+  const { oobCodes } = (await response.json()) as { oobCodes: { email: string; requestType: string; oobLink: string }[] };
+  const code = oobCodes.find(item => item.email === email && item.requestType === 'VERIFY_EMAIL');
+  if (!code) throw new Error(`No verification e-mail for ${email}`);
+  await request(code.oobLink, { method: 'GET' });
+};
+
+export const passwordResetSent = async (email: string) => {
+  const response = await fetch(`http://127.0.0.1:9099/emulator/v1/projects/${PROJECT_ID}/oobCodes`);
+  const { oobCodes } = (await response.json()) as { oobCodes: { email: string; requestType: string }[] };
+  return oobCodes.some(item => item.email === email && item.requestType === 'PASSWORD_RESET');
+};
+
+export const uidOf = async (email: string) => {
+  const response = await fetch(`${AUTH_ADMIN}/accounts:lookup`, { method: 'POST', headers: ADMIN, body: JSON.stringify({ email: [email] }) });
+  const { users } = (await response.json()) as { users?: { localId: string }[] };
+  if (!users?.[0]) throw new Error(`No account for ${email}`);
+  return users[0].localId;
+};

@@ -55,13 +55,17 @@ Po sklonowaniu włącz hook `pre-push`, który uruchamia te kontrole przy każdy
 
 ## 🔐 Konfiguracja Firebase (jednorazowo, konsola Firebase)
 
-1. **Authentication → Sign-in method:** włącz dostawcę Google.
+1. **Authentication → Sign-in method:** włącz dostawców **Google** i **Email/Password** (bez „Email link”).
 2. **Authentication → Settings → Authorized domains:** dodaj domenę hostingu (np. `training-tracker-six.vercel.app`).
-3. Zaloguj się w aplikacji — zobaczysz ekran „nie ma dostępu”. W **Authentication → Users** skopiuj swój UID.
-4. **Firestore → Data:** utwórz kolekcję `owners` z dokumentem o ID równym UID (bez pól).
-5. Wdróż reguły: `npx firebase deploy --only firestore:rules` (wymaga `npx firebase login`).
+3. **Authentication → Settings:**
+   - **Password policy:** wymagaj co najmniej 8 znaków, wielkiej i małej litery oraz cyfry (ta sama zasada co w formularzu rejestracji);
+   - **User actions:** włącz **Email enumeration protection**, aby logowanie i reset hasła nie zdradzały, czy konto istnieje.
+4. **Authentication → Templates:** ustaw język polski i nazwę aplikacji w e-mailach weryfikacji adresu i resetu hasła.
+5. Zaloguj się w aplikacji — zobaczysz ekran „nie ma dostępu”. W **Authentication → Users** skopiuj swój UID.
+6. **Firestore → Data:** utwórz kolekcję `owners` z dokumentem o ID równym UID (bez pól).
+7. Wdróż reguły: `npx firebase deploy --only firestore:rules` (wymaga `npx firebase login`). Reguły wpuszczają tylko konta z potwierdzonym adresem e-mail.
 
-Zasady dostępu: [ADR-0003](docs/adr/0003-owner-authentication.md).
+Zasady dostępu: [ADR-0003](docs/adr/0003-owner-authentication.md); konta i logowanie: [ADR-0008](docs/adr/0008-accounts-and-invitations.md).
 
 ---
 

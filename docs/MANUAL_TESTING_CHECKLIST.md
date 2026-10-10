@@ -17,7 +17,13 @@ Nowy przypadek: warunki wstępne, kroki, oczekiwany wynik.
 
 ## 1. Logowanie i dostęp
 
-- [ ] Niezalogowany użytkownik widzi ekran „Zaloguj przez Google”, bez danych
+- [ ] Niezalogowany użytkownik widzi ekran z zakładkami „Zaloguj” i „Zarejestruj” oraz przyciskiem „Kontynuuj z Google”, bez danych
+- [ ] Rejestracja: niepoprawny e-mail, hasło niespełniające zasad (8 znaków, wielka i mała litera, cyfra) albo różne hasła → komunikaty przy polach, konto nie powstaje; ikona oka pokazuje i ukrywa hasło
+- [ ] Rejestracja z poprawnymi danymi → ekran „Potwierdź adres …”; e-mail z linkiem przychodzi po polsku (sprawdź spam); bez kliknięcia linku „Potwierdziłem adres” pokazuje, że adres nie jest potwierdzony; „Wyślij link ponownie” wysyła nową wiadomość
+- [ ] Po kliknięciu linku i „Potwierdziłem adres” → ekran braku dostępu (konto spoza `owners`)
+- [ ] Logowanie z błędnym hasłem i z nieistniejącym adresem → ten sam komunikat „Nieprawidłowy e-mail lub hasło.”
+- [ ] „Nie pamiętasz hasła?” → komunikat „Jeśli konto z tym adresem istnieje…” także dla nieistniejącego adresu; link z e-maila pozwala ustawić nowe hasło, które działa przy logowaniu
+- [ ] Wiele nieudanych logowań z rzędu → komunikat „Zbyt wiele prób…”
 - [ ] Zamknięcie okna logowania Google bez wyboru konta → ekran logowania bez komunikatu błędu
 - [ ] Konto spoza `owners` → „Konto … nie ma dostępu do tego dziennika” i przycisk „Wyloguj”
 - [ ] Konto właściciela → dziennik z zakładką „Start”; w nagłówku adres e-mail i „Wyloguj”
