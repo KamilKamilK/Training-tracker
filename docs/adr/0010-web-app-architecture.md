@@ -1,6 +1,6 @@
 # ADR-0010: Architektura aplikacji webowej — routing, dane, offline, walidacja
 
-- **Status:** proponowana 2026-10-10 — czeka na akceptację właściciela
+- **Status:** przyjęta 2026-10-10
 
 ## Kontekst
 
@@ -43,7 +43,7 @@ Nawigacja to dziś stan zakładki w `TrainingTracker.tsx` — brak adresów URL,
 ## Konsekwencje
 
 - Przebudowa nawigacji i hooków danych w etapie 0, przed modelem z wieloma użytkownikami.
-- Testy E2E (Playwright na emulatorach) obejmują trasy obu ról.
+- Testy E2E (Playwright na emulatorach, także na zbudowanej wersji) obejmują trasy obu ról.
 
 ## Warunek rewizji
 

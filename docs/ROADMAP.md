@@ -1,6 +1,6 @@
 # Dziennik Treningowy — wizja i plan rozwoju
 
-**Status:** kierunek przyjęty 2026-10-10 — Firebase zostaje, najpierw wersja webowa, wersja mobilna odłożona ([ADR-0004](adr/0004-firebase-multi-user.md)). Szczegółowe decyzje czekają na akceptację jako ADR-0005–0012 ([Decyzje](#decyzje)).
+**Status:** kierunek przyjęty 2026-10-10 — Firebase zostaje, najpierw wersja webowa, wersja mobilna odłożona ([ADR-0004](adr/0004-firebase-multi-user.md)). Pozostałe decyzje czekają na akceptację jako ADR-0005–0009 i ADR-0012 ([Decyzje](#decyzje)).
 
 ## Wizja
 
@@ -79,14 +79,12 @@ Obecne dane właściciela przechodzą jednorazowo do `users/{uid}/…` skryptem 
 
 ## Decyzje
 
-Przyjęte: Firebase jako platforma, najpierw wersja webowa ([ADR-0004](adr/0004-firebase-multi-user.md)).
+Przyjęte: Firebase jako platforma, najpierw wersja webowa ([ADR-0004](adr/0004-firebase-multi-user.md)); architektura aplikacji webowej ([ADR-0010](adr/0010-web-app-architecture.md)); emulatory i produkcja, hosting Vercel, darmowe usługi ([ADR-0011](adr/0011-environments-hosting-monitoring.md)).
 
 Proponowane — każda z wariantami, zaletami, wadami i rekomendacją w osobnym ADR; implementacja danego obszaru zaczyna się po przyjęciu:
 
 | ADR | Pytanie | Potrzebna przed |
 |---|---|---|
-| [0010](adr/0010-web-app-architecture.md) | Routing, pobieranie danych, offline, walidacja | etapem 0 |
-| [0011](adr/0011-environments-hosting-monitoring.md) | Środowiska, hosting, monitoring błędów | etapem 0 |
 | [0005](adr/0005-data-model-and-access.md) | Gdzie leżą dane, jak trener uzyskuje dostęp, czym są role | etapem 1 |
 | [0007](adr/0007-exercises-and-sets.md) | Biblioteka ćwiczeń, serie liczbowe, migracja | etapem 1 |
 | [0008](adr/0008-accounts-and-invitations.md) | Metody logowania, zaproszenia, usunięcie konta | etapem 1 |
@@ -102,7 +100,7 @@ Rozmiar: S — kilka dni, M — 1–2 tygodnie, L — 3+ tygodnie pracy jednej o
 
 | Etap | Zakres | Gotowe, gdy | Rozmiar |
 |---|---|---|---|
-| **0. Fundament** | Scalenie obecnego PR i konfiguracja Firebase (KNOWN_ISSUES #1); routing, nasłuchy danych, cache offline i schematy Zod ([ADR-0010](adr/0010-web-app-architecture.md)); środowisko staging i monitoring błędów ([ADR-0011](adr/0011-environments-hosting-monitoring.md)); testy E2E Playwright na emulatorach | Scenariusze z checklisty mają testy E2E, aplikacja działa w trybie samolotowym, podglądy PR używają stagingu | M |
+| **0. Fundament** | Routing, nasłuchy danych, cache offline i schematy Zod ([ADR-0010](adr/0010-web-app-architecture.md)); testy E2E Playwright na emulatorach i na zbudowanej wersji (KNOWN_ISSUES #15, [ADR-0011](adr/0011-environments-hosting-monitoring.md)) | Scenariusze z checklisty mają testy E2E, aplikacja działa w trybie samolotowym | M |
 | **1. Wiele kont, nowy model danych** | Rejestracja i profil; dane w `users/{uid}/…`; biblioteka ćwiczeń; serie liczbowe; szablony w Firestore; migracja obecnych danych; trwały cache offline | Dwa konta nie widzą swoich danych (testy reguł A/B), dane właściciela przeniesione bez strat, aplikacja działa w trybie samolotowym | L |
 | **2. Postęp** | Wyniki z poprzedniego razu przy ćwiczeniu; wykresy e1RM, rekordy, objętość tygodniowa, regularność; trend wagi; zdjęcia sylwetki w Cloud Storage; minutnik przerwy | Podopieczny widzi postęp dla dowolnego ćwiczenia z historii; obliczenia mają testy jednostkowe | M |
 | **3. Trener** | Rola trenera; zaproszenia (Cloud Function); lista podopiecznych z sygnałami; kreator planu wielotygodniowego z kopiowaniem i progresją; przypisanie planu; „zadane / wykonane”; komentarze; check-iny; import CSV/Excel | Pilotaż: 2–3 trenerów prowadzi realnych podopiecznych przez 4 tygodnie bez arkusza | L |

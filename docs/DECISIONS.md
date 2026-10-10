@@ -22,6 +22,6 @@ Indeks decyzji. Każda decyzja ma krótki dokument ADR w [`adr/`](adr/).
 | [0007](adr/0007-exercises-and-sets.md) | Biblioteka ćwiczeń (globalna + trenera), serie liczbowe, migracja skryptem z trybem próbnym | Proponowana 2026-10-10 |
 | [0008](adr/0008-accounts-and-invitations.md) | Logowanie Google i linkiem e-mail; zaproszenia i usunięcie konta przez Cloud Functions | Proponowana 2026-10-10 |
 | [0009](adr/0009-cloud-functions-aggregates.md) | Plan Blaze z budżetem; postęp liczony w kliencie, podsumowania trenera w funkcjach | Proponowana 2026-10-10 |
-| [0010](adr/0010-web-app-architecture.md) | React Router, nasłuchy Firestore, cache offline w IndexedDB, schematy Zod | Proponowana 2026-10-10 |
-| [0011](adr/0011-environments-hosting-monitoring.md) | Emulatory, staging i produkcja; hosting na Vercel; Sentry bez danych osobowych | Proponowana 2026-10-10 |
+| [0010](adr/0010-web-app-architecture.md) | React Router, nasłuchy Firestore, cache offline w IndexedDB, schematy Zod | Przyjęta 2026-10-10 |
+| [0011](adr/0011-environments-hosting-monitoring.md) | Emulatory i produkcja bez stagingu; hosting Vercel Hobby; bez zewnętrznego monitoringu do pierwszego użytkownika spoza właściciela | Przyjęta 2026-10-10 |
 | [0012](adr/0012-personal-and-health-data.md) | Zgody na dane o zdrowiu, umowa powierzenia z trenerem, eksport i usunięcie danych | Proponowana 2026-10-10 |
