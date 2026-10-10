@@ -77,7 +77,8 @@ Nowy przypadek: warunki wstępne, kroki, oczekiwany wynik.
 ## 8. Dane na żywo i praca offline
 
 - [ ] Dwie karty (albo komputer i telefon) z dziennikiem: pomiar lub trening zapisany w jednej pojawia się w drugiej bez odświeżania
-- [ ] Zalogowany, potem bez sieci (DevTools → Offline albo tryb samolotowy w telefonie): wszystkie zakładki otwierają się i pokazują dane, także te, których jeszcze nie otwierano po zalogowaniu
+- [ ] Zalogowany, strona otwarta, potem bez sieci (DevTools → Offline albo tryb samolotowy w telefonie): wszystkie zakładki otwierają się i pokazują dane, także te, których jeszcze nie otwierano po zalogowaniu
+- [ ] Otwarcie lub odświeżenie strony bez sieci pokazuje aplikację z danymi (#17)
 - [ ] Bez sieci pomiar trafia od razu na listę, a okno pomiaru czeka z „Zapisywanie...” do powrotu sieci; po powrocie zamyka się, pomiar jest zapisany raz
 - [ ] „Wyloguj” → ekran logowania; po ponownym zalogowaniu innym kontem nie widać danych poprzedniego (pamięć w przeglądarce jest czyszczona)
 

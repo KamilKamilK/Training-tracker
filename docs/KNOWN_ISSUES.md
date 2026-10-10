@@ -4,6 +4,10 @@ Jedyne źródło prawdy o nienaprawionych błędach, długu technicznym i lukach
 
 ## Zestawienie według priorytetu
 
+### Wysoki priorytet
+
+- **#17 — Aplikacja nie otwiera się bez sieci**
+
 ### Niski priorytet
 
 - **#16 — Nieużywane pliki z szablonu projektu Vite**
@@ -23,3 +27,4 @@ Jedyne źródło prawdy o nienaprawionych błędach, długu technicznym i lukach
 | # | Temat | Szczegóły | Priorytet | Wykonanie |
 |---|-------|-----------|-----------|-----------|
 | 16 | **Nieużywane pliki z szablonu projektu Vite** | **Stan:** `src/App.css` i `src/assets/react.svg` pochodzą z szablonu startowego i nie są importowane przez kod ani `index.html`. **Gotowe, gdy:** pliki są usunięte, a `npm run build` i testy end-to-end przechodzą. | Niski | 💻 Programistyczne |
+| 17 | **Aplikacja nie otwiera się bez sieci** | **Stan:** dane są w pamięci podręcznej Firestore (IndexedDB), a zakładki pobierane po zalogowaniu (`src/app/TrainingTracker.tsx`), więc praca offline działa tylko na stronie otwartej wcześniej z siecią. Otwarcie lub odświeżenie strony bez sieci (np. telefon w trybie samolotowym, przeładowana karta) kończy się błędem przeglądarki, bo pliki aplikacji nie są zapisane lokalnie — brak service workera. **Zrobić:** decyzja właściciela (ADR-0013, propozycja: service worker dla plików aplikacji z komunikatem o nowej wersji), potem implementacja i test end-to-end otwarcia strony offline. **Gotowe, gdy:** po jednej wizycie z siecią strona otwiera się bez sieci zalogowana i z danymi, co potwierdza test end-to-end. | Wysoki | 🖐️💻 Mieszane — wymaga decyzji właściciela |
