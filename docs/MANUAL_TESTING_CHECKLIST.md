@@ -52,7 +52,8 @@ Nowy przypadek: warunki wstępne, kroki, oczekiwany wynik.
 
 ## 5. Szablony
 
-- [ ] Nowy szablon bez nazwy lub bez ćwiczeń → komunikat i brak zapisu
+- [ ] Nowy szablon z nazwą krótszą niż 3 znaki albo bez wypełnionego ćwiczenia → komunikaty przy polu nazwy i pod listą ćwiczeń, szablon nie zostaje zapisany
+- [ ] Puste pola ćwiczeń są pomijane przy zapisie; nazwa zapisuje się bez spacji na początku i końcu
 - [ ] Nowy szablon z nazwą i ćwiczeniami → widoczny na liście i w siatce na „Start”
 - [ ] Edycja, duplikacja („(kopia)”) i usunięcie szablonu własnego działają; szablon domyślny można tylko zduplikować
 - [ ] Zmiana kategorii i poziomu w formularzu zostaje zapisana

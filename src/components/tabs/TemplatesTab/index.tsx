@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Plus, Edit, Trash2, Copy, Save, X } from 'lucide-react';
 import { WorkoutTemplate } from '../../../types/index.js';
+import { TemplateInputErrors, validateTemplateInput } from '../../../utils/validation.utils.js';
 
 interface TemplatesTabProps {
   templates: WorkoutTemplate[];
@@ -22,6 +23,7 @@ export const TemplatesTab: React.FC<TemplatesTabProps> = ({
 }) => {
   const [isFormVisible, setIsFormVisible] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState<WorkoutTemplate | null>(null);
+  const [errors, setErrors] = useState<TemplateInputErrors>({});
 
   const [formData, setFormData] = useState<WorkoutTemplate>({
     id: '',
@@ -60,6 +62,7 @@ export const TemplatesTab: React.FC<TemplatesTabProps> = ({
 
   const resetForm = () => {
     setEditingTemplate(null);
+    setErrors({});
     setFormData({
       id: '',
       name: '',
@@ -77,15 +80,17 @@ export const TemplatesTab: React.FC<TemplatesTabProps> = ({
   };
 
   const handleSubmit = () => {
-    if (!formData.name.trim() || formData.exercises.length === 0) {
-      alert('⚠️ Podaj nazwę i co najmniej jedno ćwiczenie!');
+    const result = validateTemplateInput(formData);
+    if ('errors' in result) {
+      setErrors(result.errors);
       return;
     }
 
+    const template = { ...formData, ...result };
     if (editingTemplate) {
-      onUpdateTemplate({ ...formData });
+      onUpdateTemplate(template);
     } else {
-      onAddTemplate({ ...formData, id: Date.now().toString() });
+      onAddTemplate({ ...template, id: Date.now().toString() });
     }
 
     resetForm();
@@ -94,6 +99,7 @@ export const TemplatesTab: React.FC<TemplatesTabProps> = ({
   const handleEdit = (template: WorkoutTemplate) => {
     setEditingTemplate(template);
     setFormData(template);
+    setErrors({});
     setIsFormVisible(true);
   };
 
@@ -119,13 +125,19 @@ export const TemplatesTab: React.FC<TemplatesTabProps> = ({
           </h3>
           <div className="grid md:grid-cols-2 gap-4 mb-4">
             <div>
-              <label className="block text-sm mb-1 text-slate-300">Nazwa</label>
+              <label htmlFor="template-name" className="block text-sm mb-1 text-slate-300">Nazwa</label>
               <input
+                id="template-name"
                 type="text"
                 value={formData.name}
                 onChange={e => handleInputChange('name', e.target.value)}
+                aria-invalid={errors.name ? true : undefined}
+                aria-describedby={errors.name ? 'template-name-error' : undefined}
                 className="w-full bg-slate-800 rounded-lg p-2 outline-none border border-slate-600 focus:border-blue-500"
               />
+              {errors.name && (
+                <p id="template-name-error" className="text-red-400 text-sm mt-1">{errors.name}</p>
+              )}
             </div>
 
             <div>
@@ -217,6 +229,7 @@ export const TemplatesTab: React.FC<TemplatesTabProps> = ({
                 </button>
               </div>
             ))}
+            {errors.exercises && <p className="text-red-400 text-sm mb-2">{errors.exercises}</p>}
             <button
               onClick={addExerciseField}
               className="text-blue-400 hover:text-blue-500 text-sm"

@@ -1,24 +1,30 @@
-import { Workout, WorkoutTemplate } from '../types/index.js';
 import { VALIDATION_RULES } from '../constants/validation.js';
 
-export const validateWorkout = (w: Partial<Workout>): boolean => {
-  if (!w.type || !w.date || !w.exercises) return false;
-  
-  const { minExercises, maxExercises } = VALIDATION_RULES.workout;
-  const exerciseCount = w.exercises.filter(ex => ex.sets.length > 0).length;
-  
-  return exerciseCount >= minExercises && exerciseCount <= maxExercises;
-};
+export interface TemplateInputErrors {
+  name?: string;
+  exercises?: string;
+}
 
-export const validateTemplate = (t: Partial<WorkoutTemplate>): boolean => {
-  if (!t.name || !t.exercises) return false;
-  
+/**
+ * Validates the template form. Exercise fields left empty are dropped, so the returned
+ * template data holds the trimmed name and only filled-in exercises.
+ */
+export const validateTemplateInput = (input: {
+  name: string;
+  exercises: string[];
+}): { name: string; exercises: string[] } | { errors: TemplateInputErrors } => {
   const { minNameLength, maxNameLength, minExercises, maxExercises } = VALIDATION_RULES.template;
-  
-  return (
-    t.name.length >= minNameLength &&
-    t.name.length <= maxNameLength &&
-    t.exercises.length >= minExercises &&
-    t.exercises.length <= maxExercises
-  );
+  const name = input.name.trim();
+  const exercises = input.exercises.map(exercise => exercise.trim()).filter(Boolean);
+  const errors: TemplateInputErrors = {};
+
+  if (name.length < minNameLength || name.length > maxNameLength) {
+    errors.name = `Nazwa musi mieć od ${minNameLength} do ${maxNameLength} znaków.`;
+  }
+  if (exercises.length < minExercises || exercises.length > maxExercises) {
+    errors.exercises = `Szablon musi mieć od ${minExercises} do ${maxExercises} ćwiczeń.`;
+  }
+
+  if (Object.keys(errors).length > 0) return { errors };
+  return { name, exercises };
 };

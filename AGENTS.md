@@ -28,7 +28,6 @@ Instrukcje dla agentów (Claude Code, Codex i inne) oraz osób pracujących nad 
 - Nowa zależność wymaga krótkiego uzasadnienia w commit message: potrzeba, aktywne utrzymanie, licencja. Preferuj natywne API przeglądarki i Reacta.
 - Unikaj oczywistych problemów wydajnościowych (pobieranie całych kolekcji w pętli, zbędne rendery całego drzewa); poza tym nie optymalizuj przedwcześnie.
 - Po zmianie usuń martwy kod, nieużywane importy, zakomentowane fragmenty i `console.log` dodane do debugowania.
-- Kod generowany (`src/dataconnect-generated/`) nie jest edytowany ręcznie.
 
 ### 4. Bezpieczeństwo
 

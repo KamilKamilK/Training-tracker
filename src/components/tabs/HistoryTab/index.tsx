@@ -3,7 +3,7 @@ import { Workout } from '../../../types/index.js';
 import { Trash2, Eye } from 'lucide-react';
 import { formatDate } from '../../../utils/date.utils.js';
 import { getTotalSets, getExerciseCount, sortByDateDesc } from '../../../utils/workout.utils.js';
-import { useModal } from './../../../hooks/useModels.js';
+import { useModal } from './../../../hooks/useModal.js';
 import { WorkoutModal } from './WorkoutModal.js';
 
 interface HistoryTabProps {
