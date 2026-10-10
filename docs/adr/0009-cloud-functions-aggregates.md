@@ -1,6 +1,6 @@
 # ADR-0009: Plan Firebase i liczenie postępu
 
-- **Status:** przyjęta 2026-10-10 (właściciel: zostajemy na darmowym planie Spark)
+- **Status:** przyjęta 2026-10-10 (właściciel: zostajemy na darmowym planie Spark); pkt 1 w części „bez kodu serwerowego” zastąpiony przez [ADR-0014](0014-server-functions-and-email.md) — funkcje Vercel, Firebase dalej na planie Spark
 
 ## Kontekst
 

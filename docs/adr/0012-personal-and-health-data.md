@@ -1,6 +1,6 @@
 # ADR-0012: Dane osobowe i dane o zdrowiu (RODO)
 
-- **Status:** przyjęta 2026-10-10 (właściciel: zgody dobrowolne, zrozumiałe, udostępnianie tylko własnemu trenerowi); założenia o rolach do potwierdzenia przez prawnika
+- **Status:** przyjęta 2026-10-10 (właściciel: zgody dobrowolne, zrozumiałe, udostępnianie tylko własnemu trenerowi); założenia o rolach do potwierdzenia przez prawnika; dobrowolność zgody na dane o zdrowiu (pkt 2) zastąpiona przez [ADR-0015](0015-accounts-roles-consent.md) — zgoda jest warunkiem aktywacji konta
 
 ## Kontekst
 

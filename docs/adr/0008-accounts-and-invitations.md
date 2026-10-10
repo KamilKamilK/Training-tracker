@@ -1,6 +1,6 @@
 # ADR-0008: Konta, logowanie i zaproszenia
 
-- **Status:** przyjęta 2026-10-10 (właściciel: Google albo e-mail z hasłem; zaproszenie linkiem; plan Spark)
+- **Status:** przyjęta 2026-10-10 (właściciel: Google albo e-mail z hasłem; zaproszenie linkiem; plan Spark); pkt 6 (usunięcie konta w przeglądarce) zastąpiony przez [ADR-0015](0015-accounts-roles-consent.md), który dodaje też konta zakładane przez trenera
 
 ## Kontekst
 

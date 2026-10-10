@@ -1,6 +1,6 @@
 # ADR-0005: Model danych użytkowników i dostęp trenera
 
-- **Status:** przyjęta 2026-10-10 (na planie Spark, bez Cloud Functions — [ADR-0009](0009-cloud-functions-aggregates.md))
+- **Status:** przyjęta 2026-10-10 (na planie Spark, bez Cloud Functions — [ADR-0009](0009-cloud-functions-aggregates.md)); pkt 3 (samodzielne włączanie roli trenera) zastąpiony przez [ADR-0015](0015-accounts-roles-consent.md)
 
 ## Kontekst
 
