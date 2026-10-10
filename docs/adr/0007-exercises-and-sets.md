@@ -1,12 +1,12 @@
 # ADR-0007: Biblioteka ćwiczeń, serie liczbowe i migracja obecnych danych
 
-- **Status:** proponowana 2026-10-10 — czeka na akceptację właściciela
+- **Status:** przyjęta 2026-10-10
 
 ## Kontekst
 
 Ćwiczenie jest dziś tekstem (np. „Wyciskanie Smith dodatnia 15° – 5x (12/10/10/8/8)”), który miesza nazwę z zaleceniem, a ciężar, powtórzenia i RIR są napisami (`src/types/workout.types.ts`). Bez stałego identyfikatora ćwiczenia i liczb nie da się policzyć postępu (e1RM, rekordy, objętość) ani porównać z planem. Istniejące treningi właściciela trzeba przenieść bez strat.
 
-## Decyzja (rekomendacja)
+## Decyzja
 
 1. **Biblioteka globalna** `exercises/{id}` (nazwa PL/EN, partie mięśniowe, sprzęt, opcjonalne wideo) zarządzana przez administratora, plus **ćwiczenia własne trenera** w `coaches/{uid}/exercises`. Plan i sesja odwołują się do `exerciseId`; zalecenia (serie, zakres powtórzeń) są osobnymi polami planu.
 2. **Serie jako liczby:** `weight` (kg, liczba), `reps` (liczba całkowita), `rir` (liczba lub brak), `done` (bool). Pusta wartość to brak pola, nie pusty napis.
@@ -18,7 +18,7 @@
 
 | Wariant | Zalety | Wady |
 |---|---|---|
-| **Biblioteka globalna + własne trenera (rekomendowany)** | Spójne nazwy i statystyki; trener nie czeka na administratora | Utrzymanie biblioteki globalnej; dwa źródła w wyszukiwarce |
+| **Biblioteka globalna + własne trenera (wybrany)** | Spójne nazwy i statystyki; trener nie czeka na administratora | Utrzymanie biblioteki globalnej; dwa źródła w wyszukiwarce |
 | Tylko ćwiczenia własne każdego trenera | Pełna swoboda, brak utrzymania | Brak wspólnych statystyk i treści; każdy trener zaczyna od zera |
 | Wolny tekst z dopasowaniem przy wyświetlaniu | Brak zmian w zapisie | Literówki rozbijają historię ćwiczenia; postęp niewiarygodny |
 
@@ -26,7 +26,7 @@
 
 | Wariant | Zalety | Wady |
 |---|---|---|
-| **Skrypt Admin SDK z trybem próbnym (rekomendowany)** | Jednorazowy, przeglądany, z kopią i raportem; kod aplikacji nie nosi starego formatu | Wymaga uruchomienia przez właściciela z poświadczeniami serwisowymi |
+| **Skrypt Admin SDK z trybem próbnym (wybrany)** | Jednorazowy, przeglądany, z kopią i raportem; kod aplikacji nie nosi starego formatu | Wymaga uruchomienia przez właściciela z poświadczeniami serwisowymi |
 | Migracja w aplikacji przy pierwszym logowaniu | Bez narzędzi po stronie właściciela | Kod migracji zostaje w aplikacji; reguły muszą dopuszczać stary i nowy format; trudny do powtórzenia przy błędzie |
 | Odczyt obu formatów bez migracji | Brak ryzyka utraty danych | Podwójny model na zawsze; statystyki muszą rozumieć napisy |
 

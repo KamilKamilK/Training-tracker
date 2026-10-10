@@ -1,41 +1,31 @@
-# ADR-0009: Cloud Functions i liczenie postępu
+# ADR-0009: Plan Firebase i liczenie postępu
 
-- **Status:** proponowana 2026-10-10 — czeka na akceptację właściciela
+- **Status:** przyjęta 2026-10-10 (właściciel: zostajemy na darmowym planie Spark)
 
 ## Kontekst
 
-Część operacji nie może być wykonana bezpiecznie przez klienta: zaproszenia, usunięcie konta, podsumowania dla pulpitu trenera ([ADR-0005](0005-data-model-and-access.md), [ADR-0008](0008-accounts-and-invitations.md)). Wdrożenie Cloud Functions wymaga planu Blaze (płatność za użycie, z darmowym limitem); alerty budżetu w Google Cloud ostrzegają, ale nie zatrzymują kosztów. Postęp (e1RM, rekordy, objętość tygodniowa, regularność) trzeba gdzieś liczyć.
+Cloud Functions (operacje po stronie serwera) wymagają planu Blaze — płatności za użycie z darmowym limitem; alerty budżetu ostrzegają, ale nie zatrzymują kosztów. Zaproszenia, usuwanie konta i pulpit trenera da się zbudować bez funkcji ([ADR-0005](0005-data-model-and-access.md), [ADR-0008](0008-accounts-and-invitations.md)). Postęp (e1RM, rekordy, objętość, regularność) trzeba gdzieś liczyć.
 
-## Decyzja (rekomendacja)
+## Decyzja
 
-1. **Plan Blaze** z alertami budżetu (np. 5 / 20 / 50 zł miesięcznie) i regionem `europe-central2` dla funkcji.
-2. **Funkcje w TypeScript w tym repozytorium** (`functions/`), z testami na emulatorze; wspólne czyste funkcje obliczeń (`src/domain/` lub pakiet współdzielony) używane w kliencie i funkcjach.
-3. **Postęp podopiecznego liczony w kliencie** z jego historii (dziesiątki–setki sesji to mało danych).
-4. **Podsumowania dla trenera** (`coaches/{uid}/athletes/{athleteUid}`: ostatni trening, regularność tygodnia, ostatni pomiar, brak check-inu) utrzymywane przez funkcję wyzwalaną zapisem sesji, pomiaru lub check-inu.
+1. **Plan Spark, bez Cloud Functions.** Bezpieczeństwo zapewniają Firebase Authentication i reguły Firestore.
+2. **Postęp liczony w przeglądarce** z historii użytkownika — także offline; trener liczy postęp podopiecznego z jego danych po odczycie.
+3. **Wspólne, czyste funkcje obliczeń** w `src/` z testami jednostkowymi, aby przy przejściu na funkcje serwerowe użyć tego samego kodu.
+4. **Bez Cloud Storage na planie Spark:** zgodnie z warunkami Firebase domyślny zasobnik Cloud Storage wymaga planu Blaze, więc zdjęcia sylwetki czekają na zmianę planu.
 
 ## Rozważane warianty
 
-**Funkcje serwerowe**
-
 | Wariant | Zalety | Wady |
 |---|---|---|
-| **Cloud Functions na Blaze (rekomendowany)** | Ta sama platforma i uwierzytelnienie; wyzwalacze na zapisach; emulator do testów | Konto rozliczeniowe; koszt zależny od ruchu; zimny start |
-| Bez funkcji, wszystko w kliencie i regułach | Brak kosztów i konta rozliczeniowego | Zaproszenia i usunięcie konta trudne lub niebezpieczne; pulpit trenera = wiele zapytań |
-| Osobny serwer (np. Cloud Run, Vercel Functions z Admin SDK) | Większa swoboda technologii | Drugi sposób wdrażania i uwierzytelniania; więcej utrzymania |
-
-**Gdzie liczyć postęp**
-
-| Wariant | Zalety | Wady |
-|---|---|---|
-| **Klient dla podopiecznego, funkcja dla pulpitu trenera (rekomendowany)** | Wykresy działają offline; mało kodu serwera; trener ma szybki pulpit | Dwa miejsca użycia obliczeń — konieczny wspólny, testowany kod |
-| Wszystko w funkcjach (dokumenty statystyk) | Jednakowe wyniki wszędzie, mało odczytów | Opóźnienie po zapisie; każda nowa statystyka wymaga przeliczenia historii |
-| Wszystko w kliencie | Najprostsze | Pulpit trenera czyta pełne historie wszystkich podopiecznych — koszt i czas rosną z liczbą osób |
+| **Spark, bez funkcji (wybrany)** | Zero kosztów i konta rozliczeniowego | Złożone reguły (zaproszenia); pulpit trenera to zapytania per podopieczny; brak zdjęć sylwetki |
+| Blaze z Cloud Functions i alertami budżetu | Prostsze reguły; podsumowania dla trenera; Cloud Storage dla zdjęć | Karta płatnicza, możliwe koszty przy dużym ruchu |
+| Osobny serwer (np. Cloud Run) | Swoboda technologii | Drugi system do utrzymania; też wymaga rozliczeń |
 
 ## Konsekwencje
 
-- Hook `pre-push` i CI obejmą build i testy `functions/`.
-- Koszty i liczba wywołań są monitorowane od pierwszego wdrożenia.
+- Każda operacja zmieniająca cudze dane (współpraca, zaproszenie) ma regułę z walidacją i testy reguł dla każdej ścieżki.
+- Zdjęcia sylwetki ([ADR-0012](0012-personal-and-health-data.md)) i automatyczne powiadomienia trenera są poza zakresem do zmiany planu.
 
 ## Warunek rewizji
 
-Koszt funkcji powyżej progu właściciela albo statystyki wymagające przetwarzania całej bazy (rankingi, porównania między użytkownikami).
+Zdjęcia sylwetki, pulpit trenera zbyt wolny przy odczycie per podopieczny, wysyłka e-maili z aplikacji albo rozliczenia z trenerami — wtedy plan Blaze z budżetem i alertami.

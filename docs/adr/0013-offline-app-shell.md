@@ -1,6 +1,6 @@
 # ADR-0013: Otwieranie aplikacji bez sieci (service worker)
 
-- **Status:** proponowana 2026-10-10 — czeka na decyzję właściciela
+- **Status:** odłożona 2026-10-10 (właściciel: na siłowni jest Wi-Fi; otwieranie bez sieci wraca razem z wersją mobilną po pełnej wersji webowej)
 
 ## Kontekst
 
