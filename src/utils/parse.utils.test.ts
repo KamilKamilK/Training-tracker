@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { parseMeasurement, parseWeekPlanDocument, parseWorkout } from './parse.utils.js';
+import { parseMeasurement, parseTemplates, parseWeekPlanDocument, parseWorkout } from './parse.utils.js';
 
 const workout = {
   type: 'Trening A',
@@ -73,5 +73,31 @@ describe('parseWeekPlanDocument', () => {
 
   it('rejects a template id that is not a string', () => {
     expect(parseWeekPlanDocument({ plan: { monday: 1 }, updatedAt: 'now' })).toBeNull();
+  });
+});
+
+describe('parseTemplates', () => {
+  const template = {
+    id: 't1',
+    name: 'Push A',
+    description: '',
+    exercises: ['Przysiad'],
+    category: 'strength',
+    estimatedDuration: 45,
+    difficulty: 'beginner',
+    color: 'bg-blue-600',
+    isCustom: true,
+  };
+
+  it('keeps valid templates and counts invalid ones', () => {
+    expect(parseTemplates([template, { ...template, category: 'yoga' }, 'x'])).toEqual({
+      templates: [template],
+      skipped: 2,
+    });
+  });
+
+  it('treats a missing value as no templates and any other value as invalid', () => {
+    expect(parseTemplates(null)).toEqual({ templates: [], skipped: 0 });
+    expect(parseTemplates({ a: 1 })).toEqual({ templates: [], skipped: 1 });
   });
 });

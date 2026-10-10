@@ -2,10 +2,12 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
 // Third-party code changes less often than the app, so it gets its own long-cached chunks
-// and every chunk stays under Vite's 500 kB warning limit. React is split from the other
-// libraries only because those libraries import React, never the other way round: chunks
-// that import each other in a cycle fail at startup ("Cannot access ... before initialization").
+// and every chunk stays under Vite's 500 kB warning limit. A package gets a separate chunk only
+// when the chunks cannot import each other in a cycle, which fails at startup ("Cannot access ...
+// before initialization"): other libraries import React but React imports none of them, and Zod
+// has no dependencies and is imported only by the app.
 const REACT_PACKAGES = ['react', 'react-dom', 'scheduler']
+const OWN_CHUNK_PACKAGES = ['zod']
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -16,7 +18,8 @@ export default defineConfig({
         manualChunks(id) {
           const [, modulePath] = id.split('node_modules/')
           if (!modulePath) return undefined
-          return REACT_PACKAGES.some(name => modulePath.startsWith(`${name}/`)) ? 'react' : 'vendor'
+          if (REACT_PACKAGES.some(name => modulePath.startsWith(`${name}/`))) return 'react'
+          return OWN_CHUNK_PACKAGES.find(name => modulePath.startsWith(`${name}/`)) ?? 'vendor'
         },
       },
     },

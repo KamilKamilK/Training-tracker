@@ -3,14 +3,20 @@ import { WorkoutTemplate } from '../types/index.js';
 import { defaultWorkoutTemplates } from '../constants/workoutTemplates.js';
 import { LocalStorageService } from '../services/storage/localStorage.service.js';
 import { STORAGE_KEYS } from '../constants/config.js';
+import { parseTemplates } from '../utils/parse.utils.js';
+
+const loadCustomTemplates = (): WorkoutTemplate[] => {
+  const { templates, skipped } = parseTemplates(
+    LocalStorageService.get<unknown>(STORAGE_KEYS.customTemplates, []),
+  );
+  if (skipped > 0) {
+    console.warn('useTemplates: skipped invalid stored templates', skipped);
+  }
+  return templates;
+};
 
 export function useTemplates() {
-  const [customTemplates, setCustomTemplates] = useState<WorkoutTemplate[]>([]);
-
-  useEffect(() => {
-    const stored = LocalStorageService.get<WorkoutTemplate[]>(STORAGE_KEYS.customTemplates, []);
-    setCustomTemplates(stored);
-  }, []);
+  const [customTemplates, setCustomTemplates] = useState<WorkoutTemplate[]>(loadCustomTemplates);
 
   useEffect(() => {
     LocalStorageService.set(STORAGE_KEYS.customTemplates, customTemplates);

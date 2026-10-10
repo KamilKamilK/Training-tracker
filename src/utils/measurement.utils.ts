@@ -1,5 +1,7 @@
 import { Measurement } from '../types/index.js';
+import { z } from 'zod';
 import { VALIDATION_RULES } from '../constants/validation.js';
+import { toFieldErrors } from './form.utils.js';
 
 export interface MeasurementInput {
   date: string;
@@ -11,34 +13,32 @@ export type MeasurementInputErrors = Partial<Record<keyof MeasurementInput, stri
 
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
-const parseDecimal = (value: string): number => Number(value.trim().replace(',', '.'));
+const decimalInRange = (min: number, max: number, message: string) =>
+  z
+    .string()
+    .trim()
+    .min(1, message)
+    .transform(value => Number(value.replace(',', '.')))
+    .refine(value => Number.isFinite(value) && value >= min && value <= max, message);
+
+const { minWeight, maxWeight, minWaist, maxWaist } = VALIDATION_RULES.measurement;
+
+const MeasurementInputSchema = z.object({
+  date: z
+    .string()
+    .refine(value => DATE_PATTERN.test(value) && !Number.isNaN(new Date(`${value}T00:00:00`).getTime()), 'Podaj poprawną datę.')
+    .refine(value => new Date(`${value}T00:00:00`).getTime() <= Date.now(), 'Data pomiaru nie może być z przyszłości.'),
+  weight: decimalInRange(minWeight, maxWeight, `Waga musi mieścić się w zakresie ${minWeight}–${maxWeight} kg.`),
+  waist: decimalInRange(minWaist, maxWaist, `Obwód talii musi mieścić się w zakresie ${minWaist}–${maxWaist} cm.`),
+});
 
 /** Validates the measurement form; returns the measurement or field-level messages. */
 export const validateMeasurementInput = (
   input: MeasurementInput,
 ): { measurement: Omit<Measurement, 'id'> } | { errors: MeasurementInputErrors } => {
-  const { minWeight, maxWeight, minWaist, maxWaist } = VALIDATION_RULES.measurement;
-  const errors: MeasurementInputErrors = {};
-
-  const date = new Date(`${input.date}T00:00:00`);
-  if (!DATE_PATTERN.test(input.date) || Number.isNaN(date.getTime())) {
-    errors.date = 'Podaj poprawną datę.';
-  } else if (date.getTime() > Date.now()) {
-    errors.date = 'Data pomiaru nie może być z przyszłości.';
-  }
-
-  const weight = parseDecimal(input.weight);
-  if (input.weight.trim() === '' || !Number.isFinite(weight) || weight < minWeight || weight > maxWeight) {
-    errors.weight = `Waga musi mieścić się w zakresie ${minWeight}–${maxWeight} kg.`;
-  }
-
-  const waist = parseDecimal(input.waist);
-  if (input.waist.trim() === '' || !Number.isFinite(waist) || waist < minWaist || waist > maxWaist) {
-    errors.waist = `Obwód talii musi mieścić się w zakresie ${minWaist}–${maxWaist} cm.`;
-  }
-
-  if (Object.keys(errors).length > 0) return { errors };
-  return { measurement: { date: input.date, weight, waist } };
+  const result = MeasurementInputSchema.safeParse(input);
+  if (!result.success) return { errors: toFieldErrors<keyof MeasurementInput>(result.error) };
+  return { measurement: result.data };
 };
 
 export const sortByDateAsc = (measurements: Measurement[]): Measurement[] =>
