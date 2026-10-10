@@ -98,13 +98,14 @@ Instrukcje dla agentów (Claude Code, Codex i inne) oraz osób pracujących nad 
 
 ## Weryfikacja
 
-Hook `pre-push` (`.githooks/`, aktywacja raz na klon: `git config core.hooksPath .githooks` — [opis](.githooks/README.md)) uruchamia poniższe kontrole przy każdym pushu; testy reguł — gdy zmieniają się reguły, ich testy lub konfiguracja emulatora. Nie omijaj go `--no-verify`. Przed commitem zmian w kodzie uruchom:
+Hook `pre-push` (`.githooks/`, aktywacja raz na klon: `git config core.hooksPath .githooks` — [opis](.githooks/README.md)) uruchamia poniższe kontrole przy każdym pushu; testy reguł i testy end-to-end — gdy zmiana ich dotyczy. Nie omijaj go `--no-verify`. Przed commitem zmian w kodzie uruchom:
 
 ```bash
 npm run lint        # ESLint (typescript-eslint, react-hooks, no-console)
 npm run build       # tsc -b (typecheck) + vite build
 npm test            # testy jednostkowe Vitest
 npm run test:rules  # testy firestore.rules na emulatorze (wymaga Javy)
+npm run test:e2e    # Playwright: zbudowana aplikacja na emulatorach (Java, Chromium)
 ```
 
-Te same kroki zawiera CI (`.github/workflows/ci.yml`), uruchamiane tylko ręcznie (Actions → CI → Run workflow) z powodu limitu minut GitHub Actions. Zmianę widoczną dla użytkownika sprawdź w `npm run dev` z emulatorami (`VITE_USE_EMULATORS=true`, `npm run emulators` — [README](README.md#-uruchomienie-lokalne)) według [MANUAL_TESTING_CHECKLIST.md](docs/MANUAL_TESTING_CHECKLIST.md). Zmianę konfiguracji budowania (`vite.config.ts`, zależności) sprawdź także na zbudowanej wersji: `npm run build`, potem `npx vite preview` — ekran logowania bez błędów w konsoli przeglądarki. Przy samej zmianie dokumentacji sprawdź odnośniki i zgodność opisanych poleceń z `package.json`.
+Te same kroki zawiera CI (`.github/workflows/ci.yml`), uruchamiane tylko ręcznie (Actions → CI → Run workflow) z powodu limitu minut GitHub Actions. Zmianę widoczną dla użytkownika sprawdź w `npm run dev` z emulatorami (`VITE_USE_EMULATORS=true`, `npm run emulators` — [README](README.md#-uruchomienie-lokalne)) według [MANUAL_TESTING_CHECKLIST.md](docs/MANUAL_TESTING_CHECKLIST.md). Zmiana widoczna dla użytkownika dostaje scenariusz w `e2e/`, gdy da się go zautomatyzować. Przy samej zmianie dokumentacji sprawdź odnośniki i zgodność opisanych poleceń z `package.json`.

@@ -26,3 +26,8 @@ dist-ssr
 .env
 tsconfig.tsbuildinfo
 *.tsbuildinfo
+dist-e2e
+test-results
+playwright-report
+firebase-debug.log
+firestore-debug.log

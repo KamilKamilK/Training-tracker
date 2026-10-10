@@ -4,9 +4,7 @@ Jedyne źródło prawdy o nienaprawionych błędach, długu technicznym i lukach
 
 ## Zestawienie według priorytetu
 
-### Średni priorytet
-
-- **#15 — Wersja produkcyjna nie jest automatycznie sprawdzana w przeglądarce**
+Brak otwartych punktów.
 
 ### Zasady prowadzenia
 
@@ -22,4 +20,3 @@ Jedyne źródło prawdy o nienaprawionych błędach, długu technicznym i lukach
 
 | # | Temat | Szczegóły | Priorytet | Wykonanie |
 |---|-------|-----------|-----------|-----------|
-| 15 | **Wersja produkcyjna nie jest automatycznie sprawdzana w przeglądarce** | **Stan:** testy jednostkowe działają w jsdom, a hook `pre-push` tylko buduje aplikację (`npm run build`); nic nie uruchamia zbudowanego `dist/` w przeglądarce, więc błąd ładowania chunków (np. cykl importów między chunkami z `manualChunks` w `vite.config.ts`) przechodzi wszystkie kontrole i daje pustą stronę na produkcji. **Zrobić:** test E2E (Playwright) na `npm run build` + `vite preview` z emulatorami, uruchamiany w hooku `pre-push` lub osobnym poleceniu ([ROADMAP](ROADMAP.md), etap 0). **Gotowe, gdy:** test kończy się błędem przy błędzie strony (`pageerror`) lub braku ekranu logowania, co potwierdza próbka negatywna z cyklicznym podziałem chunków. | Średni | 💻 Programistyczne |

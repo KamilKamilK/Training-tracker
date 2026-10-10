@@ -1,11 +1,12 @@
 #!/bin/sh
 # Quality gate run by `git push` (activate once per clone: git config core.hooksPath .githooks).
-# Runs the checks from AGENTS.md "Weryfikacja"; the Firestore rules tests run when the pushed
-# commits touch the rules, their tests or the emulator config, because they need Java.
+# Runs the checks from AGENTS.md "Weryfikacja". The Firestore rules tests and the end-to-end tests
+# need Java (emulators), so they run only when the pushed commits touch what they cover.
 set -eu
 
 zero=0000000000000000000000000000000000000000
 rules_changed=false
+app_changed=false
 
 while read -r _local_ref local_sha _remote_ref remote_sha; do
   [ "$local_sha" = "$zero" ] && continue
@@ -18,6 +19,10 @@ while read -r _local_ref local_sha _remote_ref remote_sha; do
   if git diff --name-only "$range" -- firestore.rules tests/rules firebase.json vitest.rules.config.ts | grep -q .; then
     rules_changed=true
   fi
+  if git diff --name-only "$range" -- src public index.html vite.config.ts package.json package-lock.json \
+      tailwind.config.js postcss.config.js firestore.rules firebase.json e2e playwright.config.ts .env.e2e | grep -q .; then
+    app_changed=true
+  fi
 done
 
 run() {
@@ -29,10 +34,12 @@ run npm run --silent lint
 run npm run --silent build
 run npm test --silent
 
-if [ "$rules_changed" = true ]; then
+if [ "$rules_changed" = true ] || [ "$app_changed" = true ]; then
   if ! command -v java >/dev/null 2>&1; then
-    echo "pre-push: Firestore rules changed, but Java (needed by the emulator) is not installed — push stopped" >&2
+    echo "pre-push: the emulator tests need Java, which is not installed — push stopped" >&2
     exit 1
   fi
-  run npm run --silent test:rules
 fi
+[ "$rules_changed" = true ] && run npm run --silent test:rules
+[ "$app_changed" = true ] && run npm run --silent test:e2e
+exit 0

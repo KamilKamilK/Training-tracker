@@ -27,7 +27,7 @@ React 19, TypeScript (strict), Vite 7, Tailwind CSS 3, Lucide React, Firebase (A
 
 ## 🧑‍💻 Uruchomienie lokalne
 
-Wymagania: Node.js 22, a do emulatorów i testów reguł — Java 21.
+Wymagania: Node.js 22, a do emulatorów, testów reguł i testów end-to-end — Java 21. Przeglądarkę dla testów end-to-end instaluje się raz: `npx playwright install chromium`.
 
 ```bash
 git clone https://github.com/KamilKamilK/Training-tracker.git
@@ -46,9 +46,10 @@ Praca bez dotykania danych produkcyjnych: ustaw `VITE_USE_EMULATORS=true` w `.en
 | `npm run build` | typecheck (`tsc -b`) i build produkcyjny do `dist/` |
 | `npm test` | testy jednostkowe (Vitest) |
 | `npm run test:rules` | testy `firestore.rules` na emulatorze Firestore |
+| `npm run test:e2e` | testy end-to-end (Playwright) zbudowanej aplikacji na emulatorach |
 | `npm run emulators` | emulatory Authentication i Firestore do pracy lokalnej |
 
-Po sklonowaniu włącz hook `pre-push`, który uruchamia te kontrole przy każdym pushu: `git config core.hooksPath .githooks` ([opis](.githooks/README.md)). CI (`.github/workflows/ci.yml`) wykonuje te same kroki, ale uruchamiane jest ręcznie w zakładce Actions (limit minut GitHub Actions).
+Po sklonowaniu włącz hook `pre-push`, który uruchamia te kontrole przy każdym pushu (testy reguł i end-to-end — gdy zmiana ich dotyczy): `git config core.hooksPath .githooks` ([opis](.githooks/README.md)). CI (`.github/workflows/ci.yml`) wykonuje te same kroki, ale uruchamiane jest ręcznie w zakładce Actions (limit minut GitHub Actions).
 
 ---
 

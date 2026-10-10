@@ -13,3 +13,7 @@ interface ImportMetaEnv {
 interface ImportMeta {
   readonly env: ImportMetaEnv
 }
+interface Window {
+  /** Defined only in builds with VITE_USE_EMULATORS=true (see src/lib/firebaseConfig.ts). */
+  __e2eSignIn?: (email: string) => Promise<string>
+}

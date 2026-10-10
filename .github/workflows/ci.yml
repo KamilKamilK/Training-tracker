@@ -39,3 +39,9 @@ jobs:
 
       - name: Firestore security rules tests
         run: npm run test:rules
+
+      - name: Playwright browser
+        run: npx playwright install --with-deps chromium
+
+      - name: End-to-end tests
+        run: npm run test:e2e

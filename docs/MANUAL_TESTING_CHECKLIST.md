@@ -1,6 +1,7 @@
 # Dziennik Treningowy — ręczna lista kontrolna testów
 
-**Ostatnie pełne przejście:** brak. Scenariusze 1, 2.2–2.3 i 3.4–3.6 przeszły automatycznie w przeglądarce na emulatorach 2026-10-07.
+**Ostatnie pełne przejście:** brak.
+**Automatyzacja:** scenariusze ekranu logowania, braku dostępu, 2.2–2.3 oraz 3.3–3.5 są testami end-to-end w `e2e/` (`npm run test:e2e`, na zbudowanej wersji); ręcznie sprawdzamy pozostałe.
 **Znane rozbieżności:** punkt z numerem KNOWN_ISSUES (np. „#1”) opisuje zachowanie docelowe, którego środowisko jeszcze nie spełnia — niepowodzenie potwierdza zgłoszony problem.
 **Cel:** weryfikacja funkcji aplikacji przed wdrożeniem na Vercel lub po większych zmianach.
 **Środowisko:** `npm run emulators` i `npm run dev` z `VITE_USE_EMULATORS=true` ([README](../README.md#-uruchomienie-lokalne)); przeglądarka desktopowa i widok mobilny (DevTools, szerokość 375 px).
@@ -13,7 +14,6 @@ Nowy przypadek: warunki wstępne, kroki, oczekiwany wynik.
 ## 0. Przygotowanie
 
 - [ ] Aplikacja ładuje się bez błędów w konsoli przeglądarki
-- [ ] Wersja produkcyjna: `npm run build`, potem `npx vite preview` → strona pokazuje ekran logowania, a konsola przeglądarki nie ma błędów (pusta strona oznacza błąd ładowania kodu)
 
 ## 1. Logowanie i dostęp
 
