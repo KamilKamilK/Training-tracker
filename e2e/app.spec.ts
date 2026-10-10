@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { grantOwner, resetEmulators, revokeOwner } from './emulators.js';
+import { grantOwner, rejectWorkoutWrites, resetEmulators, restoreRules } from './emulators.js';
 
 const OWNER = 'owner@example.com';
 const STRANGER = 'stranger@example.com';
@@ -59,7 +59,7 @@ test('the owner adds a measurement after fixing invalid values', async ({ page }
 });
 
 test('a workout survives a reload and a rejected save, then saves on retry', async ({ page }) => {
-  const uid = await openAsOwner(page);
+  await openAsOwner(page);
   const workoutTab = page.getByRole('link', { name: 'Trening', exact: true });
 
   await page.getByText('Trening A - Klatka + Barki').click();
@@ -71,12 +71,12 @@ test('a workout survives a reload and a rejected save, then saves on retry', asy
   await expect(page).toHaveURL(/\/workout$/);
   await expect(page.getByPlaceholder('kg')).toHaveValue('80');
 
-  await revokeOwner(uid);
+  await rejectWorkoutWrites();
   await page.getByRole('button', { name: 'Zakończ trening' }).click();
   await expect(page.getByRole('alert')).toContainText('Nie udało się zapisać treningu');
   await expect(page.getByPlaceholder('kg')).toHaveValue('80');
 
-  await grantOwner(uid);
+  await restoreRules();
   await page.getByRole('button', { name: 'Zakończ trening' }).click();
   await expect(page).toHaveURL(/\/history$/);
   await expect(page.getByRole('heading', { name: /Historia Treningów/ })).toBeVisible();
@@ -112,4 +112,50 @@ test('an unknown address leads to the start page', async ({ page }) => {
   await page.goto('/does-not-exist');
   await expect(page).toHaveURL(/\/$/);
   await expect(page.getByRole('heading', { name: 'Rozpocznij Trening' })).toBeVisible();
+});
+
+test('a change made in one tab appears in another without a reload', async ({ page, context }) => {
+  await openAsOwner(page);
+  const other = await context.newPage();
+  other.on('pageerror', error => pageErrors.push(error.message));
+  await other.goto('/');
+  await expect(other.getByRole('heading', { name: 'Rozpocznij Trening' })).toBeVisible();
+
+  await page.getByRole('button', { name: 'Dodaj', exact: true }).click();
+  await page.getByLabel('Waga (kg)').fill('81');
+  await page.getByLabel('Obwód talii (cm)').fill('89');
+  await page.getByRole('button', { name: 'Zapisz pomiar' }).click();
+
+  await expect(other.getByText('81 kg | 89 cm')).toBeVisible();
+});
+
+test('a workout finished offline is stored once when the connection returns', async ({ page, context }) => {
+  await openAsOwner(page);
+  await page.getByText('Trening A - Klatka + Barki').click();
+  await page.getByRole('link', { name: 'Trening', exact: true }).click();
+  await page.getByRole('button', { name: 'Dodaj serię' }).first().click();
+  await page.getByPlaceholder('kg').fill('80');
+
+  await context.setOffline(true);
+  await page.getByRole('button', { name: 'Zakończ trening' }).click();
+  await expect(page.getByRole('button', { name: 'Zapisywanie...' })).toBeDisabled();
+  await page.getByRole('link', { name: 'Historia', exact: true }).click();
+  await expect(page.getByText('Trening A - Klatka + Barki')).toHaveCount(1);
+
+  await context.setOffline(false);
+  await expect(page).toHaveURL(/\/history$/);
+  await page.reload();
+  await expect(page.getByText('Trening A - Klatka + Barki')).toHaveCount(1);
+});
+
+test('signing out removes the local data cache', async ({ page }) => {
+  await openAsOwner(page);
+  const cacheNames = () =>
+    page.evaluate(async () => (await indexedDB.databases()).map(db => db.name ?? '').filter(name => name.startsWith('firestore/')));
+  await expect.poll(cacheNames).not.toEqual([]);
+
+  // Signing out reloads the app, so wait for the new page load before checking the cache.
+  await Promise.all([page.waitForEvent('load'), page.getByRole('button', { name: 'Wyloguj' }).click()]);
+  await expect(page.getByRole('button', { name: 'Zaloguj przez Google' })).toBeVisible();
+  expect(await cacheNames()).toEqual([]);
 });

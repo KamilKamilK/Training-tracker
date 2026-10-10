@@ -1,6 +1,11 @@
 import { initializeApp } from "firebase/app";
 import { GoogleAuthProvider, connectAuthEmulator, getAuth, signInWithCredential } from "firebase/auth";
-import { connectFirestoreEmulator, getFirestore } from "firebase/firestore";
+import {
+  connectFirestoreEmulator,
+  initializeFirestore,
+  persistentLocalCache,
+  persistentMultipleTabManager,
+} from "firebase/firestore";
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_API_KEY,
@@ -12,7 +17,12 @@ const firebaseConfig = {
 };
 
 const app = initializeApp(firebaseConfig);
-export const db = getFirestore(app);
+// Data is cached in IndexedDB (shared by all open tabs), so the app shows workouts and accepts
+// writes without a connection; queued writes are sent when the connection returns. Signing out
+// clears the cache (AuthService.signOut).
+export const db = initializeFirestore(app, {
+  localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }),
+});
 export const auth = getAuth(app);
 
 // Local development (`npm run emulators`) and end-to-end tests (`npm run test:e2e`) run against

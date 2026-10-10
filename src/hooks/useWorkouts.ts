@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import { Workout, WorkoutSet, WorkoutTemplate } from '../types/index.js';
 import { getCurrentDate } from '../utils/date.utils.js';
-import { parseWorkout } from '../utils/parse.utils.js';
+import { parseWorkoutDraft } from '../utils/parse.utils.js';
 import { LocalStorageService } from '../services/storage/localStorage.service.js';
 import { STORAGE_KEYS } from '../constants/config.js';
 
@@ -10,7 +10,7 @@ type SetField = keyof WorkoutSet;
 const loadDraft = (): Workout | null => {
   const stored = LocalStorageService.get<unknown>(STORAGE_KEYS.currentWorkoutDraft, null);
   if (stored === null) return null;
-  const draft = parseWorkout('', stored);
+  const draft = parseWorkoutDraft(stored);
   if (!draft) {
     console.warn('useWorkouts: discarded invalid workout draft');
   }
@@ -48,7 +48,7 @@ export const useWorkouts = () => {
 
   const startWorkout = (template: WorkoutTemplate) => {
     setCurrentWorkout({
-      id: '',
+      id: crypto.randomUUID(),
       type: template.name,
       date: getCurrentDate(),
       exercises: template.exercises.map(name => ({ name, sets: [] })),
@@ -88,7 +88,8 @@ export const useWorkouts = () => {
     if (!currentWorkout || isFinishing) return false;
     setIsFinishing(true);
     try {
-      const saved = await save({ ...currentWorkout, completed: true, date: getCurrentDate() });
+      const id = currentWorkout.id || crypto.randomUUID();
+      const saved = await save({ ...currentWorkout, id, completed: true, date: getCurrentDate() });
       if (saved) setCurrentWorkout(null);
       return saved;
     } finally {

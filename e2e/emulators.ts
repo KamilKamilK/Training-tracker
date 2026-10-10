@@ -1,4 +1,8 @@
+import { readFileSync } from 'node:fs';
+
 const PROJECT_ID = 'demo-training-tracker';
+const RULES = readFileSync('firestore.rules', 'utf8');
+const WORKOUT_WRITE_RULE = 'allow create, update: if isOwner() && isValidWorkout(request.resource.data);';
 const FIRESTORE = `http://127.0.0.1:8080/v1/projects/${PROJECT_ID}/databases/(default)/documents`;
 // The emulators accept this token as an admin that bypasses security rules.
 const ADMIN = { Authorization: 'Bearer owner', 'Content-Type': 'application/json' };
@@ -9,6 +13,7 @@ const request = async (url: string, init: RequestInit) => {
 };
 
 export const resetEmulators = async () => {
+  await restoreRules();
   await request(`http://127.0.0.1:8080/emulator/v1/projects/${PROJECT_ID}/databases/(default)/documents`, {
     method: 'DELETE',
   });
@@ -18,4 +23,18 @@ export const resetEmulators = async () => {
 export const grantOwner = (uid: string) =>
   request(`${FIRESTORE}/owners?documentId=${uid}`, { method: 'POST', headers: ADMIN, body: JSON.stringify({ fields: {} }) });
 
-export const revokeOwner = (uid: string) => request(`${FIRESTORE}/owners/${uid}`, { method: 'DELETE', headers: ADMIN });
+
+const loadRules = (content: string) =>
+  request(`http://127.0.0.1:8080/emulator/v1/projects/${PROJECT_ID}:securityRules`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ rules: { files: [{ name: 'firestore.rules', content }] } }),
+  });
+
+/** Makes the server reject every workout write while reads keep working. */
+export const rejectWorkoutWrites = () => {
+  if (!RULES.includes(WORKOUT_WRITE_RULE)) throw new Error('firestore.rules no longer contains the workout write rule');
+  return loadRules(RULES.replace(WORKOUT_WRITE_RULE, 'allow create, update: if false;'));
+};
+
+export const restoreRules = () => loadRules(RULES);

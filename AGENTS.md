@@ -41,6 +41,7 @@ Instrukcje dla agentów (Claude Code, Codex i inne) oraz osób pracujących nad 
 
 - Fail-fast: bez pustych `catch` i bez zamiany błędu na cichy `null`/wartość domyślną. Serwis przepuszcza wyjątek wyżej; hook zamienia go na stan błędu, który UI pokazuje użytkownikowi.
 - Operacja zapisu nie usuwa danych lokalnych (np. szkicu treningu), zanim zapis w Firestore się nie powiedzie.
+- Dane z Firestore trafiają do stanu przez nasłuchy (`subscribe` w serwisie); po zapisie nie aktualizuj stanu ręcznie. Dokument tworzony z UI dostaje identyfikator przed zapisem, aby ponowny zapis (np. po odświeżeniu z zapisem czekającym offline) nadpisał ten sam dokument.
 - Zapis kilku powiązanych dokumentów wykonuj atomowo (`writeBatch` lub `runTransaction`).
 - Dane czytane z Firestore i LocalStorage są niezaufane: waliduj je przy odczycie w serwisie, zanim trafią do stanu.
 - Nie zmieniaj danych w produkcyjnym projekcie Firebase ręcznie (konsola, skrypty) bez zgody właściciela na konkretną zmianę.

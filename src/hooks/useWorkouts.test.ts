@@ -115,3 +115,39 @@ describe('useWorkouts while saving', () => {
     expect(result.current.currentWorkout).toBeNull();
   });
 });
+
+describe('useWorkouts workout id', () => {
+  it('keeps the id of a draft across a reload, so a second save overwrites the same workout', async () => {
+    const { result } = startedHook();
+    const id = result.current.currentWorkout!.id;
+    expect(id).not.toBe('');
+
+    const restored = renderHook(() => useWorkouts());
+    expect(restored.result.current.currentWorkout?.id).toBe(id);
+
+    const save = vi.fn().mockResolvedValue(false);
+    await act(async () => {
+      await restored.result.current.finishWorkout(save);
+    });
+    await act(async () => {
+      await restored.result.current.finishWorkout(save);
+    });
+
+    expect(save.mock.calls.map(([workout]) => workout.id)).toEqual([id, id]);
+  });
+
+  it('gives a draft without an id one when it is finished', async () => {
+    localStorage.setItem(
+      STORAGE_KEYS.currentWorkoutDraft,
+      JSON.stringify({ id: '', type: 'A', date: '2026-10-01', exercises: [], notes: '' }),
+    );
+    const { result } = renderHook(() => useWorkouts());
+    const save = vi.fn().mockResolvedValue(true);
+
+    await act(async () => {
+      await result.current.finishWorkout(save);
+    });
+
+    expect(save.mock.calls[0][0].id).toMatch(/^[0-9a-f-]{36}$/);
+  });
+});

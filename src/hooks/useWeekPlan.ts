@@ -6,6 +6,7 @@ import { ERROR_MESSAGES } from '../constants/messages.js';
 const createEmptyPlan = (): WeekPlan =>
   Object.fromEntries(DAYS_OF_WEEK.map(day => [day, null])) as WeekPlan;
 
+/** Week plan kept in sync with Firestore; a save shows up through the subscription. */
 export const useWeekPlan = () => {
   const [weekPlan, setWeekPlan] = useState<WeekPlan>(createEmptyPlan);
   const [isLoading, setIsLoading] = useState(true);
@@ -13,24 +14,21 @@ export const useWeekPlan = () => {
   const [lastSaved, setLastSaved] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    let cancelled = false;
-    WeekPlanService.get()
-      .then(document => {
-        if (cancelled || !document) return;
-        setWeekPlan(document.plan);
-        setLastSaved(document.updatedAt);
-      })
-      .catch(() => {
-        if (!cancelled) setError(ERROR_MESSAGES.loadWeekPlan);
-      })
-      .finally(() => {
-        if (!cancelled) setIsLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+  useEffect(
+    () =>
+      WeekPlanService.subscribe(
+        document => {
+          setWeekPlan(document?.plan ?? createEmptyPlan());
+          setLastSaved(document?.updatedAt ?? null);
+          setIsLoading(false);
+        },
+        () => {
+          setError(ERROR_MESSAGES.loadWeekPlan);
+          setIsLoading(false);
+        },
+      ),
+    [],
+  );
 
   /** Resolves to true only when Firestore confirmed the write. */
   const saveWeekPlan = useCallback(async (plan: WeekPlan): Promise<boolean> => {
@@ -38,7 +36,6 @@ export const useWeekPlan = () => {
     try {
       const updatedAt = new Date().toISOString();
       await WeekPlanService.save({ plan, updatedAt });
-      setLastSaved(updatedAt);
       setError(null);
       return true;
     } catch {
@@ -50,17 +47,13 @@ export const useWeekPlan = () => {
   }, []);
 
   const updateDay = async (day: DayOfWeek, templateId: string | null) => {
-    const updatedPlan = { ...weekPlan, [day]: templateId };
-    setWeekPlan(updatedPlan);
-    return saveWeekPlan(updatedPlan);
+    return saveWeekPlan({ ...weekPlan, [day]: templateId });
   };
 
   const clearDay = async (day: DayOfWeek) => updateDay(day, null);
 
   const clearAllDays = async () => {
-    const emptyPlan = createEmptyPlan();
-    setWeekPlan(emptyPlan);
-    return saveWeekPlan(emptyPlan);
+    return saveWeekPlan(createEmptyPlan());
   };
 
   const getStats = () => {

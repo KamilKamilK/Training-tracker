@@ -4,33 +4,31 @@ import { MeasurementsService } from '../services/firebase/measurements.service.j
 import { sortByDateAsc } from '../utils/measurement.utils.js';
 import { ERROR_MESSAGES } from '../constants/messages.js';
 
+/** Measurements kept in sync with Firestore; writes show up through the subscription. */
 export const useMeasurements = () => {
   const [measurements, setMeasurements] = useState<Measurement[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    let cancelled = false;
-    MeasurementsService.getAll()
-      .then(data => {
-        if (!cancelled) setMeasurements(sortByDateAsc(data));
-      })
-      .catch(() => {
-        if (!cancelled) setError(ERROR_MESSAGES.loadMeasurements);
-      })
-      .finally(() => {
-        if (!cancelled) setIsLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+  useEffect(
+    () =>
+      MeasurementsService.subscribe(
+        data => {
+          setMeasurements(sortByDateAsc(data));
+          setIsLoading(false);
+        },
+        () => {
+          setError(ERROR_MESSAGES.loadMeasurements);
+          setIsLoading(false);
+        },
+      ),
+    [],
+  );
 
   /** Resolves to true only when Firestore confirmed the write. */
   const saveMeasurement = useCallback(async (measurement: Omit<Measurement, 'id'>): Promise<boolean> => {
     try {
-      const id = await MeasurementsService.save(measurement);
-      setMeasurements(prev => sortByDateAsc([...prev, { ...measurement, id }]));
+      await MeasurementsService.save(measurement);
       setError(null);
       return true;
     } catch {
@@ -42,7 +40,6 @@ export const useMeasurements = () => {
   const deleteMeasurement = useCallback(async (id: string): Promise<boolean> => {
     try {
       await MeasurementsService.delete(id);
-      setMeasurements(prev => prev.filter(m => m.id !== id));
       setError(null);
       return true;
     } catch {

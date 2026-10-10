@@ -1,7 +1,7 @@
 # Dziennik Treningowy — ręczna lista kontrolna testów
 
 **Ostatnie pełne przejście:** brak.
-**Automatyzacja:** scenariusze ekranu logowania, braku dostępu, 2.2–2.3 oraz 3.3–3.5 są testami end-to-end w `e2e/` (`npm run test:e2e`, na zbudowanej wersji); ręcznie sprawdzamy pozostałe.
+**Automatyzacja:** ekran logowania, brak dostępu, sekcja 1a (bez produkcji), 2.2–2.3, 3.3–3.6 oraz sekcja 8 (bez telefonu) są testami end-to-end w `e2e/` (`npm run test:e2e`, na zbudowanej wersji); ręcznie sprawdzamy pozostałe i całość na produkcji.
 **Znane rozbieżności:** punkt z numerem KNOWN_ISSUES (np. „#1”) opisuje zachowanie docelowe, którego środowisko jeszcze nie spełnia — niepowodzenie potwierdza zgłoszony problem.
 **Cel:** weryfikacja funkcji aplikacji przed wdrożeniem na Vercel lub po większych zmianach.
 **Środowisko:** `npm run emulators` i `npm run dev` z `VITE_USE_EMULATORS=true` ([README](../README.md#-uruchomienie-lokalne)); przeglądarka desktopowa i widok mobilny (DevTools, szerokość 375 px).
@@ -73,6 +73,13 @@ Nowy przypadek: warunki wstępne, kroki, oczekiwany wynik.
 - [ ] Usunięcie treningu z dnia i „Wyczyść” pytają o potwierdzenie i działają
 - [ ] Nieudany zapis planu → komunikat nad nagłówkiem planu (bez okna `alert`)
 - [ ] Statystyki planu (dni aktywne/odpoczynku) zgadzają się z przypisaniami
+
+## 8. Dane na żywo i praca offline
+
+- [ ] Dwie karty (albo komputer i telefon) z dziennikiem: pomiar lub trening zapisany w jednej pojawia się w drugiej bez odświeżania
+- [ ] Zalogowany, potem bez sieci (DevTools → Offline albo tryb samolotowy w telefonie): wszystkie zakładki otwierają się i pokazują dane, także te, których jeszcze nie otwierano po zalogowaniu
+- [ ] Bez sieci pomiar trafia od razu na listę, a okno pomiaru czeka z „Zapisywanie...” do powrotu sieci; po powrocie zamyka się, pomiar jest zapisany raz
+- [ ] „Wyloguj” → ekran logowania; po ponownym zalogowaniu innym kontem nie widać danych poprzedniego (pamięć w przeglądarce jest czyszczona)
 
 ## 7. Postępy
 

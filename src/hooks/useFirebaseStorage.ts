@@ -4,34 +4,31 @@ import { WorkoutsService } from '../services/firebase/workouts.service.js';
 import { sortByDateDesc } from '../utils/workout.utils.js';
 import { ERROR_MESSAGES } from '../constants/messages.js';
 
+/** Workout history kept in sync with Firestore; writes show up through the subscription. */
 export const useFirebaseStorage = () => {
   const [workouts, setWorkouts] = useState<Workout[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    let cancelled = false;
-    WorkoutsService.getAll()
-      .then(data => {
-        if (!cancelled) setWorkouts(sortByDateDesc(data));
-      })
-      .catch(() => {
-        if (!cancelled) setError(ERROR_MESSAGES.loadWorkouts);
-      })
-      .finally(() => {
-        if (!cancelled) setIsLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+  useEffect(
+    () =>
+      WorkoutsService.subscribe(
+        data => {
+          setWorkouts(sortByDateDesc(data));
+          setIsLoading(false);
+        },
+        () => {
+          setError(ERROR_MESSAGES.loadWorkouts);
+          setIsLoading(false);
+        },
+      ),
+    [],
+  );
 
   /** Resolves to true only when Firestore confirmed the write. */
   const saveWorkout = useCallback(async (workout: Workout): Promise<boolean> => {
     try {
-      const id = await WorkoutsService.save(workout);
-      const saved = { ...workout, id };
-      setWorkouts(prev => sortByDateDesc([...prev.filter(w => w.id !== id), saved]));
+      await WorkoutsService.save(workout);
       setError(null);
       return true;
     } catch {
@@ -43,7 +40,6 @@ export const useFirebaseStorage = () => {
   const deleteWorkout = useCallback(async (id: string): Promise<boolean> => {
     try {
       await WorkoutsService.delete(id);
-      setWorkouts(prev => prev.filter(w => w.id !== id));
       setError(null);
       return true;
     } catch {

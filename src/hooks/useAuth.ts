@@ -49,6 +49,8 @@ export const useAuth = () => {
     setError(null);
     try {
       await AuthService.signOut();
+      // A fresh page load creates a new Firestore instance with an empty cache.
+      window.location.assign('/');
     } catch {
       setError(ERROR_MESSAGES.signOut);
     }

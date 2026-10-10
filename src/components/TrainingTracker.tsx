@@ -1,4 +1,4 @@
-import React, { Suspense, lazy, useState } from 'react';
+import React, { Suspense, lazy, useEffect, useState } from 'react';
 import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router';
 import { Dumbbell, Calendar, Plus, TrendingUp, FileText } from 'lucide-react';
 import { ROUTES } from '../constants/routes.js';
@@ -17,11 +17,24 @@ import { TabNavigation } from './common/TabNavigation.js';
 import { DashboardTab } from './tabs/DashboardTab/index.js';
 import { WorkoutTab } from './tabs/WorkoutTab/index.js';
 
-// Tabs other than the start page and the active workout load on first visit.
-const TemplatesTab = lazy(() => import('./tabs/TemplatesTab/index.js').then(m => ({ default: m.TemplatesTab })));
-const PlanTab = lazy(() => import('./tabs/PlanTab/index.js').then(m => ({ default: m.PlanTab })));
-const HistoryTab = lazy(() => import('./tabs/HistoryTab/index.js').then(m => ({ default: m.HistoryTab })));
-const StatsTab = lazy(() => import('./tabs/StatsTab/index.js').then(m => ({ default: m.StatsTab })));
+// Tabs other than the start page and the active workout are separate chunks, so the first screen
+// loads faster. They are fetched in the background right after sign-in: without that, a tab opened
+// for the first time without a connection (e.g. at the gym) would fail to load.
+const loadTemplatesTab = () => import('./tabs/TemplatesTab/index.js');
+const loadPlanTab = () => import('./tabs/PlanTab/index.js');
+const loadHistoryTab = () => import('./tabs/HistoryTab/index.js');
+const loadStatsTab = () => import('./tabs/StatsTab/index.js');
+
+const TemplatesTab = lazy(() => loadTemplatesTab().then(m => ({ default: m.TemplatesTab })));
+const PlanTab = lazy(() => loadPlanTab().then(m => ({ default: m.PlanTab })));
+const HistoryTab = lazy(() => loadHistoryTab().then(m => ({ default: m.HistoryTab })));
+const StatsTab = lazy(() => loadStatsTab().then(m => ({ default: m.StatsTab })));
+
+const prefetchTabs = () =>
+  Promise.all([loadTemplatesTab(), loadPlanTab(), loadHistoryTab(), loadStatsTab()]).catch(error => {
+    // Not fatal: a tab that failed here is fetched again when opened.
+    console.warn('TrainingTracker: prefetching tabs failed', error);
+  });
 
 const tabs = [
   { path: ROUTES.dashboard, label: 'Start', icon: Dumbbell },
@@ -40,6 +53,10 @@ interface TrainingTrackerProps {
 const TrainingTracker: React.FC<TrainingTrackerProps> = ({ email, onSignOut }) => {
   const navigate = useNavigate();
   const { pathname } = useLocation();
+
+  useEffect(() => {
+    void prefetchTabs();
+  }, []);
   const [isMeasurementFormOpen, setIsMeasurementFormOpen] = useState(false);
 
   const {

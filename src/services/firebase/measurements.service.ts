@@ -1,4 +1,4 @@
-import { collection, doc, getDocs, addDoc, deleteDoc } from 'firebase/firestore';
+import { addDoc, collection, deleteDoc, doc, onSnapshot } from 'firebase/firestore';
 import { db } from '../../lib/firebaseConfig.js';
 import { Measurement } from '../../types/index.js';
 import { parseMeasurement } from '../../utils/parse.utils.js';
@@ -8,28 +8,32 @@ const COLLECTION_NAME = 'measurements';
 export class MeasurementsService {
   private static collection = collection(db, COLLECTION_NAME);
 
-  /** Returns valid measurements; documents with an unexpected shape are skipped and reported by id. */
-  static async getAll(): Promise<Measurement[]> {
-    try {
-      const snapshot = await getDocs(this.collection);
-      return snapshot.docs.flatMap(document => {
-        const measurement = parseMeasurement(document.id, document.data());
-        if (!measurement) {
-          console.warn('MeasurementsService.getAll: skipped invalid document', document.id);
-          return [];
-        }
-        return [measurement];
-      });
-    } catch (err) {
-      console.error('MeasurementsService.getAll error:', err);
-      throw err;
-    }
+  /** Streams all valid measurements; documents with an unexpected shape are skipped and reported by id. */
+  static subscribe(onChange: (measurements: Measurement[]) => void, onError: (error: unknown) => void): () => void {
+    return onSnapshot(
+      this.collection,
+      snapshot => {
+        onChange(
+          snapshot.docs.flatMap(document => {
+            const measurement = parseMeasurement(document.id, document.data());
+            if (!measurement) {
+              console.warn('MeasurementsService.subscribe: skipped invalid document', document.id);
+              return [];
+            }
+            return [measurement];
+          }),
+        );
+      },
+      error => {
+        console.error('MeasurementsService.subscribe error:', error);
+        onError(error);
+      },
+    );
   }
 
-  static async save(measurement: Omit<Measurement, 'id'>): Promise<string> {
+  static async save(measurement: Omit<Measurement, 'id'>): Promise<void> {
     try {
-      const docRef = await addDoc(this.collection, measurement);
-      return docRef.id;
+      await addDoc(this.collection, measurement);
     } catch (err) {
       console.error('MeasurementsService.save error:', err);
       throw err;

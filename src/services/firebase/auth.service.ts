@@ -1,5 +1,5 @@
 import { GoogleAuthProvider, User, onAuthStateChanged, signInWithPopup, signOut } from 'firebase/auth';
-import { doc, getDoc } from 'firebase/firestore';
+import { clearIndexedDbPersistence, doc, getDoc, terminate } from 'firebase/firestore';
 import { auth, db } from '../../lib/firebaseConfig.js';
 
 const OWNERS_COLLECTION = 'owners';
@@ -18,9 +18,15 @@ export class AuthService {
     }
   }
 
+  /**
+   * Signs out and deletes the local Firestore cache, so no data stays on a shared device. The
+   * Firestore instance cannot be used afterwards: the caller reloads the app.
+   */
   static async signOut(): Promise<void> {
     try {
       await signOut(auth);
+      await terminate(db);
+      await clearIndexedDbPersistence(db);
     } catch (err) {
       console.error('AuthService.signOut error:', err);
       throw err;

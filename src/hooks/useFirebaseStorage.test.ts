@@ -1,4 +1,4 @@
-import { act, renderHook, waitFor } from '@testing-library/react';
+import { act, renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useFirebaseStorage } from './useFirebaseStorage.js';
 import { WorkoutsService } from '../services/firebase/workouts.service.js';
@@ -6,53 +6,75 @@ import { ERROR_MESSAGES } from '../constants/messages.js';
 import { Workout } from '../types/index.js';
 
 vi.mock('../services/firebase/workouts.service.js', () => ({
-  WorkoutsService: { getAll: vi.fn(), save: vi.fn(), delete: vi.fn() },
+  WorkoutsService: { subscribe: vi.fn(), save: vi.fn(), delete: vi.fn() },
 }));
 
 const service = vi.mocked(WorkoutsService);
 
-const workout: Workout = { id: '', type: 'A', date: '2026-10-07', exercises: [], notes: '' };
+const workout = (id: string, date: string): Workout => ({ id, type: 'A', date, exercises: [], notes: '' });
+
+let emit: (workouts: Workout[]) => void;
+let fail: (error: unknown) => void;
+const unsubscribe = vi.fn();
 
 beforeEach(() => {
   vi.resetAllMocks();
+  service.subscribe.mockImplementation((onChange, onError) => {
+    emit = onChange;
+    fail = onError;
+    return unsubscribe;
+  });
 });
 
 describe('useFirebaseStorage', () => {
-  it('exposes a load error instead of an empty history', async () => {
-    service.getAll.mockRejectedValue(new Error('offline'));
+  it('shows every update from the subscription, newest first', () => {
     const { result } = renderHook(() => useFirebaseStorage());
+    expect(result.current.isLoading).toBe(true);
 
-    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    act(() => emit([workout('a', '2026-10-01'), workout('b', '2026-10-05')]));
+    expect(result.current.isLoading).toBe(false);
+    expect(result.current.workouts.map(w => w.id)).toEqual(['b', 'a']);
+
+    act(() => emit([workout('a', '2026-10-01')]));
+    expect(result.current.workouts.map(w => w.id)).toEqual(['a']);
+  });
+
+  it('exposes a load error instead of an empty history', () => {
+    const { result } = renderHook(() => useFirebaseStorage());
+    act(() => fail(new Error('permission-denied')));
+    expect(result.current.isLoading).toBe(false);
     expect(result.current.error).toBe(ERROR_MESSAGES.loadWorkouts);
   });
 
-  it('reports a failed save and leaves the history unchanged', async () => {
-    service.getAll.mockResolvedValue([]);
+  it('stops listening on unmount', () => {
+    const { unmount } = renderHook(() => useFirebaseStorage());
+    unmount();
+    expect(unsubscribe).toHaveBeenCalledTimes(1);
+  });
+
+  it('reports a failed save', async () => {
     service.save.mockRejectedValue(new Error('permission-denied'));
     const { result } = renderHook(() => useFirebaseStorage());
-    await waitFor(() => expect(result.current.isLoading).toBe(false));
 
     let saved = true;
     await act(async () => {
-      saved = await result.current.saveWorkout(workout);
+      saved = await result.current.saveWorkout(workout('a', '2026-10-01'));
     });
 
     expect(saved).toBe(false);
     expect(result.current.error).toBe(ERROR_MESSAGES.saveWorkout);
-    expect(result.current.workouts).toEqual([]);
   });
 
-  it('adds a saved workout with its new id', async () => {
-    service.getAll.mockResolvedValue([]);
-    service.save.mockResolvedValue('w1');
+  it('resolves to true once the write is confirmed', async () => {
+    service.save.mockResolvedValue(undefined);
     const { result } = renderHook(() => useFirebaseStorage());
-    await waitFor(() => expect(result.current.isLoading).toBe(false));
 
+    let saved = false;
     await act(async () => {
-      await result.current.saveWorkout(workout);
+      saved = await result.current.saveWorkout(workout('a', '2026-10-01'));
     });
 
-    expect(result.current.workouts).toEqual([{ ...workout, id: 'w1' }]);
-    expect(result.current.error).toBeNull();
+    expect(saved).toBe(true);
+    expect(service.save).toHaveBeenCalledWith(workout('a', '2026-10-01'));
   });
 });

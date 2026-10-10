@@ -15,6 +15,12 @@ export const parseWorkout = (id: string, value: unknown): Workout | null => {
   return result.success ? { id, ...result.data } : null;
 };
 
+/** The LocalStorage draft keeps its workout id, so saving it again overwrites the same document. */
+export const parseWorkoutDraft = (value: unknown): Workout | null => {
+  const id = typeof value === 'object' && value !== null && 'id' in value && typeof value.id === 'string' ? value.id : '';
+  return parseWorkout(id, value);
+};
+
 export const parseMeasurement = (id: string, value: unknown): Measurement | null => {
   const result = MeasurementDocumentSchema.safeParse(value);
   return result.success ? { id, ...result.data } : null;
