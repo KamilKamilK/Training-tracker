@@ -10,12 +10,12 @@ const errorCode = (err: unknown) => (err instanceof FirebaseError ? err.code : u
 
 export const useAuth = () => {
   const [status, setStatus] = useState<AuthStatus>('loading');
-  const [email, setEmail] = useState<string | null>(null);
+  const [user, setUser] = useState<AuthUser | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
 
   const resolveAccess = useCallback((user: AuthUser | null, isCurrent: () => boolean) => {
-    setEmail(user?.email ?? null);
+    setUser(user);
     if (!user) {
       setStatus('signedOut');
       return;
@@ -107,7 +107,9 @@ export const useAuth = () => {
 
   return {
     status,
-    email,
+    uid: user?.uid ?? null,
+    email: user?.email ?? null,
+    displayName: user?.displayName ?? null,
     error,
     notice,
     clearError: () => setError(null),

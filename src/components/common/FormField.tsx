@@ -4,7 +4,7 @@ import { Eye, EyeOff } from 'lucide-react';
 interface FormFieldProps {
   id: string;
   label: string;
-  type: 'email' | 'password';
+  type: 'email' | 'password' | 'text';
   value: string;
   error?: string;
   hint?: string;

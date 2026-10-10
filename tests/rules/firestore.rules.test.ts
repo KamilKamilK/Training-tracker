@@ -13,8 +13,10 @@ import {
   doc,
   getDoc,
   getDocs,
+  serverTimestamp,
   setDoc,
   setLogLevel,
+  Timestamp,
   updateDoc,
 } from 'firebase/firestore';
 
@@ -33,6 +35,10 @@ const weekPlan = {
   plan: { monday: 'ABC-A', tuesday: null, wednesday: null, thursday: null, friday: null, saturday: null, sunday: null },
   updatedAt: '2026-10-07T10:00:00.000Z',
 };
+
+const consent = (accepted: boolean, at: unknown = serverTimestamp()) => ({ accepted, version: '2026-10-10', at });
+const profile = (accepted = true, at: unknown = serverTimestamp()) => ({ displayName: 'Anna', consents: { health: consent(accepted, at) } });
+const storedProfile = (accepted: boolean) => profile(accepted, Timestamp.fromDate(new Date('2026-10-10T08:00:00Z')));
 
 let env: RulesTestEnvironment;
 
@@ -61,6 +67,7 @@ beforeEach(async () => {
   await env.withSecurityRulesDisabled(async context => {
     const db = context.firestore();
     await setDoc(doc(db, 'owners', OWNER), {});
+    await setDoc(doc(db, 'users', OWNER), storedProfile(true));
     await setDoc(doc(db, 'workouts', 'w1'), workout);
     await setDoc(doc(db, 'measurements', 'm1'), measurement);
     await setDoc(doc(db, 'weekPlans', 'default_week_plan'), weekPlan);
@@ -103,6 +110,21 @@ describe('access', () => {
 
   it('denies the owner account until its e-mail address is verified', async () => {
     const db = unverifiedOwnerDb();
+    await assertFails(getDocs(collection(db, 'workouts')));
+    await assertFails(getDoc(doc(db, 'measurements', 'm1')));
+    await assertFails(addDoc(collection(db, 'workouts'), workout));
+    await assertFails(setDoc(doc(db, 'weekPlans', 'default_week_plan'), weekPlan));
+  });
+
+  it.each([
+    ['without a profile', null],
+    ['after withdrawing the health consent', storedProfile(false)],
+  ])('denies the owner account %s', async (_, ownerProfile) => {
+    await env.withSecurityRulesDisabled(async context => {
+      const ref = doc(context.firestore(), 'users', OWNER);
+      await (ownerProfile ? setDoc(ref, ownerProfile) : deleteDoc(ref));
+    });
+    const db = ownerDb();
     await assertFails(getDocs(collection(db, 'workouts')));
     await assertFails(getDoc(doc(db, 'measurements', 'm1')));
     await assertFails(addDoc(collection(db, 'workouts'), workout));
@@ -160,5 +182,45 @@ describe('week plan validation', () => {
 
   it('cannot be deleted', async () => {
     await assertFails(deleteDoc(doc(ownerDb(), 'weekPlans', 'default_week_plan')));
+  });
+});
+
+describe('user profile', () => {
+  const ownProfile = (db = strangerDb()) => doc(db, 'users', STRANGER);
+
+  it('lets a verified account create, read and rename its own profile', async () => {
+    await assertSucceeds(setDoc(ownProfile(), profile()));
+    await assertSucceeds(getDoc(ownProfile()));
+    await assertSucceeds(updateDoc(ownProfile(), { displayName: 'Anna Nowak' }));
+  });
+
+  it('records a withdrawal only with the server time', async () => {
+    await env.withSecurityRulesDisabled(context => setDoc(doc(context.firestore(), 'users', STRANGER), storedProfile(true)));
+    await assertFails(updateDoc(ownProfile(), { 'consents.health.accepted': false }));
+    await assertSucceeds(updateDoc(ownProfile(), { 'consents.health': consent(false) }));
+  });
+
+  it('denies another account, an unverified account and anonymous access', async () => {
+    await assertFails(setDoc(doc(ownerDb(), 'users', STRANGER), profile()));
+    await assertFails(getDoc(doc(strangerDb(), 'users', OWNER)));
+    await assertFails(setDoc(doc(env.authenticatedContext(STRANGER, { email_verified: false }).firestore(), 'users', STRANGER), profile()));
+    await assertFails(getDoc(doc(anonymousDb(), 'users', OWNER)));
+    await assertFails(getDocs(collection(ownerDb(), 'users')));
+  });
+
+  it('cannot be deleted from the app', async () => {
+    await assertFails(deleteDoc(doc(ownerDb(), 'users', OWNER)));
+  });
+
+  it.each([
+    ['a client-chosen consent time', profile(true, Timestamp.fromDate(new Date('2020-01-01T00:00:00Z')))],
+    ['an empty name', { ...profile(), displayName: '' }],
+    ['a name over 60 characters', { ...profile(), displayName: 'a'.repeat(61) }],
+    ['an unknown field', { ...profile(), roles: ['coach'] }],
+    ['an unknown consent', { ...profile(), consents: { health: consent(true), marketing: consent(true) } }],
+    ['consent accepted as text', { ...profile(), consents: { health: { ...consent(true), accepted: 'yes' } } }],
+    ['a missing consent version', { ...profile(), consents: { health: { accepted: true, at: serverTimestamp() } } }],
+  ])('rejects a profile with %s', async (_, data) => {
+    await assertFails(setDoc(ownProfile(), data));
   });
 });

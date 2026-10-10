@@ -16,6 +16,8 @@ import { Footer } from '../components/common/Footer.js';
 import { TabNavigation } from '../components/common/TabNavigation.js';
 import { DashboardTab } from '../features/dashboard/DashboardTab.js';
 import { WorkoutTab } from '../features/workouts/WorkoutTab.js';
+import { SettingsTab } from '../features/profile/SettingsTab.js';
+import { UserProfile } from '../types/index.js';
 
 // Tabs other than the start page and the active workout are separate chunks, so the first screen
 // loads faster. They are fetched in the background right after sign-in: without that, a tab opened
@@ -47,10 +49,23 @@ const tabs = [
 
 interface TrainingTrackerProps {
   email: string | null;
+  profile: UserProfile;
+  profileError: string | null;
+  onDismissProfileError: () => void;
+  onUpdateDisplayName: (displayName: string) => Promise<boolean>;
+  onWithdrawHealthConsent: () => Promise<boolean>;
   onSignOut: () => void;
 }
 
-const TrainingTracker: React.FC<TrainingTrackerProps> = ({ email, onSignOut }) => {
+const TrainingTracker: React.FC<TrainingTrackerProps> = ({
+  email,
+  profile,
+  profileError,
+  onDismissProfileError,
+  onUpdateDisplayName,
+  onWithdrawHealthConsent,
+  onSignOut,
+}) => {
   const navigate = useNavigate();
   const { pathname } = useLocation();
 
@@ -160,6 +175,19 @@ const TrainingTracker: React.FC<TrainingTrackerProps> = ({ email, onSignOut }) =
               />
               <Route path={ROUTES.history} element={<HistoryTab workouts={workouts} onDelete={deleteWorkout} />} />
               <Route path={ROUTES.progress} element={<ProgressTab measurements={measurements} workouts={workouts} />} />
+              <Route
+                path={ROUTES.settings}
+                element={
+                  <SettingsTab
+                    email={email}
+                    profile={profile}
+                    error={profileError}
+                    onDismissError={onDismissProfileError}
+                    onUpdateDisplayName={onUpdateDisplayName}
+                    onWithdrawHealthConsent={onWithdrawHealthConsent}
+                  />
+                }
+              />
               <Route path="*" element={<Navigate to={ROUTES.dashboard} replace />} />
             </Routes>
           </Suspense>

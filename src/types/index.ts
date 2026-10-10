@@ -2,3 +2,4 @@ export * from './workout.types.js';
 export * from './measurement.types.js';
 export * from './template.types.js';
 export * from './weekPlan.types.js';
+export * from './profile.types.js';

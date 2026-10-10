@@ -1,6 +1,6 @@
 # Dziennik Treningowy — wizja i plan rozwoju
 
-**Status:** kierunek przyjęty 2026-10-10 — Firebase zostaje, najpierw wersja webowa, wersja mobilna odłożona ([ADR-0004](adr/0004-firebase-multi-user.md)). Decyzje do etapów 1–3 przyjęte; projekt zostaje na darmowym planie Spark ([Decyzje](#decyzje)).
+**Status:** kierunek przyjęty 2026-10-10 — Firebase zostaje, najpierw wersja webowa, wersja mobilna odłożona ([ADR-0004](adr/0004-firebase-multi-user.md)). Decyzje do etapów 1–3 przyjęte; Firebase zostaje na darmowym planie Spark, kod serwerowy działa w funkcjach Vercel ([Decyzje](#decyzje)).
 
 ## Wizja
 
@@ -85,12 +85,14 @@ Wszystkie decyzje potrzebne do etapów 1–3 są przyjęte (2026-10-10):
 | [0005](adr/0005-data-model-and-access.md) | Dane w `users/{uid}/…`; dostęp trenera przez zaakceptowaną współpracę; role jako profil |
 | [0006](adr/0006-training-programs.md) | Plan wielotygodniowy; przypisanie jako kopia; progresja wartościami |
 | [0007](adr/0007-exercises-and-sets.md) | Biblioteka ćwiczeń, serie liczbowe, migracja skryptem z trybem próbnym |
-| [0008](adr/0008-accounts-and-invitations.md) | Google albo e-mail z hasłem, potwierdzenie adresu, reset hasła; zaproszenie linkiem bez serwera |
+| [0008](adr/0008-accounts-and-invitations.md) | Google albo e-mail z hasłem, potwierdzenie adresu, reset hasła; zaproszenie linkiem |
 | [0009](adr/0009-cloud-functions-aggregates.md) | Plan Spark bez Cloud Functions; postęp liczony w przeglądarce; zdjęcia po zmianie planu |
 | [0010](adr/0010-web-app-architecture.md), [0011](adr/0011-environments-hosting-monitoring.md) | Architektura aplikacji webowej; emulatory i produkcja, Vercel |
-| [0012](adr/0012-personal-and-health-data.md) | Dobrowolne, zrozumiałe zgody; dane o zdrowiu tylko dla własnego trenera; eksport i usunięcie konta |
+| [0012](adr/0012-personal-and-health-data.md) | Zrozumiałe zgody; dane o zdrowiu tylko dla własnego trenera; eksport i usunięcie konta |
+| [0014](adr/0014-server-functions-and-email.md) | Funkcje Vercel z Firebase Admin SDK; e-maile przez Brevo po zakupie domeny |
+| [0015](adr/0015-accounts-roles-consent.md) | Zgoda na dane o zdrowiu warunkiem aktywacji; rola trenera od administratora; konta zakładane przez trenera; usunięcie konta |
 
-Backlog decyzji: zdjęcia sylwetki (Cloud Storage na planie Blaze albo inny dostawca); drugi dostawca chmury, np. Azure z kolejką zadań — gdy pojawi się praca w tle (wysyłka e-maili, eksporty, przeliczanie statystyk), wymaga nowego ADR; otwieranie aplikacji bez sieci ([ADR-0013](adr/0013-offline-app-shell.md), odłożona razem z wersją mobilną); plan Blaze (warunki w ADR-0009); model cenowy i operator płatności — przed etapem 5.
+Backlog decyzji: zdjęcia sylwetki (Cloud Storage na planie Blaze albo inny dostawca); drugi dostawca chmury, np. Azure z kolejką zadań — gdy pojawi się praca w tle (eksporty, przeliczanie statystyk), wymaga nowego ADR; własna domena: e-maile przez Brevo, adres aplikacji i strona `/konto/akcja` ([ADR-0014](adr/0014-server-functions-and-email.md)); otwieranie aplikacji bez sieci ([ADR-0013](adr/0013-offline-app-shell.md), odłożona razem z wersją mobilną); plan Blaze (warunki w ADR-0009); model cenowy i operator płatności — przed etapem 5.
 
 ## Etapy
 
@@ -99,9 +101,9 @@ Rozmiar: S — kilka dni, M — 1–2 tygodnie, L — 3+ tygodnie pracy jednej o
 | Etap | Zakres | Gotowe, gdy | Rozmiar |
 |---|---|---|---|
 | **0. Fundament** | Schematy Zod, routing, nasłuchy danych, cache offline i podział kodu według funkcji — wdrożone ([ADR-0010](adr/0010-web-app-architecture.md)); testy E2E Playwright na emulatorach i na zbudowanej wersji — wdrożone (`e2e/`, [ADR-0011](adr/0011-environments-hosting-monitoring.md)) | Scenariusze z checklisty mają testy E2E, aplikacja działa offline na otwartej stronie | M |
-| **1. Wiele kont, nowy model danych** | Ekran „Zaloguj / Zarejestruj” (Google albo e-mail z hasłem, potwierdzenie adresu, reset hasła) — wdrożony; profil i zgody; dane w `users/{uid}/…`; biblioteka ćwiczeń; serie liczbowe; szablony w Firestore; migracja obecnych danych | Dwa konta nie widzą swoich danych (testy reguł A/B), konto bez potwierdzonego adresu nie ma dostępu, dane właściciela przeniesione bez strat | L |
+| **1. Wiele kont, nowy model danych** | Ekran „Zaloguj / Zarejestruj” (Google albo e-mail z hasłem, potwierdzenie adresu, reset hasła) — wdrożony; profil i zgoda wymagana do aktywacji, ustawienia — wdrożone; usunięcie konta (funkcja Vercel); dane w `users/{uid}/…`; biblioteka ćwiczeń; serie liczbowe; szablony w Firestore; migracja obecnych danych | Dwa konta nie widzą swoich danych (testy reguł A/B), konto bez potwierdzonego adresu nie ma dostępu, dane właściciela przeniesione bez strat | L |
 | **2. Postęp** | Wyniki z poprzedniego razu przy ćwiczeniu; wykresy e1RM, rekordy, objętość tygodniowa, regularność; trend wagi; minutnik przerwy | Podopieczny widzi postęp dla dowolnego ćwiczenia z historii; obliczenia mają testy jednostkowe | M |
-| **3. Trener** | Rola trenera; zaproszenia linkiem (reguły Firestore); lista podopiecznych z sygnałami; kreator planu wielotygodniowego z kopiowaniem i progresją; przypisanie planu; „zadane / wykonane”; komentarze; check-iny; import CSV/Excel | Pilotaż: 2–3 trenerów prowadzi realnych podopiecznych przez 4 tygodnie bez arkusza | L |
+| **3. Trener** | Rola trenera nadawana przez administratora; konta zakładane przez trenera i zaproszenia linkiem ([ADR-0015](adr/0015-accounts-roles-consent.md)); lista podopiecznych z sygnałami; kreator planu wielotygodniowego z kopiowaniem i progresją; przypisanie planu; „zadane / wykonane”; komentarze; check-iny; import CSV/Excel | Pilotaż: 2–3 trenerów prowadzi realnych podopiecznych przez 4 tygodnie bez arkusza | L |
 | **4. Mobile — odłożony** | Do wznowienia decyzją właściciela ([ADR-0004](adr/0004-firebase-multi-user.md)); wtedy PWA, a później Capacitor | — | M |
 | **5. Produkt komercyjny** | Abonamenty i limity podopiecznych; strona produktu; regulamin, polityka prywatności, umowa powierzenia; eksport i usunięcie danych; język angielski; panel administratora | Pierwszy trener płaci za abonament, a żądanie usunięcia konta wykonuje się bez ręcznej pracy | L |
 
@@ -122,5 +124,5 @@ Kolejność: 0 → 1 → 2 → 3 → 5. Etapy 1 i 2 mają wartość także bez t
 | Złożoność reguł Firestore dla relacji trener–podopieczny | Uprawnienia przez dokument `coaching`, testy A/B dla każdej ścieżki, w tym zaproszenia wygasłe, użyte i cudze |
 | Migracja obecnych danych | Skrypt z trybem próbnym, kopia eksportu Firestore, porównanie liczby treningów i serii przed i po |
 | Trenerzy nie porzucą Excela | Import arkusza, eksport do PDF, pilotaż przed etapem 5 |
-| Wymogi RODO dla danych o zdrowiu | ADR-0012 i konsultacja prawna przed pierwszym trenerem |
+| Wymogi RODO dla danych o zdrowiu, zgoda jako warunek aktywacji konta | ADR-0012, ADR-0015; polityka prywatności i konsultacja prawna przed otwarciem rejestracji dla innych osób |
 | Limity darmowego planu Spark przy wielu podopiecznych | Odczyt tylko potrzebnych danych (limity zapytań), monitoring zużycia w konsoli; plan Blaze według warunku w ADR-0009 |

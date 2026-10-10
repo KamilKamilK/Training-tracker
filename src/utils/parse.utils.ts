@@ -1,9 +1,11 @@
 import {
   MeasurementDocumentSchema,
+  UserProfileDocumentSchema,
   WeekPlanDocumentSchema,
   WorkoutDocumentSchema,
   WorkoutTemplateSchema,
   type Measurement,
+  type UserProfile,
   type WeekPlanDocument,
   type Workout,
   type WorkoutTemplate,
@@ -39,4 +41,9 @@ export const parseTemplates = (value: unknown): { templates: WorkoutTemplate[]; 
     return result.success ? [result.data] : [];
   });
   return { templates, skipped: value.length - templates.length };
+};
+
+export const parseUserProfile = (value: unknown): UserProfile | null => {
+  const result = UserProfileDocumentSchema.safeParse(value);
+  return result.success ? result.data : null;
 };

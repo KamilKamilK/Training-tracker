@@ -1,18 +1,45 @@
 rules_version = '2';
 
 // The app has no backend, so these rules are the security boundary: only the data
-// owner (a signed-in account with a verified e-mail whose uid has a document in `owners`) can read or write,
-// and every write is checked for shape and types. Measurement ranges mirror
+// owner (a signed-in account with a verified e-mail whose uid has a document in `owners` and
+// whose profile holds the accepted health-data consent) can read or write, and every write is
+// checked for shape and types. Measurement ranges mirror
 // VALIDATION_RULES.measurement in src/constants/validation.ts.
 service cloud.firestore {
   match /databases/{database}/documents {
 
     // Accounts created with e-mail and password must confirm the address first; Google accounts
     // are verified by Google.
+    function isVerified() {
+      return request.auth != null && request.auth.token.email_verified == true;
+    }
+
+    // The account is active only with the accepted health-data consent (ADR-0015); a missing
+    // profile makes get() fail, which denies the request.
     function isOwner() {
-      return request.auth != null
-        && request.auth.token.email_verified == true
-        && exists(/databases/$(database)/documents/owners/$(request.auth.uid));
+      return isVerified()
+        && exists(/databases/$(database)/documents/owners/$(request.auth.uid))
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.consents.health.accepted == true;
+    }
+
+    function isValidConsent(consent) {
+      return consent is map
+        && consent.keys().hasAll(['accepted', 'version', 'at'])
+        && consent.keys().hasOnly(['accepted', 'version', 'at'])
+        && consent.accepted is bool
+        && consent.version is string && consent.version.size() > 0 && consent.version.size() <= 20
+        && consent.at is timestamp;
+    }
+
+    // Mirrors UserProfileDocumentSchema in src/types/profile.types.ts.
+    function isValidProfile(data) {
+      return data.keys().hasAll(['displayName', 'consents'])
+        && data.keys().hasOnly(['displayName', 'consents'])
+        && data.displayName is string && data.displayName.size() > 0 && data.displayName.size() <= 60
+        && data.consents is map
+        && data.consents.keys().hasAll(['health'])
+        && data.consents.keys().hasOnly(['health'])
+        && isValidConsent(data.consents.health);
     }
 
     function isValidWorkout(data) {
@@ -49,6 +76,23 @@ service cloud.firestore {
         && isValidDay(data.plan, 'wednesday') && isValidDay(data.plan, 'thursday')
         && isValidDay(data.plan, 'friday') && isValidDay(data.plan, 'saturday')
         && isValidDay(data.plan, 'sunday');
+    }
+
+    // Any verified account keeps its own profile; a consent decision carries the server time of
+    // the write, so it cannot be backdated.
+    match /users/{uid} {
+      function isSelf() {
+        return isVerified() && request.auth.uid == uid;
+      }
+
+      allow get: if isSelf();
+      allow create: if isSelf()
+        && isValidProfile(request.resource.data)
+        && request.resource.data.consents.health.at == request.time;
+      allow update: if isSelf()
+        && isValidProfile(request.resource.data)
+        && (request.resource.data.consents.health == resource.data.consents.health
+          || request.resource.data.consents.health.at == request.time);
     }
 
     // Created by the owner in the Firebase console; the app only checks its existence.

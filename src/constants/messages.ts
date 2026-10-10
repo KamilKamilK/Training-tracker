@@ -7,5 +7,8 @@ export const ERROR_MESSAGES = {
   deleteMeasurement: 'Nie udało się usunąć pomiaru. Spróbuj ponownie.',
   loadWeekPlan: 'Nie udało się wczytać planu tygodnia. Odśwież stronę, aby spróbować ponownie.',
   saveWeekPlan: 'Nie udało się zapisać planu tygodnia. Sprawdź połączenie i spróbuj ponownie.',
+  loadProfile: 'Nie udało się wczytać profilu. Odśwież stronę, aby spróbować ponownie.',
+  saveProfile: 'Nie udało się zapisać profilu. Sprawdź połączenie i spróbuj ponownie.',
+  withdrawConsent: 'Nie udało się wycofać zgody. Sprawdź połączenie i spróbuj ponownie.',
   checkAccess: 'Nie udało się sprawdzić uprawnień. Odśwież stronę, aby spróbować ponownie.',
 };

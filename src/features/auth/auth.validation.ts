@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { toFieldErrors } from '../../utils/form.utils.js';
+import { validate } from '../../utils/form.utils.js';
 
 /** Mirrors the password policy set in the Firebase console (README, „Konfiguracja Firebase”). */
 export const PASSWORD_RULES = 'Co najmniej 8 znaków, w tym wielka i mała litera oraz cyfra.';
@@ -28,16 +28,6 @@ const ResetSchema = z.object({ email });
 export type SignInInput = z.input<typeof SignInSchema>;
 export type RegisterInput = z.input<typeof RegisterSchema>;
 export type ResetInput = z.input<typeof ResetSchema>;
-export type FieldErrors<T> = Partial<Record<keyof T, string>>;
-
-const validate = <Input, Output>(
-  schema: z.ZodType<Output, Input>,
-  input: Input,
-): { data: Output } | { errors: FieldErrors<Input> } => {
-  const result = schema.safeParse(input);
-  if (!result.success) return { errors: toFieldErrors<Extract<keyof Input, string>>(result.error) as FieldErrors<Input> };
-  return { data: result.data };
-};
 
 export const validateSignIn = (input: SignInInput) => validate(SignInSchema, input);
 export const validateRegister = (input: RegisterInput) => validate(RegisterSchema, input);

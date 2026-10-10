@@ -9,3 +9,15 @@ export const toFieldErrors = <Field extends string>(error: z.ZodError): Partial<
   }
   return errors;
 };
+
+export type FieldErrors<T> = Partial<Record<keyof T, string>>;
+
+/** Parses form input with a schema; field errors carry the first message per field. */
+export const validate = <Input, Output>(
+  schema: z.ZodType<Output, Input>,
+  input: Input,
+): { data: Output } | { errors: FieldErrors<Input> } => {
+  const result = schema.safeParse(input);
+  if (!result.success) return { errors: toFieldErrors<Extract<keyof Input, string>>(result.error) as FieldErrors<Input> };
+  return { data: result.data };
+};

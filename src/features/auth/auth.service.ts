@@ -15,7 +15,7 @@ import { auth, db } from '../../lib/firebaseConfig.js';
 const OWNERS_COLLECTION = 'owners';
 
 /** The part of the Firebase user the app relies on. */
-export type AuthUser = Pick<User, 'uid' | 'email' | 'emailVerified'>;
+export type AuthUser = Pick<User, 'uid' | 'email' | 'emailVerified' | 'displayName'>;
 
 const logged = async <T>(operation: string, action: () => Promise<T>): Promise<T> => {
   try {

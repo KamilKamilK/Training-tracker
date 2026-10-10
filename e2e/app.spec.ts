@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { grantOwner, rejectWorkoutWrites, resetEmulators, restoreRules } from './emulators.js';
+import { activateProfile, grantOwner, rejectWorkoutWrites, resetEmulators, restoreRules } from './emulators.js';
 
 const OWNER = 'owner@example.com';
 const STRANGER = 'stranger@example.com';
@@ -14,6 +14,7 @@ const openAsOwner = async (page: Page) => {
   await page.goto('/');
   const uid = await signIn(page, OWNER);
   await grantOwner(uid);
+  await activateProfile(uid);
   await page.reload();
   await expect(page.getByRole('heading', { name: 'Rozpocznij Trening' })).toBeVisible();
   return uid;
@@ -158,4 +159,35 @@ test('signing out removes the local data cache', async ({ page }) => {
   await Promise.all([page.waitForEvent('load'), page.getByRole('button', { name: 'Wyloguj' }).click()]);
   await expect(page.getByRole('button', { name: 'Kontynuuj z Google' })).toBeVisible();
   expect(await cacheNames()).toEqual([]);
+});
+
+test('the owner activates the account with the consent and deactivates it by withdrawing it', async ({ page }) => {
+  await page.goto('/');
+  await grantOwner(await signIn(page, OWNER));
+  await page.reload();
+  const activate = page.getByRole('button', { name: 'Aktywuj konto' });
+  await expect(activate).toBeVisible();
+
+  await page.getByLabel('Imię').fill('Anna');
+  await activate.click();
+  await expect(page.getByText(/bez niej konto pozostaje nieaktywne/)).toBeVisible();
+  await page.getByRole('checkbox').check();
+  await activate.click();
+  await expect(page.getByRole('heading', { name: 'Rozpocznij Trening' })).toBeVisible();
+
+  await page.getByRole('link', { name: 'Ustawienia' }).click();
+  await expect(page).toHaveURL(/\/settings$/);
+  await page.getByLabel('Imię').fill('Anna Nowak');
+  await page.getByRole('button', { name: 'Zapisz' }).click();
+  await expect(page.getByRole('status')).toHaveText('Zapisano.');
+  await page.reload();
+  await expect(page.getByLabel('Imię')).toHaveValue('Anna Nowak');
+
+  await page.getByRole('button', { name: 'Wycofaj zgodę' }).click();
+  // The second button is the confirmation in the modal.
+  await page.getByRole('button', { name: 'Wycofaj zgodę' }).last().click();
+  await expect(activate).toBeVisible();
+  await expect(page.getByLabel('Imię')).toHaveValue('Anna Nowak');
+  await page.reload();
+  await expect(activate).toBeVisible();
 });

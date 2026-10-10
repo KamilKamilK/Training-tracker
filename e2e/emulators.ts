@@ -1,4 +1,5 @@
 import { readFileSync } from 'node:fs';
+import { HEALTH_CONSENT } from '../src/constants/consent.js';
 
 const PROJECT_ID = 'demo-training-tracker';
 const RULES = readFileSync('firestore.rules', 'utf8');
@@ -23,6 +24,32 @@ export const resetEmulators = async () => {
 export const grantOwner = (uid: string) =>
   request(`${FIRESTORE}/owners?documentId=${uid}`, { method: 'POST', headers: ADMIN, body: JSON.stringify({ fields: {} }) });
 
+/** Stores a profile with the accepted health consent, as the activation screen would. */
+export const activateProfile = (uid: string, displayName = 'Anna') =>
+  request(`${FIRESTORE}/users?documentId=${uid}`, {
+    method: 'POST',
+    headers: ADMIN,
+    body: JSON.stringify({
+      fields: {
+        displayName: { stringValue: displayName },
+        consents: {
+          mapValue: {
+            fields: {
+              health: {
+                mapValue: {
+                  fields: {
+                    accepted: { booleanValue: true },
+                    version: { stringValue: HEALTH_CONSENT.version },
+                    at: { timestampValue: new Date().toISOString() },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    }),
+  });
 
 const loadRules = (content: string) =>
   request(`http://127.0.0.1:8080/emulator/v1/projects/${PROJECT_ID}:securityRules`, {

@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { LogIn, UserPlus } from 'lucide-react';
-import { FormField } from './FormField.js';
+import { FormField } from '../../components/common/FormField.js';
+import type { FieldErrors } from '../../utils/form.utils.js';
 import {
-  FieldErrors,
   PASSWORD_RULES,
   RegisterInput,
   SignInInput,

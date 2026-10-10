@@ -1,5 +1,7 @@
 import React from 'react';
-import { LogOut } from 'lucide-react';
+import { LogOut, Settings } from 'lucide-react';
+import { Link } from 'react-router';
+import { ROUTES } from '../../constants/routes.js';
 import { APP_CONFIG } from '../../constants/config.js';
 
 interface HeaderProps {
@@ -13,6 +15,9 @@ export const Header: React.FC<HeaderProps> = ({ templatesCount, workoutsCount, e
   <div className="mb-6 text-center">
     <div className="flex justify-end items-center gap-2 text-xs text-slate-400 mb-2">
       {email && <span className="truncate">{email}</span>}
+      <Link to={ROUTES.settings} className="flex items-center gap-1 hover:text-white">
+        <Settings size={14} /> Ustawienia
+      </Link>
       <button onClick={onSignOut} className="flex items-center gap-1 hover:text-white" title="Wyloguj">
         <LogOut size={14} /> Wyloguj
       </button>

@@ -38,6 +38,9 @@ test('a new account sees no data until the e-mail is confirmed', async ({ page }
 
   await grantOwner(await uidOf(EMAIL));
   await page.reload();
+  await page.getByLabel('Imię').fill('Anna');
+  await page.getByRole('checkbox').check();
+  await page.getByRole('button', { name: 'Aktywuj konto' }).click();
   await expect(page.getByRole('heading', { name: 'Rozpocznij Trening' })).toBeVisible();
 });
 

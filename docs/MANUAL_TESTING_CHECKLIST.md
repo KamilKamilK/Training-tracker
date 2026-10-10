@@ -1,11 +1,11 @@
 # Dziennik Treningowy — ręczna lista kontrolna testów
 
 **Ostatnie pełne przejście:** brak.
-**Automatyzacja:** ekran logowania, brak dostępu, sekcja 1a (bez produkcji), 2.2–2.3, 3.3–3.6 oraz sekcja 8 (bez telefonu) są testami end-to-end w `e2e/` (`npm run test:e2e`, na zbudowanej wersji); ręcznie sprawdzamy pozostałe i całość na produkcji.
+**Automatyzacja:** ekran logowania, brak dostępu, aktywacja konta i wycofanie zgody, sekcja 1a (bez produkcji), 2.2–2.3, 3.3–3.6 oraz sekcja 8 (bez telefonu) są testami end-to-end w `e2e/` (`npm run test:e2e`, na zbudowanej wersji); ręcznie sprawdzamy pozostałe i całość na produkcji.
 **Znane rozbieżności:** punkt z numerem KNOWN_ISSUES (np. „#1”) opisuje zachowanie docelowe, którego środowisko jeszcze nie spełnia — niepowodzenie potwierdza zgłoszony problem.
 **Cel:** weryfikacja funkcji aplikacji przed wdrożeniem na Vercel lub po większych zmianach.
 **Środowisko:** `npm run emulators` i `npm run dev` z `VITE_USE_EMULATORS=true` ([README](../README.md#-uruchomienie-lokalne)); przeglądarka desktopowa i widok mobilny (DevTools, szerokość 375 px).
-**Konta:** konto właściciela (dokument `owners/{uid}` w Firestore) i drugie konto bez tego dokumentu.
+**Konta:** konto właściciela (dokument `owners/{uid}` w Firestore, profil z zaakceptowaną zgodą w `users/{uid}`) i drugie konto bez dokumentu w `owners`.
 
 Nowy przypadek: warunki wstępne, kroki, oczekiwany wynik.
 
@@ -26,9 +26,13 @@ Nowy przypadek: warunki wstępne, kroki, oczekiwany wynik.
 - [ ] Wiele nieudanych logowań z rzędu → komunikat „Zbyt wiele prób…”
 - [ ] Zamknięcie okna logowania Google bez wyboru konta → ekran logowania bez komunikatu błędu
 - [ ] Konto spoza `owners` → „Konto … nie ma dostępu do tego dziennika” i przycisk „Wyloguj”
-- [ ] Konto właściciela → dziennik z zakładką „Start”; w nagłówku adres e-mail i „Wyloguj”
+- [ ] Konto właściciela bez profilu → ekran „Aktywuj konto” z polem „Imię” (dla Google wypełnionym nazwą konta) i niezaznaczoną zgodą na dane o zdrowiu; bez imienia albo bez zaznaczenia zgody → komunikaty przy polach, konto pozostaje nieaktywne
+- [ ] Zaznaczenie zgody i „Aktywuj konto” → dziennik z zakładką „Start”; po odświeżeniu ekran aktywacji się nie pokazuje
+- [ ] Konto właściciela → dziennik z zakładką „Start”; w nagłówku adres e-mail, „Ustawienia” i „Wyloguj”
+- [ ] „Ustawienia” (`/settings`) → adres e-mail, imię z możliwością zmiany („Zapisz” → „Zapisano.”, zmiana zostaje po odświeżeniu), treść zgody z datą udzielenia i wersją
+- [ ] „Wycofaj zgodę” → okno z opisem skutków; „Anuluj” nic nie zmienia; potwierdzenie → ekran „Aktywuj konto”, także po odświeżeniu; ponowna zgoda przywraca dziennik z wcześniejszymi danymi
 - [ ] „Wyloguj” w nagłówku → powrót do ekranu logowania; odświeżenie strony nie loguje ponownie
-- [ ] Produkcja: właściciel widzi swoje dane, inne konto — ekran braku dostępu (#1)
+- [ ] Produkcja: właściciel widzi swoje dane po aktywacji konta, inne konto — ekran braku dostępu
 
 ## 1a. Nawigacja
 

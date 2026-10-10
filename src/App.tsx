@@ -1,14 +1,41 @@
 import TrainingTracker from './app/TrainingTracker.js';
 import { AuthScreen } from './features/auth/AuthScreen.js';
+import { ConsentScreen } from './features/profile/ConsentScreen.js';
 import { LoadingSpinner } from './components/common/LoadingSpinner.js';
 import { useAuth } from './features/auth/useAuth.js';
+import { useProfile } from './features/profile/useProfile.js';
+import { isActive } from './features/profile/profile.utils.js';
 
 function App() {
   const auth = useAuth();
+  const account = useProfile(auth.status === 'owner' ? auth.uid : null);
 
-  if (auth.status === 'loading') return <LoadingSpinner />;
+  if (auth.status === 'loading' || account.isLoading) return <LoadingSpinner />;
 
-  if (auth.status === 'owner') return <TrainingTracker email={auth.email} onSignOut={auth.signOut} />;
+  if (auth.status === 'owner') {
+    if (!account.profile || !isActive(account.profile)) {
+      return (
+        <ConsentScreen
+          defaultName={account.profile?.displayName ?? auth.displayName ?? ''}
+          error={account.error}
+          onDismissError={account.clearError}
+          onActivate={account.activate}
+          onSignOut={auth.signOut}
+        />
+      );
+    }
+    return (
+      <TrainingTracker
+        email={auth.email}
+        profile={account.profile}
+        profileError={account.error}
+        onDismissProfileError={account.clearError}
+        onUpdateDisplayName={account.updateDisplayName}
+        onWithdrawHealthConsent={account.withdrawHealthConsent}
+        onSignOut={auth.signOut}
+      />
+    );
+  }
 
   return (
     <AuthScreen
