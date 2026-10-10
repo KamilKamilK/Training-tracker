@@ -23,7 +23,7 @@ Instrukcje dla agentów (Claude Code, Codex i inne) oraz osób pracujących nad 
 - TypeScript w trybie `strict`; bez `any` — używaj typów domenowych z `src/types/`, generyków lub `unknown` z zawężeniem.
 - Stan React jest niemutowalny: kopiuj zagnieżdżone tablice i obiekty przed zmianą (`map`, spread, `structuredClone`), nie wywołuj `push`/`splice`/`sort` na stanie ani propsach.
 - Hooki spełniają reguły `react-hooks` (pełne tablice zależności, bez wyciszania ostrzeżeń komentarzem).
-- Dostęp do Firestore tylko przez `src/services/firebase/`; komponenty i hooki nie importują `firebase/firestore` bezpośrednio. Dostęp do LocalStorage tylko przez `LocalStorageService`, klucze z `STORAGE_KEYS`.
+- Firebase (Firestore, Auth) tylko przez serwisy `*.service.ts` w `src/features/<obszar>/` i `src/lib/firebaseConfig.ts`; komponenty i hooki nie importują `firebase/firestore` ani `firebase/auth` — pilnuje tego ESLint (`no-restricted-imports`). Dostęp do LocalStorage tylko przez `LocalStorageService`, klucze z `STORAGE_KEYS`.
 - Nie dodawaj docbloków powtarzających typ z sygnatury. Komentarz zostaw, gdy opisuje zachowanie lub kontrakt, którego sygnatura nie wyraża.
 - Nowa zależność wymaga krótkiego uzasadnienia w commit message: potrzeba, aktywne utrzymanie, licencja. Preferuj natywne API przeglądarki i Reacta.
 - Unikaj oczywistych problemów wydajnościowych (pobieranie całych kolekcji w pętli, zbędne rendery całego drzewa); poza tym nie optymalizuj przedwcześnie.
@@ -94,7 +94,7 @@ Instrukcje dla agentów (Claude Code, Codex i inne) oraz osób pracujących nad 
 ## Zakres repozytorium
 
 - Jednostronicowa aplikacja (SPA) do rejestrowania treningów, planu tygodnia, szablonów i pomiarów ciała. Stack i architektura: [ADR-0002](docs/adr/0002-spa-firebase.md); uruchomienie: [README.md](README.md).
-- Struktura `src/`: `types/` (model danych jako schematy Zod; typy przez `z.infer`), `services/` (Firebase Auth, Firestore i LocalStorage), `hooks/` (stan i operacje), `components/` (`common/`, `tabs/<Zakładka>/`, `workout/`), `utils/` (czyste funkcje, w tym walidacja odczytu schematami w `parse.utils.ts` i formularzy w `measurement.utils.ts` / `validation.utils.ts`), `constants/` (m.in. komunikaty błędów w `messages.ts`, adresy zakładek w `routes.ts`). Nawigacja: React Router (`TrainingTracker.tsx`); `vercel.json` kieruje każdy adres do `index.html`.
+- Struktura `src/`: `features/<obszar>/` (auth, dashboard, measurements, workouts, history, templates, plan, progress) — komponenty, hooki, serwis Firebase, logika i testy jednego obszaru razem; `app/TrainingTracker.tsx` (układ i trasy); wspólne: `types/` (model danych jako schematy Zod; typy przez `z.infer`), `components/common/`, `hooks/`, `services/storage/` (LocalStorage), `utils/` (walidacja odczytu w `parse.utils.ts`, daty, formularze), `constants/` (m.in. komunikaty błędów w `messages.ts`, adresy zakładek w `routes.ts`), `lib/firebaseConfig.ts`. Nawigacja: React Router; `vercel.json` kieruje każdy adres do `index.html`.
 - Konfiguracja Firebase: `firebase.json` (także emulatory), `firestore.rules`, `firestore.indexes.json`, projekt w `.firebaserc`; zmienne środowiskowe w `.env.example`.
 
 ## Weryfikacja

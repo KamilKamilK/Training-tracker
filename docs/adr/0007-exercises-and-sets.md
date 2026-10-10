@@ -33,7 +33,7 @@
 ## Konsekwencje
 
 - Formularz serii przyjmuje liczby (z przecinkiem dziesiętnym) i waliduje zakresy także w regułach.
-- Szablony domyślne z `src/constants/workoutTemplates.ts` są rozdzielane na ćwiczenie z biblioteki i zalecenie.
+- Szablony domyślne z `src/features/templates/defaultTemplates.ts` są rozdzielane na ćwiczenie z biblioteki i zalecenie.
 - Migracja wymaga zgody właściciela na konkretne zmiany w produkcji (AGENTS.md, pkt 5).
 
 ## Warunek rewizji

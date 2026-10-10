@@ -4,7 +4,9 @@ Jedyne źródło prawdy o nienaprawionych błędach, długu technicznym i lukach
 
 ## Zestawienie według priorytetu
 
-Brak otwartych punktów.
+### Niski priorytet
+
+- **#16 — Nieużywane pliki z szablonu projektu Vite**
 
 ### Zasady prowadzenia
 
@@ -20,3 +22,4 @@ Brak otwartych punktów.
 
 | # | Temat | Szczegóły | Priorytet | Wykonanie |
 |---|-------|-----------|-----------|-----------|
+| 16 | **Nieużywane pliki z szablonu projektu Vite** | **Stan:** `src/App.css` i `src/assets/react.svg` pochodzą z szablonu startowego i nie są importowane przez kod ani `index.html`. **Gotowe, gdy:** pliki są usunięte, a `npm run build` i testy end-to-end przechodzą. | Niski | 💻 Programistyczne |

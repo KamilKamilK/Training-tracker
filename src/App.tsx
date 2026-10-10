@@ -1,7 +1,7 @@
-import TrainingTracker from './components/TrainingTracker.js';
-import { AuthScreen } from './components/common/AuthScreen.js';
+import TrainingTracker from './app/TrainingTracker.js';
+import { AuthScreen } from './features/auth/AuthScreen.js';
 import { LoadingSpinner } from './components/common/LoadingSpinner.js';
-import { useAuth } from './hooks/useAuth.js';
+import { useAuth } from './features/auth/useAuth.js';
 
 function App() {
   const { status, email, error, clearError, signIn, signOut } = useAuth();

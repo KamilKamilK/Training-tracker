@@ -23,4 +23,20 @@ export default defineConfig([
       'no-console': ['error', { allow: ['warn', 'error'] }],
     },
   },
+  {
+    // Firebase is reached only through the services (AGENTS.md, pkt 3).
+    files: ['src/**/*.{ts,tsx}'],
+    ignores: ['src/**/*.service.ts', 'src/lib/firebaseConfig.ts'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          paths: [
+            { name: 'firebase/firestore', message: 'Use a *.service.ts file for Firestore access.' },
+            { name: 'firebase/auth', message: 'Use auth.service.ts for Firebase Authentication.' },
+          ],
+        },
+      ],
+    },
+  },
 ])

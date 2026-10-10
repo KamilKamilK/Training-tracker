@@ -9,7 +9,7 @@ Aplikacja to prywatny dziennik treningowy jednego użytkownika, używany główn
 ## Decyzja
 
 - **Frontend:** React 19, TypeScript (`strict`), Vite, Tailwind CSS 3, ikony `lucide-react`; budowany statycznie (`npm run build`) i hostowany na Vercel.
-- **Dane:** Cloud Firestore (`europe-central2`), kolekcje `workouts`, `measurements`, `weekPlans`. Dostęp wyłącznie przez SDK `firebase` w warstwie `src/services/firebase/`, która waliduje dokumenty przy odczycie (`src/utils/parse.utils.ts`).
+- **Dane:** Cloud Firestore (`europe-central2`), kolekcje `workouts`, `measurements`, `weekPlans`. Dostęp wyłącznie przez SDK `firebase` w serwisach `src/features/*/*.service.ts`, które walidują dokumenty przy odczycie (`src/utils/parse.utils.ts`).
 - **Dane lokalne:** LocalStorage przez `LocalStorageService` — szkic bieżącego treningu i szablony użytkownika (`STORAGE_KEYS`).
 - **Bezpieczeństwo:** brak backendu, więc granicą bezpieczeństwa są reguły `firestore.rules` (dostęp: [ADR-0003](0003-owner-authentication.md)); konfiguracja Firebase przez zmienne `VITE_*`.
 - **Warstwy:** `types` → `services` → `hooks` → `components`; komponenty nie wołają Firestore bezpośrednio.

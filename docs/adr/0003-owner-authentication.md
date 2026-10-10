@@ -8,7 +8,7 @@ Aplikacja nie ma backendu ([ADR-0002](0002-spa-firebase.md)), więc o dostępie 
 
 ## Decyzja
 
-- **Logowanie:** Firebase Authentication, dostawca Google (`signInWithPopup`) — `src/services/firebase/auth.service.ts`.
+- **Logowanie:** Firebase Authentication, dostawca Google (`signInWithPopup`) — `src/features/auth/auth.service.ts`.
 - **Właściciel:** konto, którego UID ma dokument w kolekcji `owners`. Dokument tworzy właściciel w konsoli Firebase; reguły pozwalają użytkownikowi tylko odczytać własny dokument `owners/{uid}` i nie pozwalają na zapis.
 - **Reguły (`firestore.rules`):** odczyt i zapis kolekcji danych tylko dla właściciela; każdy zapis jest walidowany (wymagane i dozwolone pola, typy, długości, zakresy pomiarów); pozostałe ścieżki są zamknięte.
 - **Aplikacja:** `App` pokazuje ekran logowania, ekran braku dostępu albo dziennik — dane są pobierane dopiero po potwierdzeniu właściciela.
