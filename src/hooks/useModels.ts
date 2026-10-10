@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 
-export function useModal<T = any>() {
+export function useModal<T>() {
   const [isOpen, setIsOpen] = useState(false);
   const [data, setData] = useState<T | null>(null);
 

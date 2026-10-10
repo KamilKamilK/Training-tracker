@@ -1,45 +1,57 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Measurement } from '../types/index.js';
 import { MeasurementsService } from '../services/firebase/measurements.service.js';
+import { sortByDateAsc } from '../utils/measurement.utils.js';
+import { ERROR_MESSAGES } from '../constants/messages.js';
 
 export const useMeasurements = () => {
   const [measurements, setMeasurements] = useState<Measurement[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchData = async () => {
-      setIsLoading(true);
-      try {
-        const data = await MeasurementsService.getAll();
-        setMeasurements(data.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()));
-      } catch (err) {
-        console.error('Measurements fetch error:', err);
-      } finally {
-        setIsLoading(false);
-      }
+    let cancelled = false;
+    MeasurementsService.getAll()
+      .then(data => {
+        if (!cancelled) setMeasurements(sortByDateAsc(data));
+      })
+      .catch(() => {
+        if (!cancelled) setError(ERROR_MESSAGES.loadMeasurements);
+      })
+      .finally(() => {
+        if (!cancelled) setIsLoading(false);
+      });
+    return () => {
+      cancelled = true;
     };
-    fetchData();
   }, []);
 
-  const saveMeasurement = async (measurement: Omit<Measurement, 'id'>) => {
+  /** Resolves to true only when Firestore confirmed the write. */
+  const saveMeasurement = useCallback(async (measurement: Omit<Measurement, 'id'>): Promise<boolean> => {
     try {
       const id = await MeasurementsService.save(measurement);
-      setMeasurements(prev => [...prev, { ...measurement, id }]);
-      console.log('💾 Pomiar zapisany!');
-    } catch (err) {
-      console.error('Błąd zapisu pomiaru:', err);
+      setMeasurements(prev => sortByDateAsc([...prev, { ...measurement, id }]));
+      setError(null);
+      return true;
+    } catch {
+      setError(ERROR_MESSAGES.saveMeasurement);
+      return false;
     }
-  };
+  }, []);
 
-  const deleteMeasurement = async (id: string) => {
+  const deleteMeasurement = useCallback(async (id: string): Promise<boolean> => {
     try {
       await MeasurementsService.delete(id);
       setMeasurements(prev => prev.filter(m => m.id !== id));
-      console.log('🗑️ Pomiar usunięty!');
-    } catch (err) {
-      console.error('Błąd usuwania pomiaru:', err);
+      setError(null);
+      return true;
+    } catch {
+      setError(ERROR_MESSAGES.deleteMeasurement);
+      return false;
     }
-  };
+  }, []);
 
-  return { measurements, saveMeasurement, deleteMeasurement, isLoading };
+  const clearError = useCallback(() => setError(null), []);
+
+  return { measurements, saveMeasurement, deleteMeasurement, isLoading, error, clearError };
 };

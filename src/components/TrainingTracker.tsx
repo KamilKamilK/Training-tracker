@@ -5,9 +5,11 @@ import { useFirebaseStorage } from '../hooks/useFirebaseStorage.js';
 import { useMeasurements } from '../hooks/useMeasurements.js';
 import { useTemplates } from '../hooks/useTemplates.js';
 import { useWorkouts } from '../hooks/useWorkouts.js';
-import { promptForMeasurement } from '../utils/measurement.utils.js';
 
 import { LoadingSpinner } from './common/LoadingSpinner.js';
+import { ErrorBanner } from './common/ErrorBanner.js';
+import { Modal } from './common/Modal.js';
+import { MeasurementForm } from './tabs/DashboardTab/MeasurementForm.js';
 import { Header } from './common/Header.js';
 import { Footer } from './common/Footer.js';
 import { TabNavigation } from './common/TabNavigation.js';
@@ -18,11 +20,30 @@ import { PlanTab }  from './tabs/PlanTab/index.js';
 import { HistoryTab } from './tabs/HistoryTab/index.js';
 import { StatsTab } from './tabs/StatsTab/index.js';
 
-const TrainingTracker: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<TabType>('dashboard');
+interface TrainingTrackerProps {
+  email: string | null;
+  onSignOut: () => void;
+}
 
-  const { workouts, saveWorkout, deleteWorkout, isLoading: workoutsLoading } = useFirebaseStorage();
-  const { measurements, saveMeasurement, isLoading: measurementsLoading } = useMeasurements();
+const TrainingTracker: React.FC<TrainingTrackerProps> = ({ email, onSignOut }) => {
+  const [activeTab, setActiveTab] = useState<TabType>('dashboard');
+  const [isMeasurementFormOpen, setIsMeasurementFormOpen] = useState(false);
+
+  const {
+    workouts,
+    saveWorkout,
+    deleteWorkout,
+    isLoading: workoutsLoading,
+    error: workoutsError,
+    clearError: clearWorkoutsError,
+  } = useFirebaseStorage();
+  const {
+    measurements,
+    saveMeasurement,
+    isLoading: measurementsLoading,
+    error: measurementsError,
+    clearError: clearMeasurementsError,
+  } = useMeasurements();
   const {
     allTemplates: templates,
     addTemplate,
@@ -32,7 +53,7 @@ const TrainingTracker: React.FC = () => {
     defaultTemplates,
     customTemplates,
   } = useTemplates();
-  const { currentWorkout, startWorkout, addSet, updateSet, removeSet, finishWorkout } = useWorkouts();
+  const { currentWorkout, isFinishing, startWorkout, addSet, updateSet, removeSet, finishWorkout } = useWorkouts();
 
   const tabs = [
     { id: 'dashboard' as TabType, label: 'Start', icon: Dumbbell },
@@ -43,15 +64,8 @@ const TrainingTracker: React.FC = () => {
     { id: 'stats' as TabType, label: 'Postępy', icon: TrendingUp },
   ];
 
-  const handleAddMeasurement = () => {
-    const measurement = promptForMeasurement();
-    if (measurement) saveMeasurement(measurement);
-  };
-
   const handleFinishWorkout = async () => {
-    const finished = finishWorkout();
-    if (finished) {
-      await saveWorkout(finished);
+    if (await finishWorkout(saveWorkout)) {
       setActiveTab('history');
     }
   };
@@ -63,8 +77,20 @@ const TrainingTracker: React.FC = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white p-4">
       <div className="max-w-6xl mx-auto">
-        <Header templatesCount={templates.length} workoutsCount={workouts.length} />
+        <Header
+          templatesCount={templates.length}
+          workoutsCount={workouts.length}
+          email={email}
+          onSignOut={onSignOut}
+        />
         <TabNavigation tabs={tabs} activeTab={activeTab} onChange={setActiveTab} />
+
+        {workoutsError && activeTab !== 'workout' && (
+          <ErrorBanner message={workoutsError} onDismiss={clearWorkoutsError} />
+        )}
+        {measurementsError && !isMeasurementFormOpen && (
+          <ErrorBanner message={measurementsError} onDismiss={clearMeasurementsError} />
+        )}
 
         <div className="bg-slate-800 rounded-xl shadow-2xl p-6">
           {activeTab === 'dashboard' && (
@@ -73,7 +99,7 @@ const TrainingTracker: React.FC = () => {
               measurements={measurements}
               templates={templates}
               onStartWorkout={startWorkout}
-              onAddMeasurement={handleAddMeasurement}
+              onAddMeasurement={() => setIsMeasurementFormOpen(true)}
             />
           )}
 
@@ -94,6 +120,9 @@ const TrainingTracker: React.FC = () => {
           {activeTab === 'workout' && (
             <WorkoutTab
               currentWorkout={currentWorkout}
+              isFinishing={isFinishing}
+              error={workoutsError}
+              onDismissError={clearWorkoutsError}
               onAddSet={addSet}
               onUpdateSet={updateSet}
               onRemoveSet={removeSet}
@@ -109,6 +138,15 @@ const TrainingTracker: React.FC = () => {
         </div>
 
         <Footer />
+
+        <Modal
+          isOpen={isMeasurementFormOpen}
+          onClose={() => setIsMeasurementFormOpen(false)}
+          title="Nowy pomiar"
+        >
+          {measurementsError && <ErrorBanner message={measurementsError} onDismiss={clearMeasurementsError} />}
+          <MeasurementForm onSubmit={saveMeasurement} onCancel={() => setIsMeasurementFormOpen(false)} />
+        </Modal>
       </div>
     </div>
   );

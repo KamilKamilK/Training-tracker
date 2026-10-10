@@ -1,51 +1,58 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Workout } from '../types/index.js';
 import { WorkoutsService } from '../services/firebase/workouts.service.js';
 import { sortByDateDesc } from '../utils/workout.utils.js';
+import { ERROR_MESSAGES } from '../constants/messages.js';
 
 export const useFirebaseStorage = () => {
   const [workouts, setWorkouts] = useState<Workout[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchData = async () => {
-      setIsLoading(true);
-      try {
-        const data = await WorkoutsService.getAll();
-        setWorkouts(sortByDateDesc(data));
-      } catch (err) {
-        console.error('Firebase fetch error:', err);
-      } finally {
-        setIsLoading(false);
-      }
+    let cancelled = false;
+    WorkoutsService.getAll()
+      .then(data => {
+        if (!cancelled) setWorkouts(sortByDateDesc(data));
+      })
+      .catch(() => {
+        if (!cancelled) setError(ERROR_MESSAGES.loadWorkouts);
+      })
+      .finally(() => {
+        if (!cancelled) setIsLoading(false);
+      });
+    return () => {
+      cancelled = true;
     };
-    fetchData();
   }, []);
 
-  const saveWorkout = async (workout: Workout) => {
+  /** Resolves to true only when Firestore confirmed the write. */
+  const saveWorkout = useCallback(async (workout: Workout): Promise<boolean> => {
     try {
       const id = await WorkoutsService.save(workout);
-      const updatedWorkout = { ...workout, id };
-      
-      setWorkouts(prev => 
-        sortByDateDesc([...prev.filter(w => w.id !== id), updatedWorkout])
-      );
-      
-      console.log('💾 Trening zapisany!');
-    } catch (err) {
-      console.error('Błąd zapisu treningu:', err);
+      const saved = { ...workout, id };
+      setWorkouts(prev => sortByDateDesc([...prev.filter(w => w.id !== id), saved]));
+      setError(null);
+      return true;
+    } catch {
+      setError(ERROR_MESSAGES.saveWorkout);
+      return false;
     }
-  };
+  }, []);
 
-  const deleteWorkout = async (id: string) => {
+  const deleteWorkout = useCallback(async (id: string): Promise<boolean> => {
     try {
       await WorkoutsService.delete(id);
       setWorkouts(prev => prev.filter(w => w.id !== id));
-      console.log('🗑️ Trening usunięty!');
-    } catch (err) {
-      console.error('Błąd usuwania treningu:', err);
+      setError(null);
+      return true;
+    } catch {
+      setError(ERROR_MESSAGES.deleteWorkout);
+      return false;
     }
-  };
+  }, []);
 
-  return { workouts, saveWorkout, deleteWorkout, isLoading };
+  const clearError = useCallback(() => setError(null), []);
+
+  return { workouts, saveWorkout, deleteWorkout, isLoading, error, clearError };
 };
