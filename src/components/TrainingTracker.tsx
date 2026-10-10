@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { Suspense, lazy, useState } from 'react';
+import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router';
 import { Dumbbell, Calendar, Plus, TrendingUp, FileText } from 'lucide-react';
-import { TabType } from '../types/index.js';
+import { ROUTES } from '../constants/routes.js';
 import { useFirebaseStorage } from '../hooks/useFirebaseStorage.js';
 import { useMeasurements } from '../hooks/useMeasurements.js';
 import { useTemplates } from '../hooks/useTemplates.js';
@@ -14,11 +15,22 @@ import { Header } from './common/Header.js';
 import { Footer } from './common/Footer.js';
 import { TabNavigation } from './common/TabNavigation.js';
 import { DashboardTab } from './tabs/DashboardTab/index.js';
-import { TemplatesTab } from './tabs/TemplatesTab/index.js';
 import { WorkoutTab } from './tabs/WorkoutTab/index.js';
-import { PlanTab }  from './tabs/PlanTab/index.js';
-import { HistoryTab } from './tabs/HistoryTab/index.js';
-import { StatsTab } from './tabs/StatsTab/index.js';
+
+// Tabs other than the start page and the active workout load on first visit.
+const TemplatesTab = lazy(() => import('./tabs/TemplatesTab/index.js').then(m => ({ default: m.TemplatesTab })));
+const PlanTab = lazy(() => import('./tabs/PlanTab/index.js').then(m => ({ default: m.PlanTab })));
+const HistoryTab = lazy(() => import('./tabs/HistoryTab/index.js').then(m => ({ default: m.HistoryTab })));
+const StatsTab = lazy(() => import('./tabs/StatsTab/index.js').then(m => ({ default: m.StatsTab })));
+
+const tabs = [
+  { path: ROUTES.dashboard, label: 'Start', icon: Dumbbell },
+  { path: ROUTES.templates, label: 'Szablony', icon: FileText },
+  { path: ROUTES.plan, label: 'Plan', icon: Calendar },
+  { path: ROUTES.workout, label: 'Trening', icon: Plus },
+  { path: ROUTES.history, label: 'Historia', icon: Calendar },
+  { path: ROUTES.progress, label: 'Postępy', icon: TrendingUp },
+];
 
 interface TrainingTrackerProps {
   email: string | null;
@@ -26,7 +38,8 @@ interface TrainingTrackerProps {
 }
 
 const TrainingTracker: React.FC<TrainingTrackerProps> = ({ email, onSignOut }) => {
-  const [activeTab, setActiveTab] = useState<TabType>('dashboard');
+  const navigate = useNavigate();
+  const { pathname } = useLocation();
   const [isMeasurementFormOpen, setIsMeasurementFormOpen] = useState(false);
 
   const {
@@ -55,18 +68,9 @@ const TrainingTracker: React.FC<TrainingTrackerProps> = ({ email, onSignOut }) =
   } = useTemplates();
   const { currentWorkout, isFinishing, startWorkout, addSet, updateSet, removeSet, finishWorkout } = useWorkouts();
 
-  const tabs = [
-    { id: 'dashboard' as TabType, label: 'Start', icon: Dumbbell },
-    { id: 'templates' as TabType, label: 'Szablony', icon: FileText },
-    { id: 'plan' as TabType, label: 'Plan', icon: Calendar },
-    { id: 'workout' as TabType, label: 'Trening', icon: Plus },
-    { id: 'history' as TabType, label: 'Historia', icon: Calendar },
-    { id: 'stats' as TabType, label: 'Postępy', icon: TrendingUp },
-  ];
-
   const handleFinishWorkout = async () => {
     if (await finishWorkout(saveWorkout)) {
-      setActiveTab('history');
+      navigate(ROUTES.history);
     }
   };
 
@@ -83,9 +87,9 @@ const TrainingTracker: React.FC<TrainingTrackerProps> = ({ email, onSignOut }) =
           email={email}
           onSignOut={onSignOut}
         />
-        <TabNavigation tabs={tabs} activeTab={activeTab} onChange={setActiveTab} />
+        <TabNavigation tabs={tabs} />
 
-        {workoutsError && activeTab !== 'workout' && (
+        {workoutsError && pathname !== ROUTES.workout && (
           <ErrorBanner message={workoutsError} onDismiss={clearWorkoutsError} />
         )}
         {measurementsError && !isMeasurementFormOpen && (
@@ -93,48 +97,55 @@ const TrainingTracker: React.FC<TrainingTrackerProps> = ({ email, onSignOut }) =
         )}
 
         <div className="bg-slate-800 rounded-xl shadow-2xl p-6">
-          {activeTab === 'dashboard' && (
-            <DashboardTab
-              workouts={workouts}
-              measurements={measurements}
-              templates={templates}
-              onStartWorkout={startWorkout}
-              onAddMeasurement={() => setIsMeasurementFormOpen(true)}
-            />
-          )}
-
-          {activeTab === 'templates' && (
-            <TemplatesTab
-              templates={templates}
-              defaultTemplates={defaultTemplates}
-              customTemplates={customTemplates}
-              onAddTemplate={addTemplate}
-              onUpdateTemplate={updateTemplate}
-              onDeleteTemplate={deleteTemplate}
-              onDuplicateTemplate={duplicateTemplate}
-            />
-          )}
-
-          {activeTab === 'plan' && <PlanTab templates={templates} />}
-
-          {activeTab === 'workout' && (
-            <WorkoutTab
-              currentWorkout={currentWorkout}
-              isFinishing={isFinishing}
-              error={workoutsError}
-              onDismissError={clearWorkoutsError}
-              onAddSet={addSet}
-              onUpdateSet={updateSet}
-              onRemoveSet={removeSet}
-              onFinishWorkout={handleFinishWorkout}
-            />
-          )}
-
-          {activeTab === 'history' && (
-            <HistoryTab workouts={workouts} onDelete={deleteWorkout} />
-          )}
-
-          {activeTab === 'stats' && <StatsTab measurements={measurements} workouts={workouts} />}
+          <Suspense fallback={<p className="text-slate-400 text-center py-12">Ładowanie...</p>}>
+            <Routes>
+              <Route
+                path={ROUTES.dashboard}
+                element={
+                  <DashboardTab
+                    workouts={workouts}
+                    measurements={measurements}
+                    templates={templates}
+                    onStartWorkout={startWorkout}
+                    onAddMeasurement={() => setIsMeasurementFormOpen(true)}
+                  />
+                }
+              />
+              <Route
+                path={ROUTES.templates}
+                element={
+                  <TemplatesTab
+                    templates={templates}
+                    defaultTemplates={defaultTemplates}
+                    customTemplates={customTemplates}
+                    onAddTemplate={addTemplate}
+                    onUpdateTemplate={updateTemplate}
+                    onDeleteTemplate={deleteTemplate}
+                    onDuplicateTemplate={duplicateTemplate}
+                  />
+                }
+              />
+              <Route path={ROUTES.plan} element={<PlanTab templates={templates} />} />
+              <Route
+                path={ROUTES.workout}
+                element={
+                  <WorkoutTab
+                    currentWorkout={currentWorkout}
+                    isFinishing={isFinishing}
+                    error={workoutsError}
+                    onDismissError={clearWorkoutsError}
+                    onAddSet={addSet}
+                    onUpdateSet={updateSet}
+                    onRemoveSet={removeSet}
+                    onFinishWorkout={handleFinishWorkout}
+                  />
+                }
+              />
+              <Route path={ROUTES.history} element={<HistoryTab workouts={workouts} onDelete={deleteWorkout} />} />
+              <Route path={ROUTES.progress} element={<StatsTab measurements={measurements} workouts={workouts} />} />
+              <Route path="*" element={<Navigate to={ROUTES.dashboard} replace />} />
+            </Routes>
+          </Suspense>
         </div>
 
         <Footer />

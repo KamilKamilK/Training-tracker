@@ -15,5 +15,3 @@ export const WorkoutTemplateSchema = z.object({
 });
 
 export type WorkoutTemplate = z.infer<typeof WorkoutTemplateSchema>;
-
-export type TabType = 'dashboard' | 'plan' | 'workout' | 'history' | 'stats' | 'templates';

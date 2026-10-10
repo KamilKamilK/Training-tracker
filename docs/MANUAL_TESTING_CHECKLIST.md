@@ -24,6 +24,14 @@ Nowy przypadek: warunki wstępne, kroki, oczekiwany wynik.
 - [ ] „Wyloguj” w nagłówku → powrót do ekranu logowania; odświeżenie strony nie loguje ponownie
 - [ ] Produkcja: właściciel widzi swoje dane, inne konto — ekran braku dostępu (#1)
 
+## 1a. Nawigacja
+
+- [ ] Każda zakładka ma własny adres: Start `/`, Szablony `/templates`, Plan `/plan`, Trening `/workout`, Historia `/history`, Postępy `/progress`; aktywna zakładka jest podświetlona
+- [ ] Odświeżenie strony (F5) zostawia tę samą zakładkę, także na produkcji (Vercel)
+- [ ] Przycisk „wstecz” przeglądarki wraca do poprzedniej zakładki
+- [ ] Nieznany adres (np. `/abc`) przenosi na Start
+- [ ] Link do zakładki (np. `/history`) otwarty bez zalogowania → ekran logowania, po zalogowaniu ta sama zakładka
+
 ## 2. Start (pulpit)
 
 - [ ] 2.1 Szybkie statystyki pokazują liczbę treningów w tym tygodniu i miesiącu oraz ostatnią wagę

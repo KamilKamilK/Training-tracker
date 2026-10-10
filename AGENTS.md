@@ -93,7 +93,7 @@ Instrukcje dla agentów (Claude Code, Codex i inne) oraz osób pracujących nad 
 ## Zakres repozytorium
 
 - Jednostronicowa aplikacja (SPA) do rejestrowania treningów, planu tygodnia, szablonów i pomiarów ciała. Stack i architektura: [ADR-0002](docs/adr/0002-spa-firebase.md); uruchomienie: [README.md](README.md).
-- Struktura `src/`: `types/` (model danych jako schematy Zod; typy przez `z.infer`), `services/` (Firebase Auth, Firestore i LocalStorage), `hooks/` (stan i operacje), `components/` (`common/`, `tabs/<Zakładka>/`, `workout/`), `utils/` (czyste funkcje, w tym walidacja odczytu schematami w `parse.utils.ts` i formularzy w `measurement.utils.ts` / `validation.utils.ts`), `constants/` (m.in. komunikaty błędów w `messages.ts`).
+- Struktura `src/`: `types/` (model danych jako schematy Zod; typy przez `z.infer`), `services/` (Firebase Auth, Firestore i LocalStorage), `hooks/` (stan i operacje), `components/` (`common/`, `tabs/<Zakładka>/`, `workout/`), `utils/` (czyste funkcje, w tym walidacja odczytu schematami w `parse.utils.ts` i formularzy w `measurement.utils.ts` / `validation.utils.ts`), `constants/` (m.in. komunikaty błędów w `messages.ts`, adresy zakładek w `routes.ts`). Nawigacja: React Router (`TrainingTracker.tsx`); `vercel.json` kieruje każdy adres do `index.html`.
 - Konfiguracja Firebase: `firebase.json` (także emulatory), `firestore.rules`, `firestore.indexes.json`, projekt w `.firebaserc`; zmienne środowiskowe w `.env.example`.
 
 ## Weryfikacja

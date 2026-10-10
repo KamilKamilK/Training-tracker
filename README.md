@@ -67,4 +67,4 @@ Zasady dostępu: [ADR-0003](docs/adr/0003-owner-authentication.md).
 
 ## 🌐 Dostęp online
 
-Aplikacja jest hostowana na Vercel: https://training-tracker-six.vercel.app/ — zmienne `VITE_*` z `.env.example` ustaw w ustawieniach projektu Vercel.
+Aplikacja jest hostowana na Vercel: https://training-tracker-six.vercel.app/ — zmienne `VITE_*` z `.env.example` ustaw w ustawieniach projektu Vercel. `vercel.json` kieruje każdy adres (np. `/history`) do aplikacji, więc odświeżenie zakładki działa.

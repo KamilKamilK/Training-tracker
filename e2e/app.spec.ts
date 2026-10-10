@@ -60,7 +60,7 @@ test('the owner adds a measurement after fixing invalid values', async ({ page }
 
 test('a workout survives a reload and a rejected save, then saves on retry', async ({ page }) => {
   const uid = await openAsOwner(page);
-  const workoutTab = page.getByRole('button', { name: 'Trening', exact: true });
+  const workoutTab = page.getByRole('link', { name: 'Trening', exact: true });
 
   await page.getByText('Trening A - Klatka + Barki').click();
   await workoutTab.click();
@@ -68,7 +68,7 @@ test('a workout survives a reload and a rejected save, then saves on retry', asy
   await page.getByPlaceholder('kg').fill('80');
 
   await page.reload();
-  await workoutTab.click();
+  await expect(page).toHaveURL(/\/workout$/);
   await expect(page.getByPlaceholder('kg')).toHaveValue('80');
 
   await revokeOwner(uid);
@@ -78,6 +78,38 @@ test('a workout survives a reload and a rejected save, then saves on retry', asy
 
   await grantOwner(uid);
   await page.getByRole('button', { name: 'Zakończ trening' }).click();
+  await expect(page).toHaveURL(/\/history$/);
   await expect(page.getByRole('heading', { name: /Historia Treningów/ })).toBeVisible();
   await expect(page.getByText('Trening A - Klatka + Barki')).toBeVisible();
+});
+
+test('every tab has its own address that survives a reload and the back button', async ({ page }) => {
+  await openAsOwner(page);
+  const tabs = [
+    ['Szablony', '/templates', /Szablony Treningów/],
+    ['Plan', '/plan', /Plan Treningowy/],
+    ['Historia', '/history', /Brak treningów w historii|Historia Treningów/],
+    ['Postępy', '/progress', /Twoje Postępy/],
+  ] as const;
+
+  for (const [label, path, content] of tabs) {
+    await page.getByRole('link', { name: label, exact: true }).click();
+    await expect(page).toHaveURL(new RegExp(`${path}$`));
+    await expect(page.getByText(content).first()).toBeVisible();
+  }
+
+  await page.reload();
+  await expect(page).toHaveURL(/\/progress$/);
+  await expect(page.getByText(/Twoje Postępy/)).toBeVisible();
+
+  await page.goBack();
+  await expect(page).toHaveURL(/\/history$/);
+  await expect(page.getByRole('link', { name: 'Historia', exact: true })).toHaveAttribute('aria-current', 'page');
+});
+
+test('an unknown address leads to the start page', async ({ page }) => {
+  await openAsOwner(page);
+  await page.goto('/does-not-exist');
+  await expect(page).toHaveURL(/\/$/);
+  await expect(page.getByRole('heading', { name: 'Rozpocznij Trening' })).toBeVisible();
 });
