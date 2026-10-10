@@ -25,3 +25,4 @@ Indeks decyzji. Każda decyzja ma krótki dokument ADR w [`adr/`](adr/).
 | [0010](adr/0010-web-app-architecture.md) | React Router, nasłuchy Firestore, cache offline w IndexedDB, schematy Zod | Przyjęta 2026-10-10 |
 | [0011](adr/0011-environments-hosting-monitoring.md) | Emulatory i produkcja bez stagingu; hosting Vercel Hobby; bez zewnętrznego monitoringu do pierwszego użytkownika spoza właściciela | Przyjęta 2026-10-10 |
 | [0012](adr/0012-personal-and-health-data.md) | Zgody na dane o zdrowiu, umowa powierzenia z trenerem, eksport i usunięcie danych | Proponowana 2026-10-10 |
+| [0013](adr/0013-offline-app-shell.md) | Service worker zapisujący pliki aplikacji, aby otwierała się bez sieci; komunikat o nowej wersji | Proponowana 2026-10-10 |

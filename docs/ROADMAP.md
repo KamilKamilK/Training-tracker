@@ -85,6 +85,7 @@ Proponowane — każda z wariantami, zaletami, wadami i rekomendacją w osobnym 
 
 | ADR | Pytanie | Potrzebna przed |
 |---|---|---|
+| [0013](adr/0013-offline-app-shell.md) | Otwieranie aplikacji bez sieci | etapem 1 lub po nim — zależnie od zasięgu na siłowni |
 | [0005](adr/0005-data-model-and-access.md) | Gdzie leżą dane, jak trener uzyskuje dostęp, czym są role | etapem 1 |
 | [0007](adr/0007-exercises-and-sets.md) | Biblioteka ćwiczeń, serie liczbowe, migracja | etapem 1 |
 | [0008](adr/0008-accounts-and-invitations.md) | Metody logowania, zaproszenia, usunięcie konta | etapem 1 |
