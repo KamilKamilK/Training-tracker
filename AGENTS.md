@@ -78,6 +78,7 @@ Instrukcje dla agentów (Claude Code, Codex i inne) oraz osób pracujących nad 
 - Pracuj na własnej gałęzi; zweryfikowane zmiany wypychaj, nie trzymaj ich tylko lokalnie.
 - Zachowuj cudze, niezatwierdzone zmiany: dodawaj do commitu jawną listę plików i sprawdź staged diff.
 - Pliki robocze twórz poza repozytorium; nie commituj `dist/`, `.env` ani `tsconfig.tsbuildinfo`.
+- Nie dodawaj do commitów stopki `Co-Authored-By` ani innych stopek współautorstwa — autorem commitu jest właściciel repozytorium.
 
 ### 11. Problemy poza zakresem — `docs/KNOWN_ISSUES.md`
 
