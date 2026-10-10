@@ -8,10 +8,6 @@ Jedyne źródło prawdy o nienaprawionych błędach, długu technicznym i lukach
 
 - **#1 — Reguły i logowanie nie są wdrożone w projekcie Firebase**
 
-### Średni priorytet
-
-- **#14 — Brak automatycznej bramki jakości przy wyłączonym CI**
-
 ### Niski priorytet
 
 - **#10 — Nieużywany katalog SDK Firebase Data Connect**
@@ -34,4 +30,3 @@ Jedyne źródło prawdy o nienaprawionych błędach, długu technicznym i lukach
 | 1 | **Reguły i logowanie nie są wdrożone w projekcie Firebase** | **Stan:** kod i `firestore.rules` realizują [ADR-0003](adr/0003-owner-authentication.md), a testy reguł przechodzą na emulatorze; reguły z repozytorium nie są wdrażane automatycznie, a dostawca Google, autoryzowana domena hostingu i dokument `owners/{uid}` w projekcie `training-tracker-6d13b` wymagają konfiguracji w konsoli. Do tego czasu produkcja nie wpuści właściciela do danych. **Zrobić:** kroki z [README](../README.md#-konfiguracja-firebase-jednorazowo-konsola-firebase). **Gotowe, gdy:** właściciel loguje się na produkcji i widzi swoje dane, a konto spoza `owners` widzi ekran braku dostępu. | Wysoki | 🖐️ Manualne — konsola Firebase i `firebase deploy` wymagają konta właściciela |
 | 10 | **Nieużywany katalog SDK Firebase Data Connect** | **Stan:** `src/dataconnect-generated/` nie jest importowany, a zależność `@dataconnect/generated` została usunięta z `package.json`; katalog jest wyłączony z ESLint w `eslint.config.js`. **Gotowe, gdy:** katalog i jego wpis w `globalIgnores` są usunięte, a `npm run build` przechodzi. | Niski | 💻 Programistyczne |
 | 13 | **Nieużywany kod pomocniczy** | **Stan:** `validateWorkout` i `validateTemplate` (`src/utils/validation.utils.ts`), `isToday` i `getTimeAgo` (`src/utils/date.utils.ts`) oraz typ `window.storage` (`src/global.d.ts`) nie mają wywołań; hook `useModal` jest w pliku `src/hooks/useModels.ts`. Formularz szablonu (`src/components/tabs/TemplatesTab/index.tsx`) nie stosuje limitów z `VALIDATION_RULES.template`. **Gotowe, gdy:** nieużywany kod jest usunięty albo podłączony (walidacja szablonu z komunikatem przy polu i testem), a plik hooka nazywa się jak hook. | Niski | 💻 Programistyczne |
-| 14 | **Brak automatycznej bramki jakości przy wyłączonym CI** | **Stan:** `.github/workflows/ci.yml` ma tylko wyzwalacz `workflow_dispatch` z powodu limitu minut GitHub Actions; lint, build i testy przed pushem zależą od ręcznego uruchomienia ([AGENTS.md](../AGENTS.md#weryfikacja)). **Zrobić:** hook `pre-push` w `.githooks/` (aktywowany przez `core.hooksPath`) uruchamiający kroki z części „Weryfikacja” albo przywrócenie wyzwalaczy `pull_request`/`push` po zwiększeniu limitu. **Gotowe, gdy:** push z błędem lint lub nieprzechodzącym testem jest automatycznie zatrzymany. | Średni | 🖐️💻 Mieszane — limit Actions zależy od właściciela, hook da się dodać w kodzie |

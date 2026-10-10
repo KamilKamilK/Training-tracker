@@ -48,7 +48,7 @@ Praca bez dotykania danych produkcyjnych: ustaw `VITE_USE_EMULATORS=true` w `.en
 | `npm run test:rules` | testy `firestore.rules` na emulatorze Firestore |
 | `npm run emulators` | emulatory Authentication i Firestore do pracy lokalnej |
 
-CI (`.github/workflows/ci.yml`) wykonuje lint, build, testy jednostkowe i testy reguł; uruchamiane jest ręcznie w zakładce Actions (limit minut GitHub Actions).
+Po sklonowaniu włącz hook `pre-push`, który uruchamia te kontrole przy każdym pushu: `git config core.hooksPath .githooks` ([opis](.githooks/README.md)). CI (`.github/workflows/ci.yml`) wykonuje te same kroki, ale uruchamiane jest ręcznie w zakładce Actions (limit minut GitHub Actions).
 
 ---
 

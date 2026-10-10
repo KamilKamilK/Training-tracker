@@ -1,0 +1,38 @@
+#!/bin/sh
+# Quality gate run by `git push` (activate once per clone: git config core.hooksPath .githooks).
+# Runs the checks from AGENTS.md "Weryfikacja"; the Firestore rules tests run when the pushed
+# commits touch the rules, their tests or the emulator config, because they need Java.
+set -eu
+
+zero=0000000000000000000000000000000000000000
+rules_changed=false
+
+while read -r _local_ref local_sha _remote_ref remote_sha; do
+  [ "$local_sha" = "$zero" ] && continue
+  if [ "$remote_sha" = "$zero" ]; then
+    base=$(git merge-base "$local_sha" origin/main 2>/dev/null || true)
+    range=${base:+$base..}$local_sha
+  else
+    range=$remote_sha..$local_sha
+  fi
+  if git diff --name-only "$range" -- firestore.rules tests/rules firebase.json vitest.rules.config.ts | grep -q .; then
+    rules_changed=true
+  fi
+done
+
+run() {
+  echo "pre-push: $*"
+  "$@" || { echo "pre-push: '$*' failed — push stopped" >&2; exit 1; }
+}
+
+run npm run --silent lint
+run npm run --silent build
+run npm test --silent
+
+if [ "$rules_changed" = true ]; then
+  if ! command -v java >/dev/null 2>&1; then
+    echo "pre-push: Firestore rules changed, but Java (needed by the emulator) is not installed — push stopped" >&2
+    exit 1
+  fi
+  run npm run --silent test:rules
+fi
