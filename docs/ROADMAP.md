@@ -1,6 +1,6 @@
 # Dziennik Treningowy — wizja i plan rozwoju
 
-**Status:** propozycja z 2026-10-07, czeka na decyzje właściciela (część [Decyzje przed etapem 1](#decyzje-przed-etapem-1)). Kierunek obowiązuje dopiero po przyjęciu odpowiednich ADR w [DECISIONS.md](DECISIONS.md).
+**Status:** kierunek przyjęty 2026-10-10 — Firebase zostaje, najpierw wersja webowa, wersja mobilna odłożona ([ADR-0004](adr/0004-firebase-multi-user.md)). Szczegółowe decyzje czekają na akceptację jako ADR-0005–0012 ([Decyzje](#decyzje)).
 
 ## Wizja
 
@@ -61,7 +61,7 @@ Zasada: trener widzi dane podopiecznego tylko podczas aktywnej współpracy; po 
 
 **Wspólne:** konto przez Google lub link e-mail, profil, zaproszenie linkiem, eksport i usunięcie danych (RODO), język polski i angielski.
 
-## Model danych (szkic dla wariantu Firestore)
+## Model danych (szkic, szczegóły w [ADR-0005](adr/0005-data-model-and-access.md))
 
 | Ścieżka | Zawartość | Kto ma dostęp |
 |---|---|---|
@@ -71,30 +71,30 @@ Zasada: trener widzi dane podopiecznego tylko podczas aktywnej współpracy; po 
 | `users/{uid}/programs/{id}` | przypisany plan (kopia) z datą startu | właściciel; trener, który go przypisał |
 | `coaching/{coachId}_{athleteId}` | status współpracy (zaproszona, aktywna, zakończona), daty | obie strony |
 | `coaches/{uid}/programTemplates`, `exercises` | szablony planów i własne ćwiczenia trenera | trener |
+| `coaches/{uid}/athletes/{athleteUid}` | podsumowanie podopiecznego dla pulpitu, utrzymywane przez Cloud Function | trener (odczyt) |
 | `exercises/{id}` | biblioteka globalna: nazwa, partie mięśniowe, sprzęt, wideo | wszyscy zalogowani (odczyt) |
 | `invites/{token}` | zaproszenie z datą wygaśnięcia; tworzy i realizuje Cloud Function | tylko serwer |
 
 Obecne dane właściciela przechodzą jednorazowo do `users/{uid}/…` skryptem migracji (napisy na liczby, nazwy ćwiczeń dopasowane do biblioteki) — po akceptacji właściciela i z kopią zapasową.
 
-## Decyzje przed etapem 1
+## Decyzje
 
-Każda decyzja to osobny ADR przyjęty przed implementacją.
+Przyjęte: Firebase jako platforma, najpierw wersja webowa ([ADR-0004](adr/0004-firebase-multi-user.md)).
 
-**1. Backend i baza danych (ADR-0004)**
+Proponowane — każda z wariantami, zaletami, wadami i rekomendacją w osobnym ADR; implementacja danego obszaru zaczyna się po przyjęciu:
 
-| Wariant | Zalety | Wady |
+| ADR | Pytanie | Potrzebna przed |
 |---|---|---|
-| **A. Firebase dalej** (Firestore + Cloud Functions + Storage) | Zapis offline i synchronizacja wbudowane — kluczowe na siłowni; podgląd trenera w czasie rzeczywistym; obecny kod, reguły i testy zostają; niski koszt na starcie | Agregaty (e1RM, objętość) trzeba liczyć w funkcjach lub w kliencie; reguły dla relacji trener–podopieczny są złożone; zależność od jednego dostawcy |
-| B. PostgreSQL w usłudze (np. Supabase: Postgres, Auth, RLS, Storage) | Model relacyjny pasuje do planów i serii; analizy w SQL; możliwy własny hosting | Brak gotowego offline — trzeba zbudować kolejkę zapisów; przepisanie warstwy danych i testów reguł |
-| C. Własne API (np. Symfony lub Node) + PostgreSQL | Pełna kontrola nad logiką, uprawnieniami i rozliczeniami | Najwięcej pracy i utrzymania serwera; offline do zbudowania |
+| [0010](adr/0010-web-app-architecture.md) | Routing, pobieranie danych, offline, walidacja | etapem 0 |
+| [0011](adr/0011-environments-hosting-monitoring.md) | Środowiska, hosting, monitoring błędów | etapem 0 |
+| [0005](adr/0005-data-model-and-access.md) | Gdzie leżą dane, jak trener uzyskuje dostęp, czym są role | etapem 1 |
+| [0007](adr/0007-exercises-and-sets.md) | Biblioteka ćwiczeń, serie liczbowe, migracja | etapem 1 |
+| [0008](adr/0008-accounts-and-invitations.md) | Metody logowania, zaproszenia, usunięcie konta | etapem 1 |
+| [0009](adr/0009-cloud-functions-aggregates.md) | Cloud Functions i plan Blaze, gdzie liczyć postęp | etapem 1 |
+| [0012](adr/0012-personal-and-health-data.md) | Dane o zdrowiu i RODO | udostępnieniem innym osobom |
+| [0006](adr/0006-training-programs.md) | Plany wielotygodniowe i ich przypisanie | etapem 3 |
 
-**Rekomendacja: A** dla etapów 1–4 — najmniejszy koszt dojścia do pilotażu z trenerami i najlepsza praca offline. Warunek rewizji: raporty dla wielu podopiecznych naraz, których nie da się rozsądnie policzyć funkcjami, albo koszt odczytów Firestore powyżej ustalonego progu.
-
-**2. Wersja mobilna (ADR-0005).** Rekomendacja: najpierw **PWA** (instalacja na ekranie głównym, trwały cache Firestore offline, powiadomienia web push przez FCM — na iOS od 16.4 po instalacji), później ta sama aplikacja React w **Capacitor** do App Store i Google Play, jeśli trenerzy będą tego oczekiwać. Osobna aplikacja natywna dopiero, gdy PWA/Capacitor okaże się niewystarczające.
-
-**3. Model biznesowy i rozliczenia (ADR-0006).** Do ustalenia: progi cenowe (np. darmowo do 3 podopiecznych), okres próbny, faktury, operator płatności (np. Stripe przez rozszerzenie Firebase).
-
-**4. Dane osobowe i zdrowotne (ADR-0007).** Waga, obwody i zdjęcia sylwetki mogą być danymi o zdrowiu w rozumieniu RODO: wyraźna zgoda podopiecznego, umowa powierzenia z trenerem, region UE (`europe-central2` już jest), eksport i usunięcie konta, regulamin i polityka prywatności — przed pierwszym płacącym trenerem; warto skonsultować z prawnikiem.
+Później, przed etapem 5: model cenowy i operator płatności; wersja mobilna — po decyzji właściciela o jej wznowieniu.
 
 ## Etapy
 
@@ -102,14 +102,14 @@ Rozmiar: S — kilka dni, M — 1–2 tygodnie, L — 3+ tygodnie pracy jednej o
 
 | Etap | Zakres | Gotowe, gdy | Rozmiar |
 |---|---|---|---|
-| **0. Fundament** | Scalenie obecnego PR i konfiguracja Firebase (KNOWN_ISSUES #1); hook `pre-push` zamiast CI (#14); routing z adresami URL (React Router); pobieranie danych przez TanStack Query; schematy Zod zamiast ręcznej walidacji; osobny projekt Firebase dla środowiska testowego; monitoring błędów (np. Sentry); testy E2E Playwright na emulatorach; ADR-0004 i ADR-0005 | Każda zmiana przechodzi bramkę lokalnie, scenariusze z checklisty mają testy E2E, decyzje przyjęte | M |
+| **0. Fundament** | Scalenie obecnego PR i konfiguracja Firebase (KNOWN_ISSUES #1); routing, nasłuchy danych, cache offline i schematy Zod ([ADR-0010](adr/0010-web-app-architecture.md)); środowisko staging i monitoring błędów ([ADR-0011](adr/0011-environments-hosting-monitoring.md)); testy E2E Playwright na emulatorach | Scenariusze z checklisty mają testy E2E, aplikacja działa w trybie samolotowym, podglądy PR używają stagingu | M |
 | **1. Wiele kont, nowy model danych** | Rejestracja i profil; dane w `users/{uid}/…`; biblioteka ćwiczeń; serie liczbowe; szablony w Firestore; migracja obecnych danych; trwały cache offline | Dwa konta nie widzą swoich danych (testy reguł A/B), dane właściciela przeniesione bez strat, aplikacja działa w trybie samolotowym | L |
 | **2. Postęp** | Wyniki z poprzedniego razu przy ćwiczeniu; wykresy e1RM, rekordy, objętość tygodniowa, regularność; trend wagi; zdjęcia sylwetki w Cloud Storage; minutnik przerwy | Podopieczny widzi postęp dla dowolnego ćwiczenia z historii; obliczenia mają testy jednostkowe | M |
 | **3. Trener** | Rola trenera; zaproszenia (Cloud Function); lista podopiecznych z sygnałami; kreator planu wielotygodniowego z kopiowaniem i progresją; przypisanie planu; „zadane / wykonane”; komentarze; check-iny; import CSV/Excel | Pilotaż: 2–3 trenerów prowadzi realnych podopiecznych przez 4 tygodnie bez arkusza | L |
-| **4. Mobile** | PWA (manifest, service worker, instalacja, web push); powiadomienia trenera i podopiecznego; później Capacitor | Instalacja na Android i iOS, powiadomienie o zakończonym treningu dociera do trenera | M |
+| **4. Mobile — odłożony** | Do wznowienia decyzją właściciela ([ADR-0004](adr/0004-firebase-multi-user.md)); wtedy PWA, a później Capacitor | — | M |
 | **5. Produkt komercyjny** | Abonamenty i limity podopiecznych; strona produktu; regulamin, polityka prywatności, umowa powierzenia; eksport i usunięcie danych; język angielski; panel administratora | Pierwszy trener płaci za abonament, a żądanie usunięcia konta wykonuje się bez ręcznej pracy | L |
 
-Etapy 1 i 2 mają wartość także bez trenerów (lepszy dziennik), więc dają szybki efekt; etap 3 warto zacząć od rozmów z 3–5 trenerami o tym, jak dziś prowadzą plany w Excelu i czego im brakuje.
+Kolejność: 0 → 1 → 2 → 3 → 5. Etapy 1 i 2 mają wartość także bez trenerów (lepszy dziennik), więc dają szybki efekt; etap 3 warto zacząć od rozmów z 3–5 trenerami o tym, jak dziś prowadzą plany w Excelu i czego im brakuje.
 
 ## Jakość — zasady przekrojowe
 
