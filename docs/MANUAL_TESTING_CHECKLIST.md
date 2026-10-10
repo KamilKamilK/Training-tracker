@@ -13,6 +13,7 @@ Nowy przypadek: warunki wstępne, kroki, oczekiwany wynik.
 ## 0. Przygotowanie
 
 - [ ] Aplikacja ładuje się bez błędów w konsoli przeglądarki
+- [ ] Wersja produkcyjna: `npm run build`, potem `npx vite preview` → strona pokazuje ekran logowania, a konsola przeglądarki nie ma błędów (pusta strona oznacza błąd ładowania kodu)
 
 ## 1. Logowanie i dostęp
 

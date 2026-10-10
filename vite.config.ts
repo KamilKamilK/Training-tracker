@@ -1,14 +1,11 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
-// Vendor libraries change less often than the app, so separate chunks stay cached
-// between deployments and keep each file under Vite's 500 kB warning limit.
-const VENDOR_CHUNKS: Record<string, string[]> = {
-  firestore: ['@firebase/firestore'],
-  'firebase-auth': ['@firebase/auth'],
-  firebase: ['@firebase/', 'firebase/'],
-  react: ['react', 'react-dom', 'scheduler'],
-}
+// Third-party code changes less often than the app, so it gets its own long-cached chunks
+// and every chunk stays under Vite's 500 kB warning limit. React is split from the other
+// libraries only because those libraries import React, never the other way round: chunks
+// that import each other in a cycle fail at startup ("Cannot access ... before initialization").
+const REACT_PACKAGES = ['react', 'react-dom', 'scheduler']
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -19,11 +16,7 @@ export default defineConfig({
         manualChunks(id) {
           const [, modulePath] = id.split('node_modules/')
           if (!modulePath) return undefined
-          return Object.keys(VENDOR_CHUNKS).find(chunk =>
-            VENDOR_CHUNKS[chunk].some(name =>
-              name.endsWith('/') ? modulePath.startsWith(name) : modulePath.startsWith(`${name}/`),
-            ),
-          )
+          return REACT_PACKAGES.some(name => modulePath.startsWith(`${name}/`)) ? 'react' : 'vendor'
         },
       },
     },
