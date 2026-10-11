@@ -9,6 +9,7 @@ import { useWorkoutDraft } from '../features/workouts/useWorkoutDraft.js';
 
 import { LoadingSpinner } from '../components/common/LoadingSpinner.js';
 import { ErrorBanner } from '../components/common/ErrorBanner.js';
+import { ErrorToast, ToastRegion } from '../components/common/Toasts.js';
 import { Modal } from '../components/common/Modal.js';
 import { MeasurementForm } from '../features/measurements/MeasurementForm.js';
 import { Header } from '../components/common/Header.js';
@@ -111,100 +112,102 @@ const TrainingTracker: React.FC<TrainingTrackerProps> = ({
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white p-4">
-      <div className="max-w-6xl mx-auto">
-        <Header
-          templatesCount={templates.length}
-          workoutsCount={workouts.length}
-          email={email}
-          onSignOut={onSignOut}
-        />
-        <TabNavigation tabs={tabs} />
+    <ToastRegion>
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white p-4">
+        <div className="max-w-6xl mx-auto">
+          <Header
+            templatesCount={templates.length}
+            workoutsCount={workouts.length}
+            email={email}
+            onSignOut={onSignOut}
+          />
+          <TabNavigation tabs={tabs} />
 
-        {workoutsError && pathname !== ROUTES.workout && (
-          <ErrorBanner message={workoutsError} onDismiss={clearWorkoutsError} />
-        )}
-        {measurementsError && !isMeasurementFormOpen && (
-          <ErrorBanner message={measurementsError} onDismiss={clearMeasurementsError} />
-        )}
+          {workoutsError && pathname !== ROUTES.workout && (
+            <ErrorToast message={workoutsError} onDismiss={clearWorkoutsError} />
+          )}
+          {measurementsError && !isMeasurementFormOpen && (
+            <ErrorToast message={measurementsError} onDismiss={clearMeasurementsError} />
+          )}
 
-        <div className="bg-slate-800 rounded-xl shadow-2xl p-6">
-          <Suspense fallback={<p className="text-slate-400 text-center py-12">Ładowanie...</p>}>
-            <Routes>
-              <Route
-                path={ROUTES.dashboard}
-                element={
-                  <DashboardTab
-                    workouts={workouts}
-                    measurements={measurements}
-                    templates={templates}
-                    onStartWorkout={startWorkout}
-                    onAddMeasurement={() => setIsMeasurementFormOpen(true)}
-                  />
-                }
-              />
-              <Route
-                path={ROUTES.templates}
-                element={
-                  <TemplatesTab
-                    templates={templates}
-                    defaultTemplates={defaultTemplates}
-                    customTemplates={customTemplates}
-                    onAddTemplate={addTemplate}
-                    onUpdateTemplate={updateTemplate}
-                    onDeleteTemplate={deleteTemplate}
-                    onDuplicateTemplate={duplicateTemplate}
-                  />
-                }
-              />
-              <Route path={ROUTES.plan} element={<PlanTab templates={templates} />} />
-              <Route
-                path={ROUTES.workout}
-                element={
-                  <WorkoutTab
-                    currentWorkout={currentWorkout}
-                    isFinishing={isFinishing}
-                    error={workoutsError}
-                    onDismissError={clearWorkoutsError}
-                    onAddSet={addSet}
-                    onUpdateSet={updateSet}
-                    onRemoveSet={removeSet}
-                    onFinishWorkout={handleFinishWorkout}
-                  />
-                }
-              />
-              <Route path={ROUTES.history} element={<HistoryTab workouts={workouts} onDelete={deleteWorkout} />} />
-              <Route path={ROUTES.progress} element={<ProgressTab measurements={measurements} workouts={workouts} />} />
-              <Route
-                path={ROUTES.settings}
-                element={
-                  <SettingsTab
-                    email={email}
-                    profile={profile}
-                    error={profileError}
-                    onDismissError={onDismissProfileError}
-                    onUpdateDisplayName={onUpdateDisplayName}
-                    onWithdrawHealthConsent={onWithdrawHealthConsent}
-                  />
-                }
-              />
-              <Route path="*" element={<Navigate to={ROUTES.dashboard} replace />} />
-            </Routes>
-          </Suspense>
+          <div className="bg-slate-800 rounded-xl shadow-2xl p-6">
+            <Suspense fallback={<p className="text-slate-400 text-center py-12">Ładowanie...</p>}>
+              <Routes>
+                <Route
+                  path={ROUTES.dashboard}
+                  element={
+                    <DashboardTab
+                      workouts={workouts}
+                      measurements={measurements}
+                      templates={templates}
+                      onStartWorkout={startWorkout}
+                      onAddMeasurement={() => setIsMeasurementFormOpen(true)}
+                    />
+                  }
+                />
+                <Route
+                  path={ROUTES.templates}
+                  element={
+                    <TemplatesTab
+                      templates={templates}
+                      defaultTemplates={defaultTemplates}
+                      customTemplates={customTemplates}
+                      onAddTemplate={addTemplate}
+                      onUpdateTemplate={updateTemplate}
+                      onDeleteTemplate={deleteTemplate}
+                      onDuplicateTemplate={duplicateTemplate}
+                    />
+                  }
+                />
+                <Route path={ROUTES.plan} element={<PlanTab templates={templates} />} />
+                <Route
+                  path={ROUTES.workout}
+                  element={
+                    <WorkoutTab
+                      currentWorkout={currentWorkout}
+                      isFinishing={isFinishing}
+                      error={workoutsError}
+                      onDismissError={clearWorkoutsError}
+                      onAddSet={addSet}
+                      onUpdateSet={updateSet}
+                      onRemoveSet={removeSet}
+                      onFinishWorkout={handleFinishWorkout}
+                    />
+                  }
+                />
+                <Route path={ROUTES.history} element={<HistoryTab workouts={workouts} onDelete={deleteWorkout} />} />
+                <Route path={ROUTES.progress} element={<ProgressTab measurements={measurements} workouts={workouts} />} />
+                <Route
+                  path={ROUTES.settings}
+                  element={
+                    <SettingsTab
+                      email={email}
+                      profile={profile}
+                      error={profileError}
+                      onDismissError={onDismissProfileError}
+                      onUpdateDisplayName={onUpdateDisplayName}
+                      onWithdrawHealthConsent={onWithdrawHealthConsent}
+                    />
+                  }
+                />
+                <Route path="*" element={<Navigate to={ROUTES.dashboard} replace />} />
+              </Routes>
+            </Suspense>
+          </div>
+
+          <Footer />
+
+          <Modal
+            isOpen={isMeasurementFormOpen}
+            onClose={() => setIsMeasurementFormOpen(false)}
+            title="Nowy pomiar"
+          >
+            {measurementsError && <ErrorBanner message={measurementsError} onDismiss={clearMeasurementsError} />}
+            <MeasurementForm onSubmit={saveMeasurement} onCancel={() => setIsMeasurementFormOpen(false)} />
+          </Modal>
         </div>
-
-        <Footer />
-
-        <Modal
-          isOpen={isMeasurementFormOpen}
-          onClose={() => setIsMeasurementFormOpen(false)}
-          title="Nowy pomiar"
-        >
-          {measurementsError && <ErrorBanner message={measurementsError} onDismiss={clearMeasurementsError} />}
-          <MeasurementForm onSubmit={saveMeasurement} onCancel={() => setIsMeasurementFormOpen(false)} />
-        </Modal>
       </div>
-    </div>
+    </ToastRegion>
   );
 };
 

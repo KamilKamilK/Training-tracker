@@ -40,6 +40,7 @@ Nowy przypadek: warunki wstępne, kroki, oczekiwany wynik.
 - [ ] Odświeżenie strony (F5) zostawia tę samą zakładkę, także na produkcji (Vercel)
 - [ ] Przycisk „wstecz” przeglądarki wraca do poprzedniej zakładki
 - [ ] Nieznany adres (np. `/abc`) przenosi na Start
+- [ ] Błąd wczytania lub zapisu poza formularzem (np. reguły odrzucające odczyt historii w emulatorze) → czerwony dymek w prawym dolnym rogu (na telefonie na całą szerokość u dołu), widoczny na każdej zakładce do zamknięcia „X”; błąd zapisu treningu i pomiaru zostaje przy formularzu
 - [ ] Link do zakładki (np. `/history`) otwarty bez zalogowania → ekran logowania, po zalogowaniu ta sama zakładka
 
 ## 2. Start (pulpit)

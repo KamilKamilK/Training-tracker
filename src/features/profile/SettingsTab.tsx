@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ErrorBanner } from '../../components/common/ErrorBanner.js';
+import { ErrorToast } from '../../components/common/Toasts.js';
 import { FormField } from '../../components/common/FormField.js';
 import { Modal } from '../../components/common/Modal.js';
 import { HEALTH_CONSENT } from '../../constants/consent.js';
@@ -58,7 +58,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
   return (
     <div className="space-y-8 max-w-xl">
       <h2 className="text-2xl font-bold">Ustawienia</h2>
-      {error && <ErrorBanner message={error} onDismiss={onDismissError} />}
+      {error && <ErrorToast message={error} onDismiss={onDismissError} />}
 
       <section className="space-y-3">
         <h3 className="text-lg font-semibold">Profil</h3>
