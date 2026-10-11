@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import { userEvent } from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { TemplatesTab } from './TemplatesTab.js';
@@ -46,5 +46,23 @@ describe('TemplatesTab form', () => {
     await user.click(screen.getByRole('button', { name: /Utwórz/ }));
 
     expect(onAddTemplate).toHaveBeenCalledWith(expect.objectContaining({ name: 'Push A', exercises: ['Przysiad'] }));
+  });
+
+  it('picks the icon and the card colour from the lists', async () => {
+    const user = userEvent.setup();
+    const onAddTemplate = renderTab();
+
+    await user.click(screen.getByRole('button', { name: /Nowy Szablon/ }));
+    await user.type(screen.getByLabelText('Nazwa'), 'Basen');
+    await user.click(screen.getByRole('button', { name: /Dodaj ćwiczenie/ }));
+    await user.type(screen.getByPlaceholderText('Ćwiczenie 1'), 'Kraul');
+    const icons = screen.getByRole('radiogroup', { name: 'Ikona' });
+    const colors = screen.getByRole('radiogroup', { name: 'Kolor karty' });
+    await user.click(within(icons).getByRole('radio', { name: '🏊' }));
+    await user.click(within(colors).getByRole('radio', { name: 'Turkusowy' }));
+    expect(within(colors).getByRole('radio', { name: 'Turkusowy' }).getAttribute('aria-checked')).toBe('true');
+    await user.click(screen.getByRole('button', { name: /Utwórz/ }));
+
+    expect(onAddTemplate).toHaveBeenCalledWith(expect.objectContaining({ icon: '🏊', color: 'bg-cyan-600' }));
   });
 });

@@ -30,7 +30,7 @@ Nowy przypadek: warunki wstępne, kroki, oczekiwany wynik.
 - [ ] Zaznaczenie zgody i „Aktywuj konto” → dziennik z zakładką „Start”; po odświeżeniu ekran aktywacji się nie pokazuje
 - [ ] Konto właściciela → dziennik z zakładką „Start”; w nagłówku adres e-mail, „Ustawienia” i „Wyloguj”
 - [ ] „Ustawienia” (`/settings`) → adres e-mail, imię z możliwością zmiany („Zapisz” → „Zapisano.”, zmiana zostaje po odświeżeniu), treść zgody z datą udzielenia i wersją
-- [ ] „Wycofaj zgodę” → okno z opisem skutków; „Anuluj” nic nie zmienia; potwierdzenie → ekran „Aktywuj konto”, także po odświeżeniu; ponowna zgoda przywraca dziennik z wcześniejszymi danymi
+- [ ] „Wycofaj zgodę” → okno z opisem skutków; „Anuluj” nic nie zmienia; potwierdzenie → ekran „Aktywuj konto”, także po odświeżeniu; ponowna zgoda przywraca dziennik z wcześniejszymi danymi, bez komunikatów błędu wczytywania na żadnej zakładce
 - [ ] „Wyloguj” w nagłówku → powrót do ekranu logowania; odświeżenie strony nie loguje ponownie
 - [ ] Produkcja: właściciel widzi swoje dane po aktywacji konta, inne konto — ekran braku dostępu
 
@@ -75,6 +75,8 @@ Nowy przypadek: warunki wstępne, kroki, oczekiwany wynik.
 - [ ] Nowy szablon z nazwą i ćwiczeniami → widoczny na liście i w siatce na „Start”
 - [ ] Edycja, duplikacja („(kopia)”) i usunięcie szablonu własnego działają; szablon domyślny można tylko zduplikować
 - [ ] Zmiana kategorii i poziomu w formularzu zostaje zapisana
+- [ ] Formularz szablonu: ikona wybierana z listy emoji, kolor karty z listy próbek kolorów (nazwa po najechaniu); wybrana opcja ma białą ramkę, a nowy szablon ma tę ikonę i kolor na liście
+- [ ] Edycja szablonu zapisanego wcześniej z kolorem lub ikoną spoza listy → pierwsza opcja „Obecny: …” jest zaznaczona, zapis bez zmiany ich nie zmienia
 - [ ] Szablony własne pozostają po odświeżeniu strony
 
 ## 6. Plan tygodnia

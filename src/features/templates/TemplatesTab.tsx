@@ -2,6 +2,18 @@ import React, { useState } from 'react';
 import { Plus, Edit, Trash2, Copy, Save, X } from 'lucide-react';
 import { WorkoutTemplate } from '../../types/index.js';
 import { TemplateInputErrors, validateTemplateInput } from './template.validation.js';
+import { TEMPLATE_COLORS, TEMPLATE_ICONS } from './templateAppearance.js';
+import { OptionPicker, PickerOption } from '../../components/common/OptionPicker.js';
+
+/** Keeps a value saved before the option lists existed selectable, so editing does not change it. */
+const withCurrent = (
+  options: PickerOption[],
+  current: string | undefined,
+  content: (value: string) => React.ReactNode,
+): PickerOption[] =>
+  !current || options.some(option => option.value === current)
+    ? options
+    : [{ value: current, label: `Obecny: ${current}`, content: content(current) }, ...options];
 
 interface TemplatesTabProps {
   templates: WorkoutTemplate[];
@@ -141,17 +153,6 @@ export const TemplatesTab: React.FC<TemplatesTabProps> = ({
             </div>
 
             <div>
-              <label className="block text-sm mb-1 text-slate-300">Ikona (emoji)</label>
-              <input
-                type="text"
-                value={formData.icon ?? ''}
-                onChange={e => handleInputChange('icon', e.target.value)}
-                className="w-full bg-slate-800 rounded-lg p-2 outline-none border border-slate-600 focus:border-blue-500"
-                maxLength={2}
-              />
-            </div>
-
-            <div>
               <label className="block text-sm mb-1 text-slate-300">Kategoria</label>
               <select
                 value={formData.category}
@@ -187,20 +188,33 @@ export const TemplatesTab: React.FC<TemplatesTabProps> = ({
                 className="w-full bg-slate-800 rounded-lg p-2 outline-none border border-slate-600 focus:border-blue-500"
               />
             </div>
-
-            <div>
-              <label className="block text-sm mb-1 text-slate-300">Kolor karty (Tailwind)</label>
-              <input
-                type="text"
-                value={formData.color}
-                onChange={e => handleInputChange('color', e.target.value)}
-                className="w-full bg-slate-800 rounded-lg p-2 outline-none border border-slate-600 focus:border-blue-500"
-                placeholder="np. bg-blue-600"
-              />
-            </div>
           </div>
 
-          <div>
+          <div className="space-y-4 mt-4">
+            <OptionPicker
+              label="Ikona"
+              options={withCurrent(
+                TEMPLATE_ICONS.map(icon => ({ value: icon, label: icon, content: icon })),
+                formData.icon,
+                icon => icon,
+              )}
+              value={formData.icon ?? ''}
+              onChange={icon => handleInputChange('icon', icon)}
+            />
+            <OptionPicker
+              label="Kolor karty"
+              options={withCurrent(
+                TEMPLATE_COLORS.map(color => ({ value: color.value, label: color.label, content: null })),
+                formData.color,
+                () => null,
+              )}
+              value={formData.color}
+              onChange={color => handleInputChange('color', color)}
+              optionClassName={option => option.value}
+            />
+          </div>
+
+          <div className="mt-4">
             <label className="block text-sm mb-2 text-slate-300">Opis</label>
             <textarea
               value={formData.description}
