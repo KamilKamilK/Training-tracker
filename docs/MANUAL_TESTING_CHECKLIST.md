@@ -33,6 +33,7 @@ Nowy przypadek: warunki wstępne, kroki, oczekiwany wynik.
 - [ ] „Wycofaj zgodę” → okno z opisem skutków; „Anuluj” nic nie zmienia; potwierdzenie → ekran „Aktywuj konto”, także po odświeżeniu; ponowna zgoda przywraca dziennik z wcześniejszymi danymi, bez komunikatów błędu wczytywania na żadnej zakładce
 - [ ] „Wyloguj” w nagłówku → powrót do ekranu logowania; odświeżenie strony nie loguje ponownie
 - [ ] Produkcja: właściciel widzi swoje dane po aktywacji konta, inne konto — ekran braku dostępu
+- [ ] Produkcja po migracji (`scripts/migrate-to-users.ts --apply`): liczba treningów w nagłówku, pomiary i plan tygodnia takie jak przed wdrożeniem
 
 ## 1a. Nawigacja
 
@@ -78,7 +79,8 @@ Nowy przypadek: warunki wstępne, kroki, oczekiwany wynik.
 - [ ] Zmiana kategorii i poziomu w formularzu zostaje zapisana
 - [ ] Formularz szablonu: ikona wybierana z listy emoji, kolor karty z listy próbek kolorów (nazwa po najechaniu); wybrana opcja ma białą ramkę, a nowy szablon ma tę ikonę i kolor na liście
 - [ ] Edycja szablonu zapisanego wcześniej z kolorem lub ikoną spoza listy → pierwsza opcja „Obecny: …” jest zaznaczona, zapis bez zmiany ich nie zmienia
-- [ ] Szablony własne pozostają po odświeżeniu strony
+- [ ] Szablony własne pozostają po odświeżeniu strony i są widoczne w innej przeglądarce po zalogowaniu (zapis w Firestore)
+- [ ] Pierwsze uruchomienie nowej wersji w przeglądarce z szablonami zapisanymi wcześniej lokalnie → te szablony są na liście i zostają po wyczyszczeniu danych przeglądarki
 
 ## 6. Plan tygodnia
 

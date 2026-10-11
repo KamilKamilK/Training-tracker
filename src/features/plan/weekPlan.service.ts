@@ -6,13 +6,18 @@ import { parseWeekPlanDocument } from '../../utils/parse.utils.js';
 const COLLECTION_NAME = 'weekPlans';
 const WEEK_PLAN_DOC_ID = 'default_week_plan';
 
-export class WeekPlanService {
-  private static docRef = doc(db, COLLECTION_NAME, WEEK_PLAN_DOC_ID);
+/** The week plan of one account: users/{uid}/weekPlans/default_week_plan (ADR-0005). */
+const weekPlan = (uid: string) => doc(db, 'users', uid, COLLECTION_NAME, WEEK_PLAN_DOC_ID);
 
+export class WeekPlanService {
   /** Streams the plan; null when no plan is saved yet or the saved document has an unexpected shape. */
-  static subscribe(onChange: (document: WeekPlanDocument | null) => void, onError: (error: unknown) => void): () => void {
+  static subscribe(
+    uid: string,
+    onChange: (document: WeekPlanDocument | null) => void,
+    onError: (error: unknown) => void,
+  ): () => void {
     return onSnapshot(
-      this.docRef,
+      weekPlan(uid),
       snapshot => {
         if (!snapshot.exists()) {
           onChange(null);
@@ -31,9 +36,9 @@ export class WeekPlanService {
     );
   }
 
-  static async save(document: WeekPlanDocument): Promise<void> {
+  static async save(uid: string, document: WeekPlanDocument): Promise<void> {
     try {
-      await setDoc(this.docRef, document);
+      await setDoc(weekPlan(uid), document);
     } catch (err) {
       console.error('WeekPlanService.save error:', err);
       throw err;

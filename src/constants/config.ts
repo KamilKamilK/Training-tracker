@@ -8,6 +8,7 @@ export const APP_CONFIG = {
 };
 
 export const STORAGE_KEYS = {
+  /** Templates saved in the browser before they moved to Firestore; read once and imported (useTemplates). */
   customTemplates: 'customTemplates',
   workouts: 'workouts',
   measurements: 'measurements',

@@ -94,7 +94,7 @@ Instrukcje dla agentów (Claude Code, Codex i inne) oraz osób pracujących nad 
 ## Zakres repozytorium
 
 - Jednostronicowa aplikacja (SPA) do rejestrowania treningów, planu tygodnia, szablonów i pomiarów ciała. Stack i architektura: [ADR-0002](docs/adr/0002-spa-firebase.md); uruchomienie: [README.md](README.md).
-- Struktura `src/`: `features/<obszar>/` (auth, dashboard, measurements, workouts, history, templates, plan, progress) — komponenty, hooki, serwis Firebase, logika i testy jednego obszaru razem; `app/TrainingTracker.tsx` (układ i trasy); wspólne: `types/` (model danych jako schematy Zod; typy przez `z.infer`), `components/common/`, `hooks/`, `services/storage/` (LocalStorage), `utils/` (walidacja odczytu w `parse.utils.ts`, daty, formularze), `constants/` (m.in. komunikaty błędów w `messages.ts`, adresy zakładek w `routes.ts`), `lib/firebaseConfig.ts`. Nawigacja: React Router; `vercel.json` kieruje każdy adres do `index.html`.
+- Struktura `src/`: `features/<obszar>/` (auth, dashboard, measurements, workouts, history, templates, plan, progress) — komponenty, hooki, serwis Firebase, logika i testy jednego obszaru razem; `app/TrainingTracker.tsx` (układ i trasy); wspólne: `types/` (model danych jako schematy Zod; typy przez `z.infer`), `components/common/`, `hooks/`, `services/storage/` (LocalStorage), `utils/` (walidacja odczytu w `parse.utils.ts`, daty, formularze), `constants/` (m.in. komunikaty błędów w `messages.ts`, adresy zakładek w `routes.ts`), `lib/firebaseConfig.ts`. Poza `src/`: `scripts/` — jednorazowe skrypty danych (Firebase Admin SDK, tryb próbny domyślnie, testy w `tests/scripts/`). Nawigacja: React Router; `vercel.json` kieruje każdy adres do `index.html`.
 - Konfiguracja Firebase: `firebase.json` (także emulatory), `firestore.rules`, `firestore.indexes.json`, projekt w `.firebaserc`; zmienne środowiskowe w `.env.example`.
 
 ## Weryfikacja
@@ -105,7 +105,7 @@ Hook `pre-push` (`.githooks/`, aktywacja raz na klon: `git config core.hooksPath
 npm run lint        # ESLint (typescript-eslint, react-hooks, no-console)
 npm run build       # tsc -b (typecheck) + vite build
 npm test            # testy jednostkowe Vitest
-npm run test:rules  # testy firestore.rules na emulatorze (wymaga Javy)
+npm run test:rules  # testy firestore.rules i skryptów danych na emulatorze (wymaga Javy)
 npm run test:e2e    # Playwright: zbudowana aplikacja na emulatorach (Java, Chromium)
 ```
 

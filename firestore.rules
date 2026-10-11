@@ -1,9 +1,9 @@
 rules_version = '2';
 
-// The app has no backend, so these rules are the security boundary: only the data
-// owner (a signed-in account with a verified e-mail whose uid has a document in `owners` and
-// whose profile holds the accepted health-data consent) can read or write, and every write is
-// checked for shape and types. Measurement ranges mirror
+// The app has no backend, so these rules are the security boundary: an account reaches only its
+// own data in users/{uid}/…, and only when it is active — a verified e-mail, a document in
+// `owners` (the access list until registration opens, ADR-0016) and the accepted health-data
+// consent in its profile. Every write is checked for shape and types. Measurement ranges mirror
 // VALIDATION_RULES.measurement in src/constants/validation.ts.
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -31,10 +31,11 @@ service cloud.firestore {
         && consent.at is timestamp;
     }
 
-    // Mirrors UserProfileDocumentSchema in src/types/profile.types.ts.
+    // Mirrors UserProfileDocumentSchema in src/types/profile.types.ts. `roles` is set only by the
+    // administrator (ADR-0016), so the account owner can neither add nor change it.
     function isValidProfile(data) {
       return data.keys().hasAll(['displayName', 'consents'])
-        && data.keys().hasOnly(['displayName', 'consents'])
+        && data.keys().hasOnly(['displayName', 'consents', 'roles'])
         && data.displayName is string && data.displayName.size() > 0 && data.displayName.size() <= 60
         && data.consents is map
         && data.consents.keys().hasAll(['health'])
@@ -78,6 +79,22 @@ service cloud.firestore {
         && isValidDay(data.plan, 'sunday');
     }
 
+    // Mirrors WorkoutTemplateSchema in src/types/template.types.ts and VALIDATION_RULES.template.
+    function isValidTemplate(data) {
+      return data.keys().hasAll(['name', 'description', 'exercises', 'category', 'estimatedDuration', 'difficulty', 'color'])
+        && data.keys().hasOnly(['name', 'description', 'exercises', 'category', 'estimatedDuration', 'difficulty', 'color', 'icon', 'isCustom', 'createdAt'])
+        && data.name is string && data.name.size() >= 3 && data.name.size() <= 50
+        && data.description is string && data.description.size() <= 1000
+        && data.exercises is list && data.exercises.size() >= 1 && data.exercises.size() <= 20
+        && data.category in ['strength', 'cardio', 'hybrid', 'custom']
+        && data.estimatedDuration is number && data.estimatedDuration >= 0 && data.estimatedDuration <= 600
+        && data.difficulty in ['beginner', 'intermediate', 'advanced']
+        && data.color is string && data.color.size() <= 40
+        && (!('icon' in data) || (data.icon is string && data.icon.size() <= 16))
+        && (!('isCustom' in data) || data.isCustom is bool)
+        && (!('createdAt' in data) || (data.createdAt is string && data.createdAt.size() <= 40));
+    }
+
     // Any verified account keeps its own profile; a consent decision carries the server time of
     // the write, so it cannot be backdated.
     match /users/{uid} {
@@ -88,11 +105,38 @@ service cloud.firestore {
       allow get: if isSelf();
       allow create: if isSelf()
         && isValidProfile(request.resource.data)
+        && !('roles' in request.resource.data)
         && request.resource.data.consents.health.at == request.time;
       allow update: if isSelf()
         && isValidProfile(request.resource.data)
+        && request.resource.data.get('roles', null) == resource.data.get('roles', null)
         && (request.resource.data.consents.health == resource.data.consents.health
           || request.resource.data.consents.health.at == request.time);
+
+      // The account's own journal (ADR-0005); the same access conditions as for the owner's data.
+      function isActiveSelf() {
+        return isOwner() && request.auth.uid == uid;
+      }
+
+      match /sessions/{sessionId} {
+        allow read, delete: if isActiveSelf();
+        allow create, update: if isActiveSelf() && isValidWorkout(request.resource.data);
+      }
+
+      match /measurements/{measurementId} {
+        allow read, delete: if isActiveSelf();
+        allow create, update: if isActiveSelf() && isValidMeasurement(request.resource.data);
+      }
+
+      match /weekPlans/{planId} {
+        allow read: if isActiveSelf();
+        allow create, update: if isActiveSelf() && isValidWeekPlan(request.resource.data);
+      }
+
+      match /templates/{templateId} {
+        allow read, delete: if isActiveSelf();
+        allow create, update: if isActiveSelf() && isValidTemplate(request.resource.data);
+      }
     }
 
     // Created by the owner in the Firebase console; the app only checks its existence.
@@ -100,6 +144,8 @@ service cloud.firestore {
       allow get: if request.auth != null && request.auth.uid == uid;
     }
 
+    // Collections from before the per-user model (ADR-0016, pkt 7). They stay until the owner
+    // confirms the migration to users/{uid}/…; removing them is a separate step.
     match /workouts/{workoutId} {
       allow read, delete: if isOwner();
       allow create, update: if isOwner() && isValidWorkout(request.resource.data);

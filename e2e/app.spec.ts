@@ -198,3 +198,44 @@ test('the owner activates the account with the consent and deactivates it by wit
   await expect(page.getByText(/Brak treningów w historii|Historia Treningów/).first()).toBeVisible();
   await expect(page.getByRole('alert')).toHaveCount(0);
 });
+
+test('custom templates are stored in the account, including ones saved before in the browser', async ({ page }) => {
+  await page.goto('/');
+  await page.evaluate(() =>
+    localStorage.setItem(
+      'customTemplates',
+      JSON.stringify([
+        {
+          id: 'old-1',
+          name: 'Stary szablon',
+          description: '',
+          exercises: ['Przysiad'],
+          category: 'strength',
+          estimatedDuration: 45,
+          difficulty: 'beginner',
+          color: 'bg-lime-700',
+          isCustom: true,
+        },
+      ]),
+    ),
+  );
+  await openAsOwner(page);
+  await page.getByRole('link', { name: 'Szablony', exact: true }).click();
+  await expect(page.getByText('Stary szablon')).toBeVisible();
+  await expect.poll(() => page.evaluate(() => localStorage.getItem('customTemplates'))).toBeNull();
+
+  await page.getByRole('button', { name: /Nowy Szablon/ }).click();
+  await page.getByLabel('Nazwa').fill('Basen');
+  await page.getByRole('button', { name: /Dodaj ćwiczenie/ }).click();
+  await page.getByPlaceholder('Ćwiczenie 1').fill('Kraul');
+  await page.getByRole('radio', { name: '🏊' }).click();
+  await page.getByRole('button', { name: /Utwórz/ }).click();
+  await expect(page.getByText('Basen')).toBeVisible();
+
+  // A fresh browser profile has no local copy: the templates come from Firestore.
+  await page.evaluate(() => localStorage.clear());
+  await page.reload();
+  await page.getByRole('link', { name: 'Szablony', exact: true }).click();
+  await expect(page.getByText('Stary szablon')).toBeVisible();
+  await expect(page.getByText('Basen')).toBeVisible();
+});

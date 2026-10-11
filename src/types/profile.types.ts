@@ -16,6 +16,8 @@ const ConsentSchema = z.object({
 export const UserProfileDocumentSchema = z.object({
   displayName: z.string().min(1).max(60),
   consents: z.object({ health: ConsentSchema }),
+  /** Set only by the administrator in the Firebase console (ADR-0016); not yet used by the app. */
+  roles: z.array(z.string()).optional(),
 });
 
 export type UserProfile = z.infer<typeof UserProfileDocumentSchema>;

@@ -49,6 +49,7 @@ const tabs = [
 ];
 
 interface TrainingTrackerProps {
+  uid: string;
   email: string | null;
   profile: UserProfile;
   profileError: string | null;
@@ -59,6 +60,7 @@ interface TrainingTrackerProps {
 }
 
 const TrainingTracker: React.FC<TrainingTrackerProps> = ({
+  uid,
   email,
   profile,
   profileError,
@@ -82,14 +84,14 @@ const TrainingTracker: React.FC<TrainingTrackerProps> = ({
     isLoading: workoutsLoading,
     error: workoutsError,
     clearError: clearWorkoutsError,
-  } = useWorkoutHistory();
+  } = useWorkoutHistory(uid);
   const {
     measurements,
     saveMeasurement,
     isLoading: measurementsLoading,
     error: measurementsError,
     clearError: clearMeasurementsError,
-  } = useMeasurements();
+  } = useMeasurements(uid);
   const {
     allTemplates: templates,
     addTemplate,
@@ -98,7 +100,9 @@ const TrainingTracker: React.FC<TrainingTrackerProps> = ({
     duplicateTemplate,
     defaultTemplates,
     customTemplates,
-  } = useTemplates();
+    error: templatesError,
+    clearError: clearTemplatesError,
+  } = useTemplates(uid);
   const { currentWorkout, isFinishing, startWorkout, addSet, updateSet, removeSet, finishWorkout } = useWorkoutDraft();
 
   const handleFinishWorkout = async () => {
@@ -126,6 +130,7 @@ const TrainingTracker: React.FC<TrainingTrackerProps> = ({
           {workoutsError && pathname !== ROUTES.workout && (
             <ErrorToast message={workoutsError} onDismiss={clearWorkoutsError} />
           )}
+          {templatesError && <ErrorToast message={templatesError} onDismiss={clearTemplatesError} />}
           {measurementsError && !isMeasurementFormOpen && (
             <ErrorToast message={measurementsError} onDismiss={clearMeasurementsError} />
           )}
@@ -159,7 +164,7 @@ const TrainingTracker: React.FC<TrainingTrackerProps> = ({
                     />
                   }
                 />
-                <Route path={ROUTES.plan} element={<PlanTab templates={templates} />} />
+                <Route path={ROUTES.plan} element={<PlanTab uid={uid} templates={templates} />} />
                 <Route
                   path={ROUTES.workout}
                   element={

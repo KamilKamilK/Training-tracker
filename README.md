@@ -45,7 +45,7 @@ Praca bez dotykania danych produkcyjnych: ustaw `VITE_USE_EMULATORS=true` w `.en
 | `npm run lint` | ESLint |
 | `npm run build` | typecheck (`tsc -b`) i build produkcyjny do `dist/` |
 | `npm test` | testy jednostkowe (Vitest) |
-| `npm run test:rules` | testy `firestore.rules` na emulatorze Firestore |
+| `npm run test:rules` | testy `firestore.rules` i skryptów danych (`scripts/`) na emulatorze Firestore |
 | `npm run test:e2e` | testy end-to-end (Playwright) zbudowanej aplikacji na emulatorach |
 | `npm run emulators` | emulatory Authentication i Firestore do pracy lokalnej |
 
@@ -65,6 +65,16 @@ Po sklonowaniu włącz hook `pre-push`, który uruchamia te kontrole przy każdy
 6. **Firestore → Data:** utwórz kolekcję `owners` z dokumentem o ID równym UID (bez pól).
 7. Wdróż reguły: `npx firebase deploy --only firestore:rules` (wymaga `npx firebase login`). Reguły wpuszczają tylko konta z potwierdzonym adresem e-mail i zaakceptowaną zgodą na dane o zdrowiu.
 8. Po zalogowaniu aplikacja prosi o imię i zgodę na dane o zdrowiu — po jej zaakceptowaniu konto jest aktywne ([ADR-0015](docs/adr/0015-accounts-roles-consent.md)). Zgodę można wycofać w **Ustawieniach** (`/settings`), co dezaktywuje konto.
+
+### Przeniesienie danych do `users/{uid}/…` (jednorazowo)
+
+Aplikacja czyta dane konta z `users/{uid}/sessions`, `measurements`, `weekPlans` i `templates` ([ADR-0016](docs/adr/0016-roles-views-exercise-library.md)). Dane zapisane wcześniej w kolekcjach `workouts`, `measurements` i `weekPlans` kopiuje skrypt — bez zmiany i bez usuwania oryginałów:
+
+1. Zaloguj się do Google Cloud: `gcloud auth application-default login` (konto z dostępem do projektu).
+2. Próba bez zapisu: `node scripts/migrate-to-users.ts --project training-tracker-6d13b --uid <UID>` — pokazuje liczbę dokumentów do skopiowania i konflikty.
+3. Zapis: to samo polecenie z `--apply`; na końcu skrypt sprawdza, że każdy dokument ma identyczną kopię. Ponowne uruchomienie kopiuje tylko brakujące dokumenty.
+
+Szablony własne zapisane w przeglądarce aplikacja przenosi sama przy pierwszym uruchomieniu nowej wersji w tej przeglądarce.
 
 Zasady dostępu: [ADR-0003](docs/adr/0003-owner-authentication.md); konta i logowanie: [ADR-0008](docs/adr/0008-accounts-and-invitations.md); zgoda i aktywacja konta: [ADR-0015](docs/adr/0015-accounts-roles-consent.md).
 

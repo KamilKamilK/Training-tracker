@@ -20,9 +20,8 @@ Co ogranicza rozwój:
 
 | Ograniczenie | Gdzie | Skutek |
 |---|---|---|
-| Jeden właściciel danych, kolekcje w korzeniu bazy | `firestore.rules`, serwisy `src/features/*/*.service.ts` | Brak kont dla wielu osób i ról |
+| Dostęp tylko z listy `owners`, bez ról | `firestore.rules`, `src/features/auth/` | Brak kont trenera i podopiecznego ([ADR-0016](adr/0016-roles-views-exercise-library.md)) |
 | Ćwiczenie to tekst, a ciężar i powtórzenia to napisy | `src/types/workout.types.ts` | Nie da się policzyć postępu dla ćwiczenia (e1RM, objętość) ani porównać z planem |
-| Szablony w LocalStorage | `src/features/templates/useTemplates.ts` | Szablony znikają przy zmianie urządzenia; trener nie może ich udostępnić |
 | Plan tygodnia jako jeden dokument z nazwami szablonów | `src/features/plan/useWeekPlan.ts` | Brak planów wielotygodniowych z progresją |
 | Tylko logowanie Google, bez rejestracji | `src/features/auth/` | Osoby bez konta Google nie mogą korzystać z aplikacji |
 
@@ -66,6 +65,7 @@ Zasada: trener widzi dane podopiecznego tylko podczas aktywnej współpracy; po 
 |---|---|---|
 | `users/{uid}` | profil, role, ustawienia | właściciel konta |
 | `users/{uid}/sessions/{id}` | wykonany trening: data, odnośnik do dnia planu, ćwiczenia z `exerciseId`, serie liczbowe (`weight`, `reps`, `rir`, `done`) | właściciel; trener z aktywną współpracą |
+| `users/{uid}/templates/{id}`, `weekPlans/default_week_plan` | szablony treningów i plan tygodnia konta | właściciel |
 | `users/{uid}/measurements`, `checkins` | pomiary, check-iny (zapis wymaga zgody na dane o zdrowiu) | jak wyżej |
 | `users/{uid}/programs/{id}` | przypisany plan (kopia) z datą startu | właściciel; trener, który go przypisał |
 | `coaching/{coachId}_{athleteId}` | status współpracy (zaproszona, aktywna, zakończona), daty | obie strony |
@@ -73,7 +73,7 @@ Zasada: trener widzi dane podopiecznego tylko podczas aktywnej współpracy; po 
 | `exercises/{id}` | biblioteka globalna: nazwa, partie mięśniowe, sprzęt, wideo | wszyscy zalogowani (odczyt) |
 | `invites/{token}` | zaproszenie: losowy token 128-bit, trener, ważność ≤ 7 dni, jednorazowe użycie ([ADR-0008](adr/0008-accounts-and-invitations.md)) | tworzy trener; odczyt pojedynczego dokumentu z linku, lista zabroniona |
 
-Obecne dane właściciela przechodzą jednorazowo do `users/{uid}/…` skryptem migracji (napisy na liczby, nazwy ćwiczeń dopasowane do biblioteki) — po akceptacji właściciela i z kopią zapasową.
+Obecne dane właściciela przechodzą do `users/{uid}/…` w dwóch krokach ([ADR-0016](adr/0016-roles-views-exercise-library.md)): przeniesienie bez zmiany kształtu (`scripts/migrate-to-users.ts`), potem serie liczbowe i `exerciseId` po wgraniu biblioteki — każdy krok z trybem próbnym, po akceptacji właściciela.
 
 ## Decyzje
 
@@ -101,7 +101,7 @@ Rozmiar: S — kilka dni, M — 1–2 tygodnie, L — 3+ tygodnie pracy jednej o
 | Etap | Zakres | Gotowe, gdy | Rozmiar |
 |---|---|---|---|
 | **0. Fundament** | Schematy Zod, routing, nasłuchy danych, cache offline i podział kodu według funkcji — wdrożone ([ADR-0010](adr/0010-web-app-architecture.md)); testy E2E Playwright na emulatorach i na zbudowanej wersji — wdrożone (`e2e/`, [ADR-0011](adr/0011-environments-hosting-monitoring.md)) | Scenariusze z checklisty mają testy E2E, aplikacja działa offline na otwartej stronie | M |
-| **1. Wiele kont, nowy model danych** | Ekran „Zaloguj / Zarejestruj” (Google albo e-mail z hasłem, potwierdzenie adresu, reset hasła) — wdrożony; profil i zgoda wymagana do aktywacji, ustawienia — wdrożone; usunięcie konta (funkcja Vercel); dane w `users/{uid}/…`; biblioteka ćwiczeń; serie liczbowe; szablony w Firestore; migracja obecnych danych | Dwa konta nie widzą swoich danych (testy reguł A/B), konto bez potwierdzonego adresu nie ma dostępu, dane właściciela przeniesione bez strat | L |
+| **1. Wiele kont, nowy model danych** | Ekran „Zaloguj / Zarejestruj” (Google albo e-mail z hasłem, potwierdzenie adresu, reset hasła) — wdrożony; profil i zgoda wymagana do aktywacji, ustawienia — wdrożone; dane w `users/{uid}/…` i szablony w Firestore — wdrożone (migracja, krok 1); usunięcie konta (funkcja Vercel); biblioteka ćwiczeń; serie liczbowe; szablony w Firestore; migracja obecnych danych | Dwa konta nie widzą swoich danych (testy reguł A/B), konto bez potwierdzonego adresu nie ma dostępu, dane właściciela przeniesione bez strat | L |
 | **2. Postęp** | Wyniki z poprzedniego razu przy ćwiczeniu; wykresy e1RM, rekordy, objętość tygodniowa, regularność; trend wagi; minutnik przerwy | Podopieczny widzi postęp dla dowolnego ćwiczenia z historii; obliczenia mają testy jednostkowe | M |
 | **3. Trener** | Rola trenera nadawana przez administratora; konta zakładane przez trenera i zaproszenia linkiem ([ADR-0015](adr/0015-accounts-roles-consent.md)); lista podopiecznych z sygnałami; kreator planu wielotygodniowego z kopiowaniem i progresją; przypisanie planu; „zadane / wykonane”; komentarze; check-iny; import CSV/Excel | Pilotaż: 2–3 trenerów prowadzi realnych podopiecznych przez 4 tygodnie bez arkusza | L |
 | **4. Mobile — odłożony** | Do wznowienia decyzją właściciela ([ADR-0004](adr/0004-firebase-multi-user.md)); wtedy PWA, a później Capacitor | — | M |

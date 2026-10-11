@@ -7,7 +7,7 @@ const createEmptyPlan = (): WeekPlan =>
   Object.fromEntries(DAYS_OF_WEEK.map(day => [day, null])) as WeekPlan;
 
 /** Week plan kept in sync with Firestore; a save shows up through the subscription. */
-export const useWeekPlan = () => {
+export const useWeekPlan = (uid: string) => {
   const [weekPlan, setWeekPlan] = useState<WeekPlan>(createEmptyPlan);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -17,6 +17,7 @@ export const useWeekPlan = () => {
   useEffect(
     () =>
       WeekPlanService.subscribe(
+        uid,
         document => {
           setWeekPlan(document?.plan ?? createEmptyPlan());
           setLastSaved(document?.updatedAt ?? null);
@@ -27,7 +28,7 @@ export const useWeekPlan = () => {
           setIsLoading(false);
         },
       ),
-    [],
+    [uid],
   );
 
   /** Resolves to true only when Firestore confirmed the write. */
@@ -35,7 +36,7 @@ export const useWeekPlan = () => {
     setIsSaving(true);
     try {
       const updatedAt = new Date().toISOString();
-      await WeekPlanService.save({ plan, updatedAt });
+      await WeekPlanService.save(uid, { plan, updatedAt });
       setError(null);
       return true;
     } catch {
@@ -44,7 +45,7 @@ export const useWeekPlan = () => {
     } finally {
       setIsSaving(false);
     }
-  }, []);
+  }, [uid]);
 
   const updateDay = async (day: DayOfWeek, templateId: string | null) => {
     return saveWeekPlan({ ...weekPlan, [day]: templateId });
