@@ -19,7 +19,7 @@ Indeks decyzji. Każda decyzja ma krótki dokument ADR w [`adr/`](adr/).
 | [0004](adr/0004-firebase-multi-user.md) | Wersja z wieloma użytkownikami na Firebase (Auth, Firestore, Storage, Cloud Functions); najpierw tylko aplikacja webowa, wersja mobilna odłożona | Przyjęta 2026-10-10 |
 | [0005](adr/0005-data-model-and-access.md) | Dane w `users/{uid}/…`; dostęp trenera przez dokument współpracy, odczyt per podopieczny; role jako profil, uprawnienia z relacji | Przyjęta 2026-10-10; pkt 3 zastąpiony przez [0015](adr/0015-accounts-roles-consent.md) |
 | [0006](adr/0006-training-programs.md) | Plan wielotygodniowy trenera; przypisanie jako kopia; progresja zapisana wartościami | Przyjęta 2026-10-10 |
-| [0007](adr/0007-exercises-and-sets.md) | Biblioteka ćwiczeń (globalna + trenera), serie liczbowe, migracja skryptem z trybem próbnym | Przyjęta 2026-10-10 |
+| [0007](adr/0007-exercises-and-sets.md) | Biblioteka ćwiczeń (globalna + trenera), serie liczbowe, migracja skryptem z trybem próbnym | Przyjęta 2026-10-10; jedna migracja zastąpiona dwoma krokami w [0016](adr/0016-roles-views-exercise-library.md) |
 | [0008](adr/0008-accounts-and-invitations.md) | Google albo e-mail z hasłem (potwierdzenie adresu, reset, polityka haseł); zaproszenie linkiem z losowym tokenem w regułach; usunięcie konta w aplikacji | Przyjęta 2026-10-10; pkt 6 zastąpiony przez [0015](adr/0015-accounts-roles-consent.md) |
 | [0009](adr/0009-cloud-functions-aggregates.md) | Plan Spark bez Cloud Functions; postęp liczony w przeglądarce; zdjęcia sylwetki po zmianie planu | Przyjęta 2026-10-10; kod serwerowy według [0014](adr/0014-server-functions-and-email.md) |
 | [0010](adr/0010-web-app-architecture.md) | React Router, nasłuchy Firestore, cache offline w IndexedDB, schematy Zod | Przyjęta 2026-10-10 |
@@ -28,3 +28,4 @@ Indeks decyzji. Każda decyzja ma krótki dokument ADR w [`adr/`](adr/).
 | [0013](adr/0013-offline-app-shell.md) | Service worker zapisujący pliki aplikacji, aby otwierała się bez sieci | Odłożona 2026-10-10 — razem z wersją mobilną |
 | [0014](adr/0014-server-functions-and-email.md) | Kod serwerowy w funkcjach Vercel (Firebase dalej na Spark); e-maile przez Brevo po zakupie domeny, do tego czasu z Firebase | Przyjęta 2026-10-10 |
 | [0015](adr/0015-accounts-roles-consent.md) | Zgoda na dane o zdrowiu warunkiem aktywacji; rolę trenera nadaje administrator; konta zakładane przez trenera; usunięcie konta przez funkcję | Przyjęta 2026-10-10 |
+| [0016](adr/0016-roles-views-exercise-library.md) | Role w `users/{uid}`; trener CRUD, podopieczny edytuje swoje wyniki i kopię planu; widoki według roli; biblioteka z free-exercise-db; migracja w dwóch krokach | Przyjęta 2026-10-11 |

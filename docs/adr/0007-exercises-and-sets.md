@@ -1,6 +1,6 @@
 # ADR-0007: Biblioteka ćwiczeń, serie liczbowe i migracja obecnych danych
 
-- **Status:** przyjęta 2026-10-10
+- **Status:** przyjęta 2026-10-10; pkt 3 (jeden skrypt migracji) zastąpiony przez [ADR-0016](0016-roles-views-exercise-library.md) — dwa kroki
 
 ## Kontekst
 
