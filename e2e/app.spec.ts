@@ -190,4 +190,11 @@ test('the owner activates the account with the consent and deactivates it by wit
   await expect(page.getByLabel('Imię')).toHaveValue('Anna Nowak');
   await page.reload();
   await expect(activate).toBeVisible();
+
+  await page.getByRole('checkbox').check();
+  await activate.click();
+  await expect(page.getByRole('heading', { name: 'Ustawienia' })).toBeVisible();
+  await page.getByRole('link', { name: 'Historia', exact: true }).click();
+  await expect(page.getByText(/Brak treningów w historii|Historia Treningów/).first()).toBeVisible();
+  await expect(page.getByRole('alert')).toHaveCount(0);
 });

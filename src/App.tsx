@@ -13,7 +13,10 @@ function App() {
   if (auth.status === 'loading' || account.isLoading) return <LoadingSpinner />;
 
   if (auth.status === 'owner') {
-    if (!account.profile || !isActive(account.profile)) {
+    // The journal opens only once the server confirmed the consent: its queries are checked by
+    // rules that read the stored profile, so opening earlier would get them rejected.
+    const confirmedActive = account.confirmedProfile !== null && isActive(account.confirmedProfile);
+    if (!account.profile || !isActive(account.profile) || !confirmedActive) {
       return (
         <ConsentScreen
           defaultName={account.profile?.displayName ?? auth.displayName ?? ''}

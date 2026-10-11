@@ -21,23 +21,29 @@ const logged = async (operation: string, uid: string, action: () => Promise<void
 };
 
 export class ProfileService {
-  /** Streams the profile; a missing or invalid document is reported as null. */
+  /**
+   * Streams the profile; a missing or invalid document is reported as null. `pending` is true while
+   * a local write is not yet confirmed by the server — until then the security rules still see the
+   * previous profile.
+   */
   static subscribe(
     uid: string,
-    onChange: (profile: UserProfile | null) => void,
+    onChange: (profile: UserProfile | null, pending: boolean) => void,
     onError: (error: unknown) => void,
   ): () => void {
     return onSnapshot(
       profileRef(uid),
+      { includeMetadataChanges: true },
       snapshot => {
+        const pending = snapshot.metadata.hasPendingWrites;
         if (!snapshot.exists()) {
-          onChange(null);
+          onChange(null, pending);
           return;
         }
         // A pending write has no server time yet; the estimate keeps the profile valid until it is confirmed.
         const profile = parseUserProfile(snapshot.data({ serverTimestamps: 'estimate' }));
         if (!profile) console.warn('ProfileService.subscribe: invalid profile document', uid);
-        onChange(profile);
+        onChange(profile, pending);
       },
       error => {
         console.error('ProfileService.subscribe error:', uid, error);
