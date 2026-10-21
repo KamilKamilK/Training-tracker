@@ -129,7 +129,7 @@ Dlaczego tak:
 - Etap 2 daje wartość bez trenerów i korzysta z nowego modelu, więc sprawdza go w praktyce przed etapem 3.
 - Usunięcie konta i opinia prawna blokują otwarcie rejestracji dla innych osób, więc nie mogą czekać na koniec etapu 3.
 
-Między krokami warto zamykać drobne punkty z [KNOWN_ISSUES.md](KNOWN_ISSUES.md). Decyzji właściciela czeka #19 (pamięć podręczna dla wielu kart, zmiana ADR-0010). Programistycznie najpierw #27 (formularz serii na telefonie), potem #25, #26 (pomiary), #18 i #22; #28 i #29 wchodzą do kroku 4, a edycja zapisanego treningu z #26 — po nim.
+Między krokami warto zamykać drobne punkty z [KNOWN_ISSUES.md](KNOWN_ISSUES.md). Programistycznie najpierw #27 (formularz serii na telefonie), potem #25, #26 (pomiary), #18 i #22; #28 i #29 wchodzą do kroku 4, a edycja zapisanego treningu z #26 — po nim.
 
 ## Jakość — zasady przekrojowe
 
