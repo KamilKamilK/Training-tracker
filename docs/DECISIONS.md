@@ -13,7 +13,7 @@ Indeks decyzji. Każda decyzja ma krótki dokument ADR w [`adr/`](adr/).
 
 | ADR | Decyzja | Status |
 |---|---|---|
-| [0001](adr/0001-documentation-and-agents.md) | Dokumentacja: jeden cel na dokument, jeden fakt w jednym miejscu; wspólne instrukcje agentów w `AGENTS.md` | Przyjęta 2026-10-07 |
+| [0001](adr/0001-documentation-and-agents.md) | Dokumentacja: jeden cel na dokument, jeden fakt w jednym miejscu; wspólne instrukcje agentów w `AGENTS.md` | Przyjęta 2026-10-07; rodzaje dokumentów uzupełnione przez [0017](adr/0017-architecture-document.md) |
 | [0002](adr/0002-spa-firebase.md) | SPA React + TypeScript bez własnego backendu; dane w Cloud Firestore, szkic treningu w LocalStorage | Przyjęta 2026-10-07 |
 | [0003](adr/0003-owner-authentication.md) | Logowanie Google; dostęp do danych tylko dla właściciela z kolekcji `owners`; walidacja zapisów w `firestore.rules` | Przyjęta 2026-10-07 |
 | [0004](adr/0004-firebase-multi-user.md) | Wersja z wieloma użytkownikami na Firebase (Auth, Firestore, Storage, Cloud Functions); najpierw tylko aplikacja webowa, wersja mobilna odłożona | Przyjęta 2026-10-10 |
@@ -29,3 +29,4 @@ Indeks decyzji. Każda decyzja ma krótki dokument ADR w [`adr/`](adr/).
 | [0014](adr/0014-server-functions-and-email.md) | Kod serwerowy w funkcjach Vercel (Firebase dalej na Spark); e-maile przez Brevo po zakupie domeny, do tego czasu z Firebase | Przyjęta 2026-10-10 |
 | [0015](adr/0015-accounts-roles-consent.md) | Zgoda na dane o zdrowiu warunkiem aktywacji; rolę trenera nadaje administrator; konta zakładane przez trenera; usunięcie konta przez funkcję | Przyjęta 2026-10-10 |
 | [0016](adr/0016-roles-views-exercise-library.md) | Role w `users/{uid}`; trener CRUD, podopieczny edytuje swoje wyniki i kopię planu; widoki według roli; biblioteka z free-exercise-db; migracja w dwóch krokach | Przyjęta 2026-10-11 |
+| [0017](adr/0017-architecture-document.md) | Opis bieżącej budowy aplikacji w `docs/ARCHITECTURE.md`; instrukcje agentów do niego odsyłają | Przyjęta 2026-10-21 |

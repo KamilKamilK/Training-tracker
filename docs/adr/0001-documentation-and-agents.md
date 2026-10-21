@@ -1,6 +1,6 @@
 # ADR-0001: Dokumentacja i instrukcje agentów
 
-- **Status:** przyjęta 2026-10-07
+- **Status:** przyjęta 2026-10-07; tabela rodzajów dokumentów i zasada 3 uzupełnione przez [ADR-0017](0017-architecture-document.md) (`ARCHITECTURE.md`)
 
 ## Kontekst
 
