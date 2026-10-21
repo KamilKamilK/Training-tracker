@@ -10,7 +10,7 @@ interface WorkoutModalProps {
 
 export const WorkoutModal: React.FC<WorkoutModalProps> = ({ workout, onClose }) => {
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
+    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
       <div className="bg-slate-800 rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6">
         <div className="flex justify-between items-start mb-4">
           <div>
@@ -28,7 +28,7 @@ export const WorkoutModal: React.FC<WorkoutModalProps> = ({ workout, onClose }) 
               <h3 className="font-bold mb-3">{exercise.name}</h3>
               <div className="space-y-2">
                 {exercise.sets.map((set, sIdx) => (
-                  <div key={sIdx} className="flex gap-3 text-sm bg-slate-600 p-2 rounded items-center">
+                  <div key={sIdx} className="flex gap-3 text-sm bg-slate-600 p-2 rounded-sm items-center">
                     <span className="text-slate-400">Seria {sIdx + 1}:</span>
                     <span className="font-bold">{set.weight} kg × {set.reps} powt.</span>
                     {set.rir && <span className="text-slate-400">RIR: {set.rir}</span>}

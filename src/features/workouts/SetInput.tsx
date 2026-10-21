@@ -23,19 +23,19 @@ export const SetInput: React.FC<SetInputProps> = ({
       value={weight}
       onChange={e => onChange('weight', e.target.value)}
       placeholder="kg"
-      className="bg-slate-600 p-2 rounded w-20 text-center outline-none focus:ring-2 focus:ring-blue-500"
+      className="bg-slate-600 p-2 rounded-sm w-20 text-center outline-hidden focus:ring-2 focus:ring-blue-500"
     />
     <input
       value={reps}
       onChange={e => onChange('reps', e.target.value)}
       placeholder="powt."
-      className="bg-slate-600 p-2 rounded w-20 text-center outline-none focus:ring-2 focus:ring-blue-500"
+      className="bg-slate-600 p-2 rounded-sm w-20 text-center outline-hidden focus:ring-2 focus:ring-blue-500"
     />
     <input
       value={rir}
       onChange={e => onChange('rir', e.target.value)}
       placeholder="RIR"
-      className="bg-slate-600 p-2 rounded w-20 text-center outline-none focus:ring-2 focus:ring-blue-500"
+      className="bg-slate-600 p-2 rounded-sm w-20 text-center outline-hidden focus:ring-2 focus:ring-blue-500"
     />
     <button
       onClick={onRemove}

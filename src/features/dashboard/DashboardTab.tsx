@@ -21,7 +21,7 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({
 }) => {
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold mb-4">Rozpocznij Trening</h2>
+      <h2 className="text-2xl font-bold">Rozpocznij Trening</h2>
       <QuickStats workouts={workouts} measurements={measurements} />
       <TemplateGrid templates={templates} workouts={workouts} onStart={onStartWorkout} />
       <MeasurementsWidget measurements={measurements} onAdd={onAddMeasurement} />

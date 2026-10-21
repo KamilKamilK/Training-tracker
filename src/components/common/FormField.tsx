@@ -31,7 +31,7 @@ export const FormField: React.FC<FormFieldProps> = ({ id, label, type, value, er
           onChange={e => onChange(e.target.value)}
           aria-invalid={error ? true : undefined}
           aria-describedby={describedBy}
-          className="w-full bg-slate-700 p-2 pr-10 rounded outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full bg-slate-700 p-2 pr-10 rounded-sm outline-hidden focus:ring-2 focus:ring-blue-500"
         />
         {type === 'password' && (
           <button

@@ -118,7 +118,7 @@ export const TemplatesTab: React.FC<TemplatesTabProps> = ({
   return (
     <div className="space-y-6">
       {/* HEADER */}
-      <div className="flex justify-between items-center mb-4">
+      <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">🧩 Szablony Treningów</h2>
         <button
           onClick={() => setIsFormVisible(true)}
@@ -145,7 +145,7 @@ export const TemplatesTab: React.FC<TemplatesTabProps> = ({
                 onChange={e => handleInputChange('name', e.target.value)}
                 aria-invalid={errors.name ? true : undefined}
                 aria-describedby={errors.name ? 'template-name-error' : undefined}
-                className="w-full bg-slate-800 rounded-lg p-2 outline-none border border-slate-600 focus:border-blue-500"
+                className="w-full bg-slate-800 rounded-lg p-2 outline-hidden border border-slate-600 focus:border-blue-500"
               />
               {errors.name && (
                 <p id="template-name-error" className="text-red-400 text-sm mt-1">{errors.name}</p>
@@ -185,7 +185,7 @@ export const TemplatesTab: React.FC<TemplatesTabProps> = ({
                 type="number"
                 value={formData.estimatedDuration}
                 onChange={e => handleInputChange('estimatedDuration', Number(e.target.value))}
-                className="w-full bg-slate-800 rounded-lg p-2 outline-none border border-slate-600 focus:border-blue-500"
+                className="w-full bg-slate-800 rounded-lg p-2 outline-hidden border border-slate-600 focus:border-blue-500"
               />
             </div>
           </div>
@@ -219,7 +219,7 @@ export const TemplatesTab: React.FC<TemplatesTabProps> = ({
             <textarea
               value={formData.description}
               onChange={e => handleInputChange('description', e.target.value)}
-              className="w-full bg-slate-800 rounded-lg p-2 outline-none border border-slate-600 focus:border-blue-500 h-20"
+              className="w-full bg-slate-800 rounded-lg p-2 outline-hidden border border-slate-600 focus:border-blue-500 h-20"
             />
           </div>
 

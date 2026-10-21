@@ -1,5 +1,6 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import tailwindcss from '@tailwindcss/vite'
 
 // Third-party code changes less often than the app, so it gets its own long-cached chunks.
 // A package gets a separate chunk only when the chunks cannot import each other in a cycle,
@@ -10,7 +11,7 @@ const packages = (...names: string[]) => new RegExp(`node_modules[\\\\/](${names
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), tailwindcss()],
   build: {
     rolldownOptions: {
       output: {

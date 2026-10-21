@@ -20,7 +20,7 @@ export const MeasurementsWidget: React.FC<MeasurementsWidgetProps> = ({
         <h3 className="text-xl font-bold">Pomiary</h3>
         <button
           onClick={onAdd}
-          className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700 px-3 py-1 rounded text-sm transition-all"
+          className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700 px-3 py-1 rounded-sm text-sm transition-all"
         >
           <Plus size={16} />
           Dodaj
@@ -31,7 +31,7 @@ export const MeasurementsWidget: React.FC<MeasurementsWidgetProps> = ({
       ) : (
         <div className="space-y-2">
           {recent.map((m, idx) => (
-            <div key={idx} className="flex justify-between bg-slate-600 p-3 rounded">
+            <div key={idx} className="flex justify-between bg-slate-600 p-3 rounded-sm">
               <span>{formatDate(m.date)}</span>
               <span className="font-bold">
                 {m.weight} kg | {m.waist} cm

@@ -22,7 +22,7 @@ export const Header: React.FC<HeaderProps> = ({ templatesCount, workoutsCount, e
         <LogOut size={14} /> Wyloguj
       </button>
     </div>
-    <h1 className="text-4xl font-bold mb-2 bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
+    <h1 className="text-4xl font-bold mb-2 bg-linear-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
       💪 {APP_CONFIG.name}
     </h1>
     <p className="text-slate-400">{APP_CONFIG.subtitle}</p>

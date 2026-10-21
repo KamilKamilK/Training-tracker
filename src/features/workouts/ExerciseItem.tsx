@@ -17,7 +17,7 @@ export const ExerciseItem: React.FC<ExerciseItemProps> = ({
   onUpdateSet,
   onRemoveSet,
 }) => (
-  <div className="bg-slate-700 rounded-lg p-4 mb-4">
+  <div className="bg-slate-700 rounded-lg p-4">
     <h3 className="font-bold text-lg mb-2">{exercise.name}</h3>
 
     {exercise.sets.length === 0 ? (
