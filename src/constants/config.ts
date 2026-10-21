@@ -1,17 +1,14 @@
 export const APP_CONFIG = {
   name: 'Dziennik Treningowy',
-  version: '1.0.0',
   subtitle: 'Plan: Redukcja + Kondycja + Siła',
-  defaultRestTime: 90,
-  maxSetsPerExercise: 10,
-  maxExercisesPerWorkout: 15,
 };
 
+/** Every LocalStorage entry of the app; sign-out removes all of them (AuthService.signOut). */
 export const STORAGE_KEYS = {
+  currentWorkoutDraft: 'currentWorkoutDraft',
   /** Templates saved in the browser before they moved to Firestore; read once and imported (useTemplates). */
   customTemplates: 'customTemplates',
-  workouts: 'workouts',
-  measurements: 'measurements',
-  settings: 'userSettings',
-  currentWorkoutDraft: 'currentWorkoutDraft',
+  /** Workouts and measurements kept in the browser by the first versions; no longer read, only removed. */
+  legacyWorkouts: 'workouts',
+  legacyMeasurements: 'measurements',
 };

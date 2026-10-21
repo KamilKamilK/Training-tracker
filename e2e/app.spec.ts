@@ -194,10 +194,14 @@ test('signing out asks about the workout in progress and leaves nothing for the 
   await page.getByRole('button', { name: 'Anuluj' }).click();
   await expect(page.getByPlaceholder('kg')).toHaveValue('80');
 
+  // Measurements kept in the browser by the first versions of the app.
+  await page.evaluate(() => localStorage.setItem('measurements', '[{"weight":"82"}]'));
   await page.getByRole('button', { name: 'Wyloguj' }).click();
   await Promise.all([page.waitForEvent('load'), page.getByRole('button', { name: 'Wyloguj i usuń trening' }).click()]);
   await expect(page.getByRole('button', { name: 'Kontynuuj z Google' })).toBeVisible();
-  expect(await page.evaluate(() => localStorage.getItem('currentWorkoutDraft'))).toBeNull();
+  expect(
+    await page.evaluate(() => [localStorage.getItem('currentWorkoutDraft'), localStorage.getItem('measurements')]),
+  ).toEqual([null, null]);
 
   const other = await signIn(page, 'other-owner@example.com');
   await grantOwner(other);
