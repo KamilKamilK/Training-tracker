@@ -9,6 +9,21 @@
 
 Nowy przypadek: warunki wstępne, kroki, oczekiwany wynik.
 
+## Kiedy i co sprawdzać
+
+| Kiedy | Zakres | Gdzie |
+|---|---|---|
+| Przed wdrożeniem większej zmiany | Cała lista; punkty z testów end-to-end można pominąć, gdy `npm run test:e2e` przeszedł. Po przejściu wpisz datę w „Ostatnie pełne przejście” | Emulatory |
+| Po każdym wdrożeniu | Test dymny poniżej (ok. 10 minut) | Produkcja, komputer i telefon |
+| Po zmianie jednego obszaru | Sekcja tego obszaru i test dymny | Emulatory, potem produkcja |
+
+**Test dymny na produkcji.** Na produkcji nie zapisuj danych testowych: pomiaru i treningu nie da się jeszcze usunąć ani poprawić (#26), więc zapis sprawdzaj prawdziwym treningiem lub pomiarem.
+
+- [ ] Logowanie kontem właściciela otwiera dziennik bez błędów w konsoli; liczba treningów w nagłówku, ostatnie pomiary, plan tygodnia i szablony są takie jak przed wdrożeniem
+- [ ] Odświeżenie strony (F5) na zakładce innej niż Start zostawia tę zakładkę i dane
+- [ ] Na telefonie wszystkie zakładki otwierają się i są czytelne przy szerokości ekranu
+- [ ] Przy najbliższym treningu: „Zakończ trening” przenosi do „Historii”, trening jest na górze listy i widać go na drugim urządzeniu bez odświeżania
+
 ---
 
 ## 0. Przygotowanie
