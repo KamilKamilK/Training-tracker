@@ -1,7 +1,7 @@
 # 💪 Dziennik Treningowy
 
 Aplikacja webowa do śledzenia treningów, planu tygodnia i pomiarów ciała.
-Projekt prywatny: jeden właściciel danych, dostęp po zalogowaniu kontem Google.
+Na razie z aplikacji korzystają tylko konta z listy dostępu (`owners`). Docelowo ma służyć trenerom i ich podopiecznym ([plan rozwoju](docs/ROADMAP.md)).
 
 ---
 
@@ -10,24 +10,25 @@ Projekt prywatny: jeden właściciel danych, dostęp po zalogowaniu kontem Googl
 - 🏋️ **Rejestrowanie treningów** z szablonów — serie z ciężarem, powtórzeniami i RIR
 - 💾 **Szkic treningu w przeglądarce** — wpisane serie przetrwają odświeżenie strony
 - 📅 **Plan tygodnia** i **historia treningów**
-- 📋 **Szablony** domyślne i własne (własne zapisywane w przeglądarce)
+- 📋 **Szablony** domyślne i własne (własne zapisane w koncie, widoczne na każdym urządzeniu)
 - ⚖️ **Pomiary ciała** — waga i obwód talii, zmiany w czasie
-- 🔐 **Logowanie Google**, dane w Cloud Firestore dostępne tylko dla właściciela
+- 🔐 **Logowanie Google albo e-mailem z hasłem** (potwierdzenie adresu, reset hasła); dane w Cloud Firestore dostępne tylko dla właściciela konta
+- ✅ **Zgoda na dane o zdrowiu** wymagana do aktywacji konta, wycofanie w Ustawieniach
 - 📱 **Responsywny, ciemny interfejs**
 
-Architektura i decyzje: [docs/DECISIONS.md](docs/DECISIONS.md).
+Budowa aplikacji: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md); decyzje: [docs/DECISIONS.md](docs/DECISIONS.md); plan rozwoju: [docs/ROADMAP.md](docs/ROADMAP.md).
 
 ---
 
 ## 🧰 Stack technologiczny
 
-React 19, TypeScript (strict), Vite 7, Tailwind CSS 3, Lucide React, Firebase (Authentication, Cloud Firestore); testy: Vitest, Testing Library, emulator Firestore.
+React 19, TypeScript (strict), Vite 7, React Router, Zod, Tailwind CSS 3, Lucide React, Firebase (Authentication, Cloud Firestore); testy: Vitest, Testing Library, emulator Firestore, Playwright.
 
 ---
 
 ## 🧑‍💻 Uruchomienie lokalne
 
-Wymagania: Node.js 22, a do emulatorów, testów reguł i testów end-to-end — Java 21. Przeglądarkę dla testów end-to-end instaluje się raz: `npx playwright install chromium`.
+Wymagania: Node.js 22.18 lub nowszy (skrypty w `scripts/` uruchamia bezpośrednio Node), a do emulatorów, testów reguł i testów end-to-end — Java 21. Przeglądarkę dla testów end-to-end instaluje się raz: `npx playwright install chromium`.
 
 ```bash
 git clone https://github.com/KamilKamilK/Training-tracker.git
@@ -45,7 +46,7 @@ Praca bez dotykania danych produkcyjnych: ustaw `VITE_USE_EMULATORS=true` w `.en
 | `npm run lint` | ESLint |
 | `npm run build` | typecheck (`tsc -b`) i build produkcyjny do `dist/` |
 | `npm test` | testy jednostkowe (Vitest) |
-| `npm run test:rules` | testy `firestore.rules` na emulatorze Firestore |
+| `npm run test:rules` | testy `firestore.rules` i skryptów danych (`scripts/`) na emulatorze Firestore |
 | `npm run test:e2e` | testy end-to-end (Playwright) zbudowanej aplikacji na emulatorach |
 | `npm run emulators` | emulatory Authentication i Firestore do pracy lokalnej |
 
@@ -65,6 +66,19 @@ Po sklonowaniu włącz hook `pre-push`, który uruchamia te kontrole przy każdy
 6. **Firestore → Data:** utwórz kolekcję `owners` z dokumentem o ID równym UID (bez pól).
 7. Wdróż reguły: `npx firebase deploy --only firestore:rules` (wymaga `npx firebase login`). Reguły wpuszczają tylko konta z potwierdzonym adresem e-mail i zaakceptowaną zgodą na dane o zdrowiu.
 8. Po zalogowaniu aplikacja prosi o imię i zgodę na dane o zdrowiu — po jej zaakceptowaniu konto jest aktywne ([ADR-0015](docs/adr/0015-accounts-roles-consent.md)). Zgodę można wycofać w **Ustawieniach** (`/settings`), co dezaktywuje konto.
+
+### Przeniesienie danych do `users/{uid}/…` (jednorazowo)
+
+Aplikacja czyta dane konta z `users/{uid}/sessions`, `measurements`, `weekPlans` i `templates` ([ADR-0016](docs/adr/0016-roles-views-exercise-library.md)). Dane zapisane wcześniej w kolekcjach `workouts`, `measurements` i `weekPlans` kopiuje skrypt — bez zmiany i bez usuwania oryginałów:
+
+1. **Reguły:** opublikuj `firestore.rules` z tej wersji (konsola Firebase → Firestore → Rules albo `npx firebase deploy --only firestore:rules`). Reguły obsługują stare i nowe kolekcje, więc wdrożona wersja aplikacji działa dalej.
+2. **Narzędzia:** sprawdź `node --version`; przy wersji starszej niż 22.18 zaktualizuj Node (np. `nvm install 22`) albo dodaj do poleceń poniżej flagę `--experimental-strip-types` (`node --experimental-strip-types scripts/…`). Zainstaluj [Google Cloud CLI](https://cloud.google.com/sdk/docs/install), a następnie uruchom `gcloud auth application-default login` (konto z dostępem do projektu) i `gcloud auth application-default set-quota-project training-tracker-6d13b`.
+3. **Próba bez zapisu:** `node scripts/migrate-to-users.ts --project training-tracker-6d13b --uid <UID>`. Skrypt pokazuje liczbę dokumentów do skopiowania i konflikty; oczekiwane jest 0 konfliktów.
+4. **Zapis:** to samo polecenie z `--apply`. Na końcu skrypt sprawdza, że każdy dokument ma identyczną kopię („Check: every source document has an identical copy.”). Ponowne uruchomienie kopiuje tylko brakujące dokumenty.
+5. **Wdrożenie:** scal zmiany do `main` (Vercel opublikuje nową wersję). Między krokiem 4 a wdrożeniem nie zapisuj treningów; jeśli zapiszesz, powtórz krok 4.
+6. **Sprawdzenie:** liczba treningów w nagłówku, pomiary, plan tygodnia i szablony własne są takie jak przed wdrożeniem.
+
+Szablony własne zapisane w przeglądarce aplikacja przenosi sama przy pierwszym uruchomieniu nowej wersji. Każda przeglądarka przenosi swoje szablony, więc otwórz nową wersję na każdym urządzeniu, na którym były zapisane.
 
 Zasady dostępu: [ADR-0003](docs/adr/0003-owner-authentication.md); konta i logowanie: [ADR-0008](docs/adr/0008-accounts-and-invitations.md); zgoda i aktywacja konta: [ADR-0015](docs/adr/0015-accounts-roles-consent.md).
 

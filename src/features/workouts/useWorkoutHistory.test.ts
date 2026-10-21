@@ -19,7 +19,7 @@ const unsubscribe = vi.fn();
 
 beforeEach(() => {
   vi.resetAllMocks();
-  service.subscribe.mockImplementation((onChange, onError) => {
+  service.subscribe.mockImplementation((_uid, onChange, onError) => {
     emit = onChange;
     fail = onError;
     return unsubscribe;
@@ -28,7 +28,8 @@ beforeEach(() => {
 
 describe('useWorkoutHistory', () => {
   it('shows every update from the subscription, newest first', () => {
-    const { result } = renderHook(() => useWorkoutHistory());
+    const { result } = renderHook(() => useWorkoutHistory('u1'));
+    expect(service.subscribe).toHaveBeenCalledWith('u1', expect.any(Function), expect.any(Function));
     expect(result.current.isLoading).toBe(true);
 
     act(() => emit([workout('a', '2026-10-01'), workout('b', '2026-10-05')]));
@@ -40,21 +41,21 @@ describe('useWorkoutHistory', () => {
   });
 
   it('exposes a load error instead of an empty history', () => {
-    const { result } = renderHook(() => useWorkoutHistory());
+    const { result } = renderHook(() => useWorkoutHistory('u1'));
     act(() => fail(new Error('permission-denied')));
     expect(result.current.isLoading).toBe(false);
     expect(result.current.error).toBe(ERROR_MESSAGES.loadWorkouts);
   });
 
   it('stops listening on unmount', () => {
-    const { unmount } = renderHook(() => useWorkoutHistory());
+    const { unmount } = renderHook(() => useWorkoutHistory('u1'));
     unmount();
     expect(unsubscribe).toHaveBeenCalledTimes(1);
   });
 
   it('reports a failed save', async () => {
     service.save.mockRejectedValue(new Error('permission-denied'));
-    const { result } = renderHook(() => useWorkoutHistory());
+    const { result } = renderHook(() => useWorkoutHistory('u1'));
 
     let saved = true;
     await act(async () => {
@@ -67,7 +68,7 @@ describe('useWorkoutHistory', () => {
 
   it('resolves to true once the write is confirmed', async () => {
     service.save.mockResolvedValue(undefined);
-    const { result } = renderHook(() => useWorkoutHistory());
+    const { result } = renderHook(() => useWorkoutHistory('u1'));
 
     let saved = false;
     await act(async () => {
@@ -75,6 +76,6 @@ describe('useWorkoutHistory', () => {
     });
 
     expect(saved).toBe(true);
-    expect(service.save).toHaveBeenCalledWith(workout('a', '2026-10-01'));
+    expect(service.save).toHaveBeenCalledWith('u1', workout('a', '2026-10-01'));
   });
 });

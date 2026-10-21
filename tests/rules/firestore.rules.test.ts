@@ -40,6 +40,22 @@ const consent = (accepted: boolean, at: unknown = serverTimestamp()) => ({ accep
 const profile = (accepted = true, at: unknown = serverTimestamp()) => ({ displayName: 'Anna', consents: { health: consent(accepted, at) } });
 const storedProfile = (accepted: boolean) => profile(accepted, Timestamp.fromDate(new Date('2026-10-10T08:00:00Z')));
 
+const template = {
+  name: 'Push A',
+  description: '',
+  exercises: ['Przysiad'],
+  category: 'strength',
+  estimatedDuration: 45,
+  difficulty: 'beginner',
+  color: 'bg-blue-600',
+  icon: '💪',
+  isCustom: true,
+  createdAt: '2026-10-11T08:00:00.000Z',
+};
+
+// Second active account, to check that two accounts never see each other's data.
+const OTHER_OWNER = 'other-owner-uid';
+
 let env: RulesTestEnvironment;
 
 const VERIFIED = { email_verified: true };
@@ -68,6 +84,14 @@ beforeEach(async () => {
     const db = context.firestore();
     await setDoc(doc(db, 'owners', OWNER), {});
     await setDoc(doc(db, 'users', OWNER), storedProfile(true));
+    await setDoc(doc(db, 'owners', OTHER_OWNER), {});
+    await setDoc(doc(db, 'users', OTHER_OWNER), storedProfile(true));
+    for (const uid of [OWNER, OTHER_OWNER]) {
+      await setDoc(doc(db, 'users', uid, 'sessions', 'w1'), workout);
+      await setDoc(doc(db, 'users', uid, 'measurements', 'm1'), measurement);
+      await setDoc(doc(db, 'users', uid, 'weekPlans', 'default_week_plan'), weekPlan);
+      await setDoc(doc(db, 'users', uid, 'templates', 't1'), template);
+    }
     await setDoc(doc(db, 'workouts', 'w1'), workout);
     await setDoc(doc(db, 'measurements', 'm1'), measurement);
     await setDoc(doc(db, 'weekPlans', 'default_week_plan'), weekPlan);
@@ -216,11 +240,87 @@ describe('user profile', () => {
     ['a client-chosen consent time', profile(true, Timestamp.fromDate(new Date('2020-01-01T00:00:00Z')))],
     ['an empty name', { ...profile(), displayName: '' }],
     ['a name over 60 characters', { ...profile(), displayName: 'a'.repeat(61) }],
-    ['an unknown field', { ...profile(), roles: ['coach'] }],
+    ['an unknown field', { ...profile(), ownerId: STRANGER }],
     ['an unknown consent', { ...profile(), consents: { health: consent(true), marketing: consent(true) } }],
     ['consent accepted as text', { ...profile(), consents: { health: { ...consent(true), accepted: 'yes' } } }],
     ['a missing consent version', { ...profile(), consents: { health: { accepted: true, at: serverTimestamp() } } }],
   ])('rejects a profile with %s', async (_, data) => {
     await assertFails(setDoc(ownProfile(), data));
+  });
+});
+
+describe('per-user journal', () => {
+  const own = (db = ownerDb()) => (path: string, ...segments: string[]) => doc(db, 'users', OWNER, path, ...segments);
+
+  it('lets an active account read and write its own sessions, measurements, plan and templates', async () => {
+    const db = ownerDb();
+    for (const name of ['sessions', 'measurements', 'templates']) {
+      await assertSucceeds(getDocs(collection(db, 'users', OWNER, name)));
+    }
+    await assertSucceeds(getDoc(own()('weekPlans', 'default_week_plan')));
+    await assertSucceeds(setDoc(own()('sessions', 'w2'), workout));
+    await assertSucceeds(setDoc(own()('measurements', 'm2'), measurement));
+    await assertSucceeds(setDoc(own()('weekPlans', 'default_week_plan'), weekPlan));
+    await assertSucceeds(setDoc(own()('templates', 't2'), template));
+    await assertSucceeds(deleteDoc(own()('sessions', 'w1')));
+    await assertSucceeds(deleteDoc(own()('templates', 't1')));
+  });
+
+  it('keeps two active accounts out of each other\'s data', async () => {
+    const other = env.authenticatedContext(OTHER_OWNER, VERIFIED).firestore();
+    for (const name of ['sessions', 'measurements', 'templates']) {
+      await assertFails(getDocs(collection(other, 'users', OWNER, name)));
+    }
+    await assertFails(getDoc(own(other)('weekPlans', 'default_week_plan')));
+    await assertFails(setDoc(own(other)('sessions', 'w2'), workout));
+    await assertFails(setDoc(own(other)('templates', 't2'), template));
+    await assertFails(deleteDoc(own(other)('measurements', 'm1')));
+  });
+
+  it('denies an account outside owners its own journal', async () => {
+    await env.withSecurityRulesDisabled(context => setDoc(doc(context.firestore(), 'users', STRANGER), storedProfile(true)));
+    await assertFails(setDoc(doc(strangerDb(), 'users', STRANGER, 'sessions', 'w1'), workout));
+  });
+
+  it('denies the journal without the accepted consent or a verified e-mail', async () => {
+    await env.withSecurityRulesDisabled(context => setDoc(doc(context.firestore(), 'users', OWNER), storedProfile(false)));
+    await assertFails(getDocs(collection(ownerDb(), 'users', OWNER, 'sessions')));
+    await env.withSecurityRulesDisabled(context => setDoc(doc(context.firestore(), 'users', OWNER), storedProfile(true)));
+    await assertFails(getDocs(collection(unverifiedOwnerDb(), 'users', OWNER, 'sessions')));
+  });
+
+  it('validates writes like the shared collections', async () => {
+    await assertFails(setDoc(own()('sessions', 'w2'), { ...workout, type: '' }));
+    await assertFails(setDoc(own()('measurements', 'm2'), { ...measurement, weight: 20 }));
+    await assertFails(deleteDoc(own()('weekPlans', 'default_week_plan')));
+    await assertFails(setDoc(doc(ownerDb(), 'users', OWNER, 'other', 'x'), { a: 1 }));
+  });
+
+  it.each([
+    ['a name shorter than 3 characters', { ...template, name: 'AB' }],
+    ['no exercises', { ...template, exercises: [] }],
+    ['more than 20 exercises', { ...template, exercises: Array(21).fill('Przysiad') }],
+    ['an unknown category', { ...template, category: 'yoga' }],
+    ['a duration over 600 minutes', { ...template, estimatedDuration: 601 }],
+    ['a description over 1000 characters', { ...template, description: 'a'.repeat(1001) }],
+    ['an unknown field', { ...template, ownerId: OWNER }],
+  ])('rejects a template with %s', async (_, data) => {
+    await assertFails(setDoc(own()('templates', 't2'), data));
+  });
+});
+
+describe('roles', () => {
+  it('lets only the administrator set roles: the owner can neither add nor change them', async () => {
+    await assertFails(setDoc(doc(strangerDb(), 'users', STRANGER), { ...profile(), roles: ['coach'] }));
+    await assertFails(updateDoc(doc(ownerDb(), 'users', OWNER), { roles: ['admin'] }));
+
+    await env.withSecurityRulesDisabled(context =>
+      setDoc(doc(context.firestore(), 'users', OWNER), { ...storedProfile(true), roles: ['coach'] }),
+    );
+    await assertSucceeds(updateDoc(doc(ownerDb(), 'users', OWNER), { displayName: 'Trener Anna' }));
+    await assertFails(updateDoc(doc(ownerDb(), 'users', OWNER), { roles: ['coach', 'admin'] }));
+    // Accepting the consent again (as ProfileService.activate does) keeps the roles.
+    await assertSucceeds(setDoc(doc(ownerDb(), 'users', OWNER), profile(), { merge: true }));
+    await assertFails(setDoc(doc(ownerDb(), 'users', OWNER), profile()));
   });
 });

@@ -6,6 +6,7 @@ import { useWeekPlan } from "./useWeekPlan.js";
 import { ErrorToast } from "../../components/common/Toasts.js";
 
 interface PlanTabProps {
+  uid: string;
   templates: WorkoutTemplate[];
 }
 
@@ -19,7 +20,7 @@ const daysConfig = [
   { id: 'sunday' as DayOfWeek, label: 'Niedziela', short: 'Nd' }
 ];
 
-export const PlanTab: React.FC<PlanTabProps> = ({ templates }) => {
+export const PlanTab: React.FC<PlanTabProps> = ({ uid, templates }) => {
   const {
     weekPlan,
     isLoading,
@@ -32,7 +33,7 @@ export const PlanTab: React.FC<PlanTabProps> = ({ templates }) => {
     clearAllDays,
     saveWeekPlan,
     getStats
-  } = useWeekPlan();
+  } = useWeekPlan(uid);
 
   const handleUpdateDay = async (day: DayOfWeek, templateId: string) => {
     const value = templateId === "" ? null : templateId;

@@ -13,6 +13,10 @@ describe('parseUserProfile', () => {
     expect(parseUserProfile(document(true))?.consents.health.at).toEqual(new Date(1_791_000_000_500));
   });
 
+  it('accepts roles set by the administrator', () => {
+    expect(parseUserProfile({ ...document(true), roles: ['coach'] })?.roles).toEqual(['coach']);
+  });
+
   it.each([
     ['no consent', { displayName: 'Anna', consents: {} }],
     ['an empty name', { ...document(true), displayName: '' }],

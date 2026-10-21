@@ -11,6 +11,6 @@
     "forceConsistentCasingInFileNames": true,
     "noEmit": true
   },
-  "include": ["src", "tests", "e2e"],
+  "include": ["src", "tests", "e2e", "scripts"],
   "exclude": ["node_modules", "dist"]
 }

@@ -16,7 +16,7 @@ while read -r _local_ref local_sha _remote_ref remote_sha; do
   else
     range=$remote_sha..$local_sha
   fi
-  if git diff --name-only "$range" -- firestore.rules tests/rules firebase.json vitest.rules.config.ts | grep -q .; then
+  if git diff --name-only "$range" -- firestore.rules tests/rules tests/scripts scripts firebase.json vitest.rules.config.ts | grep -q .; then
     rules_changed=true
   fi
   if git diff --name-only "$range" -- src public index.html vite.config.ts package.json package-lock.json \

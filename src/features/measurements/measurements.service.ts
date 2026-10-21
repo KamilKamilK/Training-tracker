@@ -5,13 +5,18 @@ import { parseMeasurement } from '../../utils/parse.utils.js';
 
 const COLLECTION_NAME = 'measurements';
 
-export class MeasurementsService {
-  private static collection = collection(db, COLLECTION_NAME);
+/** Measurements of one account: users/{uid}/measurements (ADR-0005). */
+const measurements = (uid: string) => collection(db, 'users', uid, COLLECTION_NAME);
 
+export class MeasurementsService {
   /** Streams all valid measurements; documents with an unexpected shape are skipped and reported by id. */
-  static subscribe(onChange: (measurements: Measurement[]) => void, onError: (error: unknown) => void): () => void {
+  static subscribe(
+    uid: string,
+    onChange: (measurements: Measurement[]) => void,
+    onError: (error: unknown) => void,
+  ): () => void {
     return onSnapshot(
-      this.collection,
+      measurements(uid),
       snapshot => {
         onChange(
           snapshot.docs.flatMap(document => {
@@ -31,18 +36,18 @@ export class MeasurementsService {
     );
   }
 
-  static async save(measurement: Omit<Measurement, 'id'>): Promise<void> {
+  static async save(uid: string, measurement: Omit<Measurement, 'id'>): Promise<void> {
     try {
-      await addDoc(this.collection, measurement);
+      await addDoc(measurements(uid), measurement);
     } catch (err) {
       console.error('MeasurementsService.save error:', err);
       throw err;
     }
   }
 
-  static async delete(id: string): Promise<void> {
+  static async delete(uid: string, id: string): Promise<void> {
     try {
-      await deleteDoc(doc(this.collection, id));
+      await deleteDoc(doc(measurements(uid), id));
     } catch (err) {
       console.error('MeasurementsService.delete error:', err);
       throw err;

@@ -69,7 +69,7 @@ Instrukcje dla agentów (Claude Code, Codex i inne) oraz osób pracujących nad 
 
 - Każdy dokument ma jeden cel, jeden fakt jest w jednym miejscu ([ADR-0001](docs/adr/0001-documentation-and-agents.md)). Zapisuj bieżący stan; przebieg prac należy do commit message.
 - Komentarze odpowiadają na pytanie „co ten kod robi i dlaczego tak działa teraz”. Bez numerów zgłoszeń, opisów „przed/po” i odwołań do usuniętego kodu — to należy do commit message.
-- Po zmianie zachowania przeszukaj `README.md` i `docs/` pod kątem opisu starego stanu i popraw go w tej samej zmianie. Zdanie „CI sprawdza X” zapisuj tylko, gdy taka kontrola istnieje.
+- Po zmianie zachowania przeszukaj `README.md` i `docs/` pod kątem opisu starego stanu i popraw go w tej samej zmianie. Zmiana struktury katalogów, kolekcji Firestore, przepływu danych, środowisk albo skryptów danych aktualizuje [ARCHITECTURE.md](docs/ARCHITECTURE.md). Zdanie „CI sprawdza X” zapisuj tylko, gdy taka kontrola istnieje.
 
 ### 10. Commit i praca z gałęziami
 
@@ -94,7 +94,7 @@ Instrukcje dla agentów (Claude Code, Codex i inne) oraz osób pracujących nad 
 ## Zakres repozytorium
 
 - Jednostronicowa aplikacja (SPA) do rejestrowania treningów, planu tygodnia, szablonów i pomiarów ciała. Stack i architektura: [ADR-0002](docs/adr/0002-spa-firebase.md); uruchomienie: [README.md](README.md).
-- Struktura `src/`: `features/<obszar>/` (auth, dashboard, measurements, workouts, history, templates, plan, progress) — komponenty, hooki, serwis Firebase, logika i testy jednego obszaru razem; `app/TrainingTracker.tsx` (układ i trasy); wspólne: `types/` (model danych jako schematy Zod; typy przez `z.infer`), `components/common/`, `hooks/`, `services/storage/` (LocalStorage), `utils/` (walidacja odczytu w `parse.utils.ts`, daty, formularze), `constants/` (m.in. komunikaty błędów w `messages.ts`, adresy zakładek w `routes.ts`), `lib/firebaseConfig.ts`. Nawigacja: React Router; `vercel.json` kieruje każdy adres do `index.html`.
+- Struktura kodu, przepływ danych, model danych (ścieżka Firestore → schemat Zod → reguła), środowiska i skrypty danych: [ARCHITECTURE.md](docs/ARCHITECTURE.md) ([ADR-0017](docs/adr/0017-architecture-document.md)). W skrócie: `src/features/<obszar>/` trzyma komponenty, hook, serwis Firebase i testy jednego obszaru, `src/types/` — schematy Zod, `scripts/` — jednorazowe skrypty danych.
 - Konfiguracja Firebase: `firebase.json` (także emulatory), `firestore.rules`, `firestore.indexes.json`, projekt w `.firebaserc`; zmienne środowiskowe w `.env.example`.
 
 ## Weryfikacja
@@ -105,7 +105,7 @@ Hook `pre-push` (`.githooks/`, aktywacja raz na klon: `git config core.hooksPath
 npm run lint        # ESLint (typescript-eslint, react-hooks, no-console)
 npm run build       # tsc -b (typecheck) + vite build
 npm test            # testy jednostkowe Vitest
-npm run test:rules  # testy firestore.rules na emulatorze (wymaga Javy)
+npm run test:rules  # testy firestore.rules i skryptów danych na emulatorze (wymaga Javy)
 npm run test:e2e    # Playwright: zbudowana aplikacja na emulatorach (Java, Chromium)
 ```
 

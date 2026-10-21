@@ -8,11 +8,12 @@ import { isActive } from './features/profile/profile.utils.js';
 
 function App() {
   const auth = useAuth();
-  const account = useProfile(auth.status === 'owner' ? auth.uid : null);
+  const ownerUid = auth.status === 'owner' ? auth.uid : null;
+  const account = useProfile(ownerUid);
 
   if (auth.status === 'loading' || account.isLoading) return <LoadingSpinner />;
 
-  if (auth.status === 'owner') {
+  if (auth.status === 'owner' && ownerUid) {
     // The journal opens only once the server confirmed the consent: its queries are checked by
     // rules that read the stored profile, so opening earlier would get them rejected.
     const confirmedActive = account.confirmedProfile !== null && isActive(account.confirmedProfile);
@@ -29,6 +30,7 @@ function App() {
     }
     return (
       <TrainingTracker
+        uid={ownerUid}
         email={auth.email}
         profile={account.profile}
         profileError={account.error}
@@ -39,6 +41,9 @@ function App() {
       />
     );
   }
+
+  // An owner always has a uid; the check only narrows the type.
+  if (auth.status === 'owner') return <LoadingSpinner />;
 
   return (
     <AuthScreen

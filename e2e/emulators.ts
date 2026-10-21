@@ -3,7 +3,7 @@ import { HEALTH_CONSENT } from '../src/constants/consent.js';
 
 const PROJECT_ID = 'demo-training-tracker';
 const RULES = readFileSync('firestore.rules', 'utf8');
-const WORKOUT_WRITE_RULE = 'allow create, update: if isOwner() && isValidWorkout(request.resource.data);';
+const WORKOUT_WRITE_RULE = 'allow create, update: if isActiveSelf() && isValidWorkout(request.resource.data);';
 const FIRESTORE = `http://127.0.0.1:8080/v1/projects/${PROJECT_ID}/databases/(default)/documents`;
 // The emulators accept this token as an admin that bypasses security rules.
 const ADMIN = { Authorization: 'Bearer owner', 'Content-Type': 'application/json' };

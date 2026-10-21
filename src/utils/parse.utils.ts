@@ -33,6 +33,13 @@ export const parseWeekPlanDocument = (value: unknown): WeekPlanDocument | null =
   return result.success ? result.data : null;
 };
 
+/** Builds a template from an untrusted Firestore document stored under the template id. */
+export const parseTemplate = (id: string, value: unknown): WorkoutTemplate | null => {
+  if (typeof value !== 'object' || value === null) return null;
+  const result = WorkoutTemplateSchema.safeParse({ ...value, id });
+  return result.success ? result.data : null;
+};
+
 /** Valid templates from untrusted LocalStorage data; the number of skipped entries is reported. */
 export const parseTemplates = (value: unknown): { templates: WorkoutTemplate[]; skipped: number } => {
   if (!Array.isArray(value)) return { templates: [], skipped: value === null || value === undefined ? 0 : 1 };

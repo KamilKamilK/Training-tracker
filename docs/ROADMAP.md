@@ -14,17 +14,16 @@ Główna przewaga nad Excelem: plan i wykonanie są w jednym miejscu, porównani
 
 ## Stan wyjściowy
 
-Co już działa: zapis treningu z szablonu z szkicem odpornym na odświeżenie, plan tygodnia, historia, pomiary, logowanie Google, reguły Firestore z walidacją, adresy URL zakładek, dane na żywo i praca offline na otwartej stronie, testy jednostkowe, reguł i end-to-end ([ADR-0002](adr/0002-spa-firebase.md), [ADR-0003](adr/0003-owner-authentication.md)).
+Co już działa: zapis treningu z szablonu ze szkicem odpornym na odświeżenie, plan tygodnia, historia, pomiary, szablony własne w koncie, logowanie Google albo e-mailem z hasłem (potwierdzenie adresu, reset hasła), zgoda na dane o zdrowiu i Ustawienia, dane każdego konta w `users/{uid}/…`, reguły Firestore z walidacją, adresy URL zakładek, dane na żywo i praca offline na otwartej stronie, testy jednostkowe, reguł i end-to-end. Budowa aplikacji: [ARCHITECTURE.md](ARCHITECTURE.md).
 
 Co ogranicza rozwój:
 
 | Ograniczenie | Gdzie | Skutek |
 |---|---|---|
-| Jeden właściciel danych, kolekcje w korzeniu bazy | `firestore.rules`, serwisy `src/features/*/*.service.ts` | Brak kont dla wielu osób i ról |
+| Dostęp tylko z listy `owners`; pole `roles` istnieje, ale aplikacja go nie używa | `firestore.rules`, `src/features/auth/` | Brak kont trenera i podopiecznego ([ADR-0016](adr/0016-roles-views-exercise-library.md)) |
 | Ćwiczenie to tekst, a ciężar i powtórzenia to napisy | `src/types/workout.types.ts` | Nie da się policzyć postępu dla ćwiczenia (e1RM, objętość) ani porównać z planem |
-| Szablony w LocalStorage | `src/features/templates/useTemplates.ts` | Szablony znikają przy zmianie urządzenia; trener nie może ich udostępnić |
-| Plan tygodnia jako jeden dokument z nazwami szablonów | `src/features/plan/useWeekPlan.ts` | Brak planów wielotygodniowych z progresją |
-| Tylko logowanie Google, bez rejestracji | `src/features/auth/` | Osoby bez konta Google nie mogą korzystać z aplikacji |
+| Plan tygodnia jako jeden dokument z identyfikatorami szablonów | `src/features/plan/useWeekPlan.ts` | Brak planów wielotygodniowych z progresją |
+| Brak kodu serwerowego | brak katalogu `api/` | Nie da się usunąć konta, założyć konta podopiecznego ani nadać roli z aplikacji ([ADR-0014](adr/0014-server-functions-and-email.md)) |
 
 ## Role i uprawnienia
 
@@ -66,6 +65,7 @@ Zasada: trener widzi dane podopiecznego tylko podczas aktywnej współpracy; po 
 |---|---|---|
 | `users/{uid}` | profil, role, ustawienia | właściciel konta |
 | `users/{uid}/sessions/{id}` | wykonany trening: data, odnośnik do dnia planu, ćwiczenia z `exerciseId`, serie liczbowe (`weight`, `reps`, `rir`, `done`) | właściciel; trener z aktywną współpracą |
+| `users/{uid}/templates/{id}`, `weekPlans/default_week_plan` | szablony treningów i plan tygodnia konta | właściciel |
 | `users/{uid}/measurements`, `checkins` | pomiary, check-iny (zapis wymaga zgody na dane o zdrowiu) | jak wyżej |
 | `users/{uid}/programs/{id}` | przypisany plan (kopia) z datą startu | właściciel; trener, który go przypisał |
 | `coaching/{coachId}_{athleteId}` | status współpracy (zaproszona, aktywna, zakończona), daty | obie strony |
@@ -73,7 +73,7 @@ Zasada: trener widzi dane podopiecznego tylko podczas aktywnej współpracy; po 
 | `exercises/{id}` | biblioteka globalna: nazwa, partie mięśniowe, sprzęt, wideo | wszyscy zalogowani (odczyt) |
 | `invites/{token}` | zaproszenie: losowy token 128-bit, trener, ważność ≤ 7 dni, jednorazowe użycie ([ADR-0008](adr/0008-accounts-and-invitations.md)) | tworzy trener; odczyt pojedynczego dokumentu z linku, lista zabroniona |
 
-Obecne dane właściciela przechodzą jednorazowo do `users/{uid}/…` skryptem migracji (napisy na liczby, nazwy ćwiczeń dopasowane do biblioteki) — po akceptacji właściciela i z kopią zapasową.
+Obecne dane właściciela przechodzą do `users/{uid}/…` w dwóch krokach ([ADR-0016](adr/0016-roles-views-exercise-library.md)): przeniesienie bez zmiany kształtu (`scripts/migrate-to-users.ts`), potem serie liczbowe i `exerciseId` po wgraniu biblioteki — każdy krok z trybem próbnym, po akceptacji właściciela.
 
 ## Decyzje
 
@@ -101,13 +101,35 @@ Rozmiar: S — kilka dni, M — 1–2 tygodnie, L — 3+ tygodnie pracy jednej o
 | Etap | Zakres | Gotowe, gdy | Rozmiar |
 |---|---|---|---|
 | **0. Fundament** | Schematy Zod, routing, nasłuchy danych, cache offline i podział kodu według funkcji — wdrożone ([ADR-0010](adr/0010-web-app-architecture.md)); testy E2E Playwright na emulatorach i na zbudowanej wersji — wdrożone (`e2e/`, [ADR-0011](adr/0011-environments-hosting-monitoring.md)) | Scenariusze z checklisty mają testy E2E, aplikacja działa offline na otwartej stronie | M |
-| **1. Wiele kont, nowy model danych** | Ekran „Zaloguj / Zarejestruj” (Google albo e-mail z hasłem, potwierdzenie adresu, reset hasła) — wdrożony; profil i zgoda wymagana do aktywacji, ustawienia — wdrożone; usunięcie konta (funkcja Vercel); dane w `users/{uid}/…`; biblioteka ćwiczeń; serie liczbowe; szablony w Firestore; migracja obecnych danych | Dwa konta nie widzą swoich danych (testy reguł A/B), konto bez potwierdzonego adresu nie ma dostępu, dane właściciela przeniesione bez strat | L |
+| **1. Wiele kont, nowy model danych** | **Wdrożone:** ekran „Zaloguj / Zarejestruj” (Google albo e-mail z hasłem, potwierdzenie adresu, reset hasła); profil, zgoda wymagana do aktywacji, Ustawienia; dane w `users/{uid}/…` i szablony w Firestore (migracja, krok 1 — dane właściciela przeniesione na produkcji 2026-10-21: 3 treningi, 2 pomiary, plan tygodnia). **Zostało:** biblioteka ćwiczeń; serie liczbowe i `exerciseId` (migracja, krok 2); usunięcie starych kolekcji; usunięcie konta (funkcja Vercel) — szczegóły w [Najbliższych krokach](#najbliższe-kroki) | Dwa konta nie widzą swoich danych (testy reguł A/B), konto bez potwierdzonego adresu nie ma dostępu, dane właściciela przeniesione bez strat | L |
 | **2. Postęp** | Wyniki z poprzedniego razu przy ćwiczeniu; wykresy e1RM, rekordy, objętość tygodniowa, regularność; trend wagi; minutnik przerwy | Podopieczny widzi postęp dla dowolnego ćwiczenia z historii; obliczenia mają testy jednostkowe | M |
 | **3. Trener** | Rola trenera nadawana przez administratora; konta zakładane przez trenera i zaproszenia linkiem ([ADR-0015](adr/0015-accounts-roles-consent.md)); lista podopiecznych z sygnałami; kreator planu wielotygodniowego z kopiowaniem i progresją; przypisanie planu; „zadane / wykonane”; komentarze; check-iny; import CSV/Excel | Pilotaż: 2–3 trenerów prowadzi realnych podopiecznych przez 4 tygodnie bez arkusza | L |
 | **4. Mobile — odłożony** | Do wznowienia decyzją właściciela ([ADR-0004](adr/0004-firebase-multi-user.md)); wtedy PWA, a później Capacitor | — | M |
 | **5. Produkt komercyjny** | Abonamenty i limity podopiecznych (do 30 podopiecznych w roli nadanej przez administratora, powyżej — abonament dla trenera, jeśli potwierdzą to rozmowy z trenerami; [ADR-0015](adr/0015-accounts-roles-consent.md)); strona produktu; regulamin, polityka prywatności, umowa powierzenia; eksport i usunięcie danych; język angielski; panel administratora | Pierwszy trener płaci za abonament, a żądanie usunięcia konta wykonuje się bez ręcznej pracy | L |
 
 Kolejność: 0 → 1 → 2 → 3 → 5. Etapy 1 i 2 mają wartość także bez trenerów (lepszy dziennik), więc dają szybki efekt; etap 3 warto zacząć od rozmów z 3–5 trenerami o tym, jak dziś prowadzą plany w Excelu i czego im brakuje.
+
+## Najbliższe kroki
+
+Kolejność pracy do końca etapu 1 i na początek etapu 2. 🖐️ — właściciel, 💻 — programista lub agent. Wykonany krok usuwamy z listy.
+
+| # | Krok | Wykonanie | Zależy od | Gotowe, gdy |
+|---|---|---|---|---|
+| 1 | **Sprawdzenie po wdrożeniu (migracja, krok 1).** Reguły, kopia danych i wdrożenie są wykonane; zostało porównanie w aplikacji — według [README](../README.md#przeniesienie-danych-do-usersuid-jednorazowo), krok 6 | 🖐️ | — | Wdrożona wersja pokazuje te same treningi, pomiary, plan i szablony co przed wdrożeniem |
+| 2 | **Usunięcie starych kolekcji** z reguł, a potem z bazy, po kilku dniach normalnego używania nowej wersji ([KNOWN_ISSUES #21](KNOWN_ISSUES.md)) | 🖐️💻 | 1 | Reguły zawierają tylko `users` i `owners` |
+| 3 | **Biblioteka ćwiczeń** ([ADR-0016](adr/0016-roles-views-exercise-library.md), pkt 6). Najpierw arkusz 120–150 ćwiczeń z free-exercise-db i z obecnych szablonów (nazwa PL/EN, partie mięśni, sprzęt) do przeglądu przez właściciela. Potem kolekcja `exercises` z regułami (odczyt dla aktywnych kont, zapis tylko przez skrypt administratora) i testami. Na koniec skrypt wgrania z trybem próbnym | 💻🖐️ | — | Zatwierdzona lista jest w `exercises` na produkcji |
+| 4 | **Serie liczbowe i `exerciseId` (migracja, krok 2)** ([ADR-0007](adr/0007-exercises-and-sets.md)). Nowe schematy Zod i reguły, formularz serii przyjmujący liczby (także z przecinkiem), szablony domyślne rozdzielone na ćwiczenie i zalecenie. Tabela mapowań „nazwa → `exerciseId`” do przeglądu przez właściciela, skrypt z trybem próbnym i raportem liczby sesji i serii | 💻🖐️ | 3 | Każdy trening ma ćwiczenia z `exerciseId` i liczbowe serie, a raport liczby sesji i serii zgadza się przed i po |
+| 5 | **Etap 2: postęp.** Wyniki z poprzedniego razu przy ćwiczeniu, e1RM, rekordy, objętość tygodniowa — jako czyste funkcje z testami | 💻 | 4 | Jak w tabeli etapów |
+| 6 | **Funkcje Vercel i usunięcie konta** ([ADR-0014](adr/0014-server-functions-and-email.md), [ADR-0015](adr/0015-accounts-roles-consent.md), pkt 7): katalog `api/`, weryfikacja tokenu, klucz serwisowy w Vercel. Wymagane przed pierwszym użytkownikiem spoza właściciela | 💻🖐️ | — (równolegle z 5) | Usunięcie konta w Ustawieniach usuwa dane i konto logowania, co potwierdzają testy |
+| 7 | **Sprawy z długim czasem oczekiwania:** projekt polityki prywatności i treści zgody do konsultacji z prawnikiem ([ADR-0012](adr/0012-personal-and-health-data.md), [ADR-0015](adr/0015-accounts-roles-consent.md), pkt 8); rozmowy z 3–5 trenerami przed etapem 3 | 🖐️ | — (zacząć teraz) | Opinia prawna i notatki z rozmów są gotowe przed etapem 3 |
+
+Dlaczego tak:
+
+- Bibliotekę wgrywamy przed serią liczbową, bo mapowanie nazw wymaga istniejących `exerciseId`.
+- Etap 2 daje wartość bez trenerów i korzysta z nowego modelu, więc sprawdza go w praktyce przed etapem 3.
+- Usunięcie konta i opinia prawna blokują otwarcie rejestracji dla innych osób, więc nie mogą czekać na koniec etapu 3.
+
+Między krokami warto zamykać drobne punkty z [KNOWN_ISSUES.md](KNOWN_ISSUES.md). Najpierw #19, bo przypadkowo zatrzymuje poprawny push, potem #20, #16, #22 i #18.
 
 ## Jakość — zasady przekrojowe
 

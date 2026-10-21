@@ -52,10 +52,13 @@ export class ProfileService {
     );
   }
 
-  /** Creates or replaces the profile with the accepted health consent, which activates the account. */
+  /**
+   * Stores the name and the accepted health consent, which activates the account. Merging keeps the
+   * roles set by the administrator, which the account itself may not write.
+   */
   static activate(uid: string, displayName: string): Promise<void> {
     return logged('activate', uid, () =>
-      setDoc(profileRef(uid), { displayName, consents: { health: healthConsent(true) } }),
+      setDoc(profileRef(uid), { displayName, consents: { health: healthConsent(true) } }, { merge: true }),
     );
   }
 
