@@ -56,6 +56,11 @@ const template = {
 // Second active account, to check that two accounts never see each other's data.
 const OTHER_OWNER = 'other-owner-uid';
 
+const SESSIONS = `users/${OWNER}/sessions`;
+const MEASUREMENTS = `users/${OWNER}/measurements`;
+const WEEK_PLAN = `users/${OWNER}/weekPlans/default_week_plan`;
+const ROOT_COLLECTIONS = ['workouts', 'measurements', 'weekPlans'];
+
 let env: RulesTestEnvironment;
 
 const VERIFIED = { email_verified: true };
@@ -99,30 +104,18 @@ beforeEach(async () => {
 });
 
 describe('access', () => {
-  it('lets the owner read and write every collection', async () => {
-    const db = ownerDb();
-    await assertSucceeds(getDocs(collection(db, 'workouts')));
-    await assertSucceeds(getDocs(collection(db, 'measurements')));
-    await assertSucceeds(getDoc(doc(db, 'weekPlans', 'default_week_plan')));
-    await assertSucceeds(addDoc(collection(db, 'workouts'), workout));
-    await assertSucceeds(addDoc(collection(db, 'measurements'), measurement));
-    await assertSucceeds(setDoc(doc(db, 'weekPlans', 'default_week_plan'), weekPlan));
-    await assertSucceeds(deleteDoc(doc(db, 'workouts', 'w1')));
-    await assertSucceeds(deleteDoc(doc(db, 'measurements', 'm1')));
-  });
-
   it.each([
     ['anonymous', anonymousDb],
     ['signed-in stranger', strangerDb],
   ])('denies a %s any access to data', async (_, database) => {
     const db = database();
-    await assertFails(getDocs(collection(db, 'workouts')));
-    await assertFails(getDoc(doc(db, 'measurements', 'm1')));
-    await assertFails(getDoc(doc(db, 'weekPlans', 'default_week_plan')));
-    await assertFails(addDoc(collection(db, 'workouts'), workout));
-    await assertFails(addDoc(collection(db, 'measurements'), measurement));
-    await assertFails(setDoc(doc(db, 'weekPlans', 'default_week_plan'), weekPlan));
-    await assertFails(deleteDoc(doc(db, 'workouts', 'w1')));
+    await assertFails(getDocs(collection(db, SESSIONS)));
+    await assertFails(getDoc(doc(db, MEASUREMENTS, 'm1')));
+    await assertFails(getDoc(doc(db, WEEK_PLAN)));
+    await assertFails(addDoc(collection(db, SESSIONS), workout));
+    await assertFails(addDoc(collection(db, MEASUREMENTS), measurement));
+    await assertFails(setDoc(doc(db, WEEK_PLAN), weekPlan));
+    await assertFails(deleteDoc(doc(db, SESSIONS, 'w1')));
   });
 
   it('lets a user read only their own owner document and never write it', async () => {
@@ -134,10 +127,10 @@ describe('access', () => {
 
   it('denies the owner account until its e-mail address is verified', async () => {
     const db = unverifiedOwnerDb();
-    await assertFails(getDocs(collection(db, 'workouts')));
-    await assertFails(getDoc(doc(db, 'measurements', 'm1')));
-    await assertFails(addDoc(collection(db, 'workouts'), workout));
-    await assertFails(setDoc(doc(db, 'weekPlans', 'default_week_plan'), weekPlan));
+    await assertFails(getDocs(collection(db, SESSIONS)));
+    await assertFails(getDoc(doc(db, MEASUREMENTS, 'm1')));
+    await assertFails(addDoc(collection(db, SESSIONS), workout));
+    await assertFails(setDoc(doc(db, WEEK_PLAN), weekPlan));
   });
 
   it.each([
@@ -149,14 +142,27 @@ describe('access', () => {
       await (ownerProfile ? setDoc(ref, ownerProfile) : deleteDoc(ref));
     });
     const db = ownerDb();
-    await assertFails(getDocs(collection(db, 'workouts')));
-    await assertFails(getDoc(doc(db, 'measurements', 'm1')));
-    await assertFails(addDoc(collection(db, 'workouts'), workout));
-    await assertFails(setDoc(doc(db, 'weekPlans', 'default_week_plan'), weekPlan));
+    await assertFails(getDocs(collection(db, SESSIONS)));
+    await assertFails(getDoc(doc(db, MEASUREMENTS, 'm1')));
+    await assertFails(addDoc(collection(db, SESSIONS), workout));
+    await assertFails(setDoc(doc(db, WEEK_PLAN), weekPlan));
   });
 
   it('denies collections without rules', async () => {
     await assertFails(setDoc(doc(ownerDb(), 'other', 'x'), { a: 1 }));
+  });
+
+  it('denies even the owner the collections in the database root from before users/{uid}', async () => {
+    const db = ownerDb();
+    for (const name of ROOT_COLLECTIONS) {
+      await assertFails(getDocs(collection(db, name)));
+    }
+    await assertFails(getDoc(doc(db, 'workouts', 'w1')));
+    await assertFails(addDoc(collection(db, 'workouts'), workout));
+    await assertFails(addDoc(collection(db, 'measurements'), measurement));
+    await assertFails(setDoc(doc(db, 'weekPlans', 'default_week_plan'), weekPlan));
+    await assertFails(deleteDoc(doc(db, 'workouts', 'w1')));
+    await assertFails(deleteDoc(doc(db, 'measurements', 'm1')));
   });
 });
 
@@ -169,19 +175,19 @@ describe('workout validation', () => {
     ['completed not a boolean', { ...workout, completed: 'yes' }],
   ])('rejects %s', async (_, data) => {
     const clean = Object.fromEntries(Object.entries(data).filter(([, v]) => v !== undefined));
-    await assertFails(addDoc(collection(ownerDb(), 'workouts'), clean));
+    await assertFails(addDoc(collection(ownerDb(), SESSIONS), clean));
   });
 
   it('validates the merged document on update', async () => {
-    await assertSucceeds(updateDoc(doc(ownerDb(), 'workouts', 'w1'), { notes: 'ok' }));
-    await assertFails(updateDoc(doc(ownerDb(), 'workouts', 'w1'), { notes: 5 }));
+    await assertSucceeds(updateDoc(doc(ownerDb(), SESSIONS, 'w1'), { notes: 'ok' }));
+    await assertFails(updateDoc(doc(ownerDb(), SESSIONS, 'w1'), { notes: 5 }));
   });
 });
 
 describe('measurement validation', () => {
   it('accepts the range boundaries', async () => {
-    await assertSucceeds(addDoc(collection(ownerDb(), 'measurements'), { date: '2026-10-07', weight: 30, waist: 200 }));
-    await assertSucceeds(addDoc(collection(ownerDb(), 'measurements'), { date: '2026-10-07', weight: 300, waist: 50 }));
+    await assertSucceeds(addDoc(collection(ownerDb(), MEASUREMENTS), { date: '2026-10-07', weight: 30, waist: 200 }));
+    await assertSucceeds(addDoc(collection(ownerDb(), MEASUREMENTS), { date: '2026-10-07', weight: 300, waist: 50 }));
   });
 
   it.each([
@@ -191,7 +197,7 @@ describe('measurement validation', () => {
     ['date in another format', { ...measurement, date: '07.10.2026' }],
     ['unknown field', { ...measurement, note: 'x' }],
   ])('rejects %s', async (_, data) => {
-    await assertFails(addDoc(collection(ownerDb(), 'measurements'), data));
+    await assertFails(addDoc(collection(ownerDb(), MEASUREMENTS), data));
   });
 });
 
@@ -201,11 +207,11 @@ describe('week plan validation', () => {
     ['template id not a string', { ...weekPlan, plan: { ...weekPlan.plan, monday: 1 } }],
     ['missing updatedAt', { plan: weekPlan.plan }],
   ])('rejects %s', async (_, data) => {
-    await assertFails(setDoc(doc(ownerDb(), 'weekPlans', 'default_week_plan'), data));
+    await assertFails(setDoc(doc(ownerDb(), WEEK_PLAN), data));
   });
 
   it('cannot be deleted', async () => {
-    await assertFails(deleteDoc(doc(ownerDb(), 'weekPlans', 'default_week_plan')));
+    await assertFails(deleteDoc(doc(ownerDb(), WEEK_PLAN)));
   });
 });
 
@@ -289,10 +295,7 @@ describe('per-user journal', () => {
     await assertFails(getDocs(collection(unverifiedOwnerDb(), 'users', OWNER, 'sessions')));
   });
 
-  it('validates writes like the shared collections', async () => {
-    await assertFails(setDoc(own()('sessions', 'w2'), { ...workout, type: '' }));
-    await assertFails(setDoc(own()('measurements', 'm2'), { ...measurement, weight: 20 }));
-    await assertFails(deleteDoc(own()('weekPlans', 'default_week_plan')));
+  it('denies subcollections without rules', async () => {
     await assertFails(setDoc(doc(ownerDb(), 'users', OWNER, 'other', 'x'), { a: 1 }));
   });
 

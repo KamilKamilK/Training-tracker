@@ -101,7 +101,7 @@ Dane konta leżą w `users/{uid}/…` ([ADR-0005](adr/0005-data-model-and-access
 | `users/{uid}/weekPlans/default_week_plan` | `WeekPlanDocumentSchema` | `isValidWeekPlan` | dzień tygodnia → id szablonu albo `null` (odpoczynek) |
 | `users/{uid}/templates/{id}` | `WorkoutTemplateSchema` | `isValidTemplate` | szablony własne: nazwa, lista ćwiczeń (tekst), kategoria, wygląd |
 | `owners/{uid}` | — | tylko `get` własnego | lista dostępu, zakładana w konsoli |
-| `workouts`, `measurements`, `weekPlans` w korzeniu | jak wyżej | dostęp właściciela | dane sprzed migracji; usunięcie: [KNOWN_ISSUES #21](KNOWN_ISSUES.md) |
+| `workouts`, `measurements`, `weekPlans` w korzeniu | — | brak dostępu | dane sprzed migracji do usunięcia skryptem ([KNOWN_ISSUES #21](KNOWN_ISSUES.md)) |
 
 Poza Firestore:
 
@@ -165,12 +165,13 @@ Hook `pre-push` w `.githooks/` uruchamia lint, build i testy jednostkowe. Testy 
 
 - domyślnie działają w trybie próbnym, a zapisują dopiero z `--apply`;
 - są idempotentne (te same identyfikatory dokumentów);
-- nie zmieniają ani nie usuwają danych źródłowych;
+- nie zmieniają danych źródłowych, a usuwają je tylko po sprawdzeniu, że każdy dokument ma identyczną kopię, i po zapisaniu ich do pliku;
 - na końcu sprawdzają wynik;
 - mają testy na emulatorze w `tests/scripts/`.
 
 | Skrypt | Działanie |
 |---|---|
 | `migrate-to-users.ts` | kopiuje `workouts` → `users/{uid}/sessions`, `measurements` i `weekPlans` do `users/{uid}/…` ([ADR-0016](adr/0016-roles-views-exercise-library.md), pkt 7) |
+| `remove-root-collections.ts` | zapisuje `workouts`, `measurements` i `weekPlans` z korzenia bazy do pliku JSON i usuwa je, gdy każdy dokument ma identyczną kopię w `users/{uid}/…` |
 
-Skrypty są w TypeScripcie i uruchamia je bezpośrednio Node.js 22.18 lub nowszy. Poświadczenia: `gcloud auth application-default login`. Instrukcja: [README](../README.md#przeniesienie-danych-do-usersuid-jednorazowo).
+Skrypty są w TypeScripcie i uruchamia je bezpośrednio Node.js 22.18 lub nowszy. Poświadczenia: `gcloud auth application-default login`. Instrukcja: [README](../README.md#usunięcie-kolekcji-sprzed-migracji-jednorazowo).
