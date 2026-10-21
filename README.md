@@ -22,7 +22,7 @@ Budowa aplikacji: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md); decyzje: [docs/D
 
 ## 🧰 Stack technologiczny
 
-React 19, TypeScript (strict), Vite 7, React Router, Zod, Tailwind CSS 3, Lucide React, Firebase (Authentication, Cloud Firestore); testy: Vitest, Testing Library, emulator Firestore, Playwright.
+React 19, TypeScript (strict), Vite 8, React Router, Zod, Tailwind CSS 3, Lucide React, Firebase (Authentication, Cloud Firestore); testy: Vitest, Testing Library, emulator Firestore, Playwright.
 
 ---
 
