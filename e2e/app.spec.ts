@@ -133,7 +133,7 @@ test('a change made in one tab appears in another without a reload', async ({ pa
 test('a workout finished offline is stored once when the connection returns', async ({ page, context }) => {
   await openAsOwner(page);
   await page.getByText('Trening A - Klatka + Barki').click();
-  await page.getByRole('link', { name: 'Trening', exact: true }).click();
+  await expect(page).toHaveURL(/\/workout$/);
   await page.getByRole('button', { name: 'Dodaj serię' }).first().click();
   await page.getByPlaceholder('kg').fill('80');
 
@@ -147,6 +147,28 @@ test('a workout finished offline is stored once when the connection returns', as
   await expect(page).toHaveURL(/\/history$/);
   await page.reload();
   await expect(page.getByText('Trening A - Klatka + Barki')).toHaveCount(1);
+});
+
+test('choosing a template during a workout asks before replacing it', async ({ page }) => {
+  await openAsOwner(page);
+  await page.getByText('Trening A - Klatka + Barki').click();
+  await expect(page).toHaveURL(/\/workout$/);
+  await page.getByRole('button', { name: 'Dodaj serię' }).first().click();
+  await page.getByPlaceholder('kg').fill('80');
+
+  await page.getByRole('link', { name: 'Start', exact: true }).click();
+  await page.getByText('Trening B - Plecy + Barki Tylne').click();
+  await expect(page.getByRole('heading', { name: 'Trwa inny trening' })).toBeVisible();
+  await page.getByRole('button', { name: 'Wróć do treningu' }).click();
+  await expect(page).toHaveURL(/\/workout$/);
+  await expect(page.getByPlaceholder('kg')).toHaveValue('80');
+
+  await page.getByRole('link', { name: 'Start', exact: true }).click();
+  await page.getByText('Trening B - Plecy + Barki Tylne').click();
+  await page.getByRole('button', { name: 'Zacznij nowy trening' }).click();
+  await expect(page).toHaveURL(/\/workout$/);
+  await expect(page.getByRole('heading', { name: 'Trening B - Plecy + Barki Tylne' })).toBeVisible();
+  await expect(page.getByPlaceholder('kg')).toHaveCount(0);
 });
 
 test('signing out removes the local data cache', async ({ page }) => {

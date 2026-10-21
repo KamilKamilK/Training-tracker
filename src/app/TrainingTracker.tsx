@@ -11,6 +11,7 @@ import { LoadingSpinner } from '../components/common/LoadingSpinner.js';
 import { ErrorBanner } from '../components/common/ErrorBanner.js';
 import { ErrorToast, ToastRegion } from '../components/common/Toasts.js';
 import { Modal } from '../components/common/Modal.js';
+import { ConfirmDialog } from '../components/common/ConfirmDialog.js';
 import { MeasurementForm } from '../features/measurements/MeasurementForm.js';
 import { Header } from '../components/common/Header.js';
 import { Footer } from '../components/common/Footer.js';
@@ -18,7 +19,7 @@ import { TabNavigation } from '../components/common/TabNavigation.js';
 import { DashboardTab } from '../features/dashboard/DashboardTab.js';
 import { WorkoutTab } from '../features/workouts/WorkoutTab.js';
 import { SettingsTab } from '../features/profile/SettingsTab.js';
-import { UserProfile } from '../types/index.js';
+import { UserProfile, WorkoutTemplate } from '../types/index.js';
 
 // Tabs other than the start page and the active workout are separate chunks, so the first screen
 // loads faster. They are fetched in the background right after sign-in: without that, a tab opened
@@ -76,6 +77,8 @@ const TrainingTracker: React.FC<TrainingTrackerProps> = ({
     void prefetchTabs();
   }, []);
   const [isMeasurementFormOpen, setIsMeasurementFormOpen] = useState(false);
+  // A template chosen while another workout is in progress, waiting for the user's decision.
+  const [pendingTemplate, setPendingTemplate] = useState<WorkoutTemplate | null>(null);
 
   const {
     workouts,
@@ -104,6 +107,25 @@ const TrainingTracker: React.FC<TrainingTrackerProps> = ({
     clearError: clearTemplatesError,
   } = useTemplates(uid);
   const { currentWorkout, isFinishing, startWorkout, addSet, updateSet, removeSet, finishWorkout } = useWorkoutDraft();
+
+  const handleStartWorkout = (template: WorkoutTemplate) => {
+    if (startWorkout(template)) {
+      navigate(ROUTES.workout);
+    } else {
+      setPendingTemplate(template);
+    }
+  };
+
+  const replaceWorkout = () => {
+    if (pendingTemplate) startWorkout(pendingTemplate, { replaceDraft: true });
+    setPendingTemplate(null);
+    navigate(ROUTES.workout);
+  };
+
+  const returnToWorkout = () => {
+    setPendingTemplate(null);
+    navigate(ROUTES.workout);
+  };
 
   const handleFinishWorkout = async () => {
     if (await finishWorkout(saveWorkout)) {
@@ -145,7 +167,7 @@ const TrainingTracker: React.FC<TrainingTrackerProps> = ({
                       workouts={workouts}
                       measurements={measurements}
                       templates={templates}
-                      onStartWorkout={startWorkout}
+                      onStartWorkout={handleStartWorkout}
                       onAddMeasurement={() => setIsMeasurementFormOpen(true)}
                     />
                   }
@@ -210,6 +232,20 @@ const TrainingTracker: React.FC<TrainingTrackerProps> = ({
             {measurementsError && <ErrorBanner message={measurementsError} onDismiss={clearMeasurementsError} />}
             <MeasurementForm onSubmit={saveMeasurement} onCancel={() => setIsMeasurementFormOpen(false)} />
           </Modal>
+
+          <ConfirmDialog
+            isOpen={pendingTemplate !== null}
+            title="Trwa inny trening"
+            confirmLabel="Zacznij nowy trening"
+            cancelLabel="Wróć do treningu"
+            onConfirm={replaceWorkout}
+            onCancel={returnToWorkout}
+          >
+            <p>
+              Masz rozpoczęty trening „{currentWorkout?.type}”. Rozpoczęcie treningu „{pendingTemplate?.name}” usunie
+              wpisane w nim serie.
+            </p>
+          </ConfirmDialog>
         </div>
       </div>
     </ToastRegion>
