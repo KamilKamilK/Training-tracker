@@ -26,6 +26,7 @@ Instrukcje dla agentów (Claude Code, Codex i inne) oraz osób pracujących nad 
 - Firebase (Firestore, Auth) tylko przez serwisy `*.service.ts` w `src/features/<obszar>/` i `src/lib/firebaseConfig.ts`; komponenty i hooki nie importują `firebase/firestore` ani `firebase/auth` — pilnuje tego ESLint (`no-restricted-imports`). Dostęp do LocalStorage tylko przez `LocalStorageService`, klucze z `STORAGE_KEYS`.
 - Nie dodawaj docbloków powtarzających typ z sygnatury. Komentarz zostaw, gdy opisuje zachowanie lub kontrakt, którego sygnatura nie wyraża.
 - Nowa zależność wymaga krótkiego uzasadnienia w commit message: potrzeba, aktywne utrzymanie, licencja. Preferuj natywne API przeglądarki i Reacta.
+- Zależności utrzymuj w najnowszych wersjach, także głównych (decyzja właściciela). Wersję, której nie da się zaktualizować, i zaakceptowane ryzyko zapisz w [KNOWN_ISSUES.md](docs/KNOWN_ISSUES.md).
 - Unikaj oczywistych problemów wydajnościowych (pobieranie całych kolekcji w pętli, zbędne rendery całego drzewa); poza tym nie optymalizuj przedwcześnie.
 - Po zmianie usuń martwy kod, nieużywane importy, zakomentowane fragmenty i `console.log` dodane do debugowania.
 

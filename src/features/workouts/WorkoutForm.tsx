@@ -31,7 +31,7 @@ export const WorkoutForm: React.FC<WorkoutFormProps> = ({
   onFinishWorkout,
 }) => (
   <div className="space-y-6">
-    <h2 className="text-2xl font-bold mb-4">{workout.type}</h2>
+    <h2 className="text-2xl font-bold">{workout.type}</h2>
 
     {workout.exercises.map((ex, i) => (
       <ExerciseItem

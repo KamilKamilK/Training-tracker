@@ -150,7 +150,7 @@ const TrainingTracker: React.FC<TrainingTrackerProps> = ({
 
   return (
     <ToastRegion>
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white p-4">
+      <div className="min-h-screen bg-linear-to-br from-slate-900 via-slate-800 to-slate-900 text-white p-4">
         <div className="max-w-6xl mx-auto">
           <Header
             templatesCount={templates.length}

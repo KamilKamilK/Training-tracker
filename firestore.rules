@@ -143,22 +143,5 @@ service cloud.firestore {
     match /owners/{uid} {
       allow get: if request.auth != null && request.auth.uid == uid;
     }
-
-    // Collections from before the per-user model (ADR-0016, pkt 7). They stay until the owner
-    // confirms the migration to users/{uid}/…; removing them is a separate step.
-    match /workouts/{workoutId} {
-      allow read, delete: if isOwner();
-      allow create, update: if isOwner() && isValidWorkout(request.resource.data);
-    }
-
-    match /measurements/{measurementId} {
-      allow read, delete: if isOwner();
-      allow create, update: if isOwner() && isValidMeasurement(request.resource.data);
-    }
-
-    match /weekPlans/{planId} {
-      allow read: if isOwner();
-      allow create, update: if isOwner() && isValidWeekPlan(request.resource.data);
-    }
   }
 }

@@ -54,7 +54,7 @@ export const MeasurementForm: React.FC<MeasurementFormProps> = ({ onSubmit, onCa
             onChange={e => setInput(prev => ({ ...prev, [key]: e.target.value }))}
             aria-invalid={errors[key] ? true : undefined}
             aria-describedby={errors[key] ? `measurement-${key}-error` : undefined}
-            className="w-full bg-slate-700 p-2 rounded outline-none focus:ring-2 focus:ring-purple-500"
+            className="w-full bg-slate-700 p-2 rounded-sm outline-hidden focus:ring-2 focus:ring-purple-500"
           />
           {errors[key] && (
             <p id={`measurement-${key}-error`} className="text-red-400 text-sm mt-1">

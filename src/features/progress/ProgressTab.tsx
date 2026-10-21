@@ -16,7 +16,7 @@ export const ProgressTab: React.FC<ProgressTabProps> = ({ workouts, measurements
 
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold mb-4">📊 Twoje Postępy</h2>
+      <h2 className="text-2xl font-bold">📊 Twoje Postępy</h2>
 
       {/* Statystyki treningów */}
       <div className="grid md:grid-cols-3 gap-4">
@@ -47,7 +47,7 @@ export const ProgressTab: React.FC<ProgressTabProps> = ({ workouts, measurements
               const waistDiff = prev ? calculateWaistDiff(m, prev) : 0;
 
               return (
-                <div key={idx} className="flex justify-between items-center bg-slate-600 p-3 rounded">
+                <div key={idx} className="flex justify-between items-center bg-slate-600 p-3 rounded-sm">
                   <span className="text-slate-300">{formatDate(m.date)}</span>
                   <div className="flex gap-4">
                     <span className="font-bold">

@@ -169,7 +169,7 @@ export const PlanTab: React.FC<PlanTabProps> = ({ uid, templates }) => {
 
                 <div className="flex-1">
                   <select
-                    className="w-full bg-slate-800 border border-slate-500 p-3 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                    className="w-full bg-slate-800 border border-slate-500 p-3 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-hidden"
                     value={weekPlan[id] ?? ""}
                     onChange={e => handleUpdateDay(id, e.target.value)}
                     disabled={isSaving}
@@ -189,7 +189,7 @@ export const PlanTab: React.FC<PlanTabProps> = ({ uid, templates }) => {
                     <button
                       onClick={() => handleClearDay(id)}
                       disabled={isSaving}
-                      className="p-2 bg-red-600 hover:bg-red-700 disabled:bg-gray-600 rounded transition-all"
+                      className="p-2 bg-red-600 hover:bg-red-700 disabled:bg-gray-600 rounded-sm transition-all"
                       title="Usuń"
                     >
                       <Trash2 size={16} />
@@ -246,7 +246,7 @@ export const PlanTab: React.FC<PlanTabProps> = ({ uid, templates }) => {
       </div>
 
       {/* Wskazówki i rekomendacje */}
-      <div className="bg-gradient-to-r from-blue-900 to-purple-900 rounded-lg p-6">
+      <div className="bg-linear-to-r from-blue-900 to-purple-900 rounded-lg p-6">
         <h3 className="text-xl font-bold mb-4">💡 Wskazówki Planowania</h3>
         
         <div className="grid md:grid-cols-2 gap-6">
@@ -274,7 +274,7 @@ export const PlanTab: React.FC<PlanTabProps> = ({ uid, templates }) => {
         </div>
 
         {stats.workloadPercentage > 70 && (
-          <div className="mt-4 bg-yellow-900 bg-opacity-30 border border-yellow-600 rounded-lg p-4">
+          <div className="mt-4 bg-yellow-900/30 border border-yellow-600 rounded-lg p-4">
             <p className="text-yellow-200 text-sm flex items-center gap-2">
               <AlertCircle size={20} />
               <strong>Uwaga:</strong> Twój plan ma obciążenie powyżej 70%. Upewnij się, że Twoja regeneracja jest na wysokim poziomie!

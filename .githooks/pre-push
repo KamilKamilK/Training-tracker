@@ -20,7 +20,7 @@ while read -r _local_ref local_sha _remote_ref remote_sha; do
     rules_changed=true
   fi
   if git diff --name-only "$range" -- src public index.html vite.config.ts package.json package-lock.json \
-      tailwind.config.js postcss.config.js firestore.rules firebase.json e2e playwright.config.ts .env.e2e | grep -q .; then
+      firestore.rules firebase.json e2e playwright.config.ts .env.e2e | grep -q .; then
     app_changed=true
   fi
 done
