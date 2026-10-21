@@ -11,6 +11,8 @@ import {
 } from 'firebase/auth';
 import { clearIndexedDbPersistence, doc, getDoc, terminate } from 'firebase/firestore';
 import { auth, db } from '../../lib/firebaseConfig.js';
+import { LocalStorageService } from '../../services/storage/localStorage.service.js';
+import { STORAGE_KEYS } from '../../constants/config.js';
 
 const OWNERS_COLLECTION = 'owners';
 
@@ -80,12 +82,14 @@ export class AuthService {
   }
 
   /**
-   * Signs out and deletes the local Firestore cache, so no data stays on a shared device. The
-   * Firestore instance cannot be used afterwards: the caller reloads the app.
+   * Signs out and deletes the local Firestore cache and the app's LocalStorage entries (workout
+   * draft, legacy templates), so no data stays on a shared device or reaches the next account.
+   * The Firestore instance cannot be used afterwards: the caller reloads the app.
    */
   static signOut(): Promise<void> {
     return logged('signOut', async () => {
       await signOut(auth);
+      Object.values(STORAGE_KEYS).forEach(key => LocalStorageService.remove(key));
       await terminate(db);
       await clearIndexedDbPersistence(db);
     });

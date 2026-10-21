@@ -15,6 +15,8 @@ const template: WorkoutTemplate = {
   color: 'bg-blue-600',
 };
 
+const otherTemplate: WorkoutTemplate = { ...template, id: 't2', name: 'Trening B', exercises: ['Martwy ciąg'] };
+
 const storedDraft = () => JSON.parse(localStorage.getItem(STORAGE_KEYS.currentWorkoutDraft) ?? 'null');
 
 const startedHook = () => {
@@ -85,6 +87,63 @@ describe('useWorkoutDraft', () => {
 
     expect(result.current.currentWorkout).toBeNull();
     expect(localStorage.getItem(STORAGE_KEYS.currentWorkoutDraft)).toBeNull();
+  });
+});
+
+describe('useWorkoutDraft starting a workout', () => {
+  it('starts a workout when there is no draft', () => {
+    const { result } = renderHook(() => useWorkoutDraft());
+
+    let started = false;
+    act(() => {
+      started = result.current.startWorkout(template);
+    });
+
+    expect(started).toBe(true);
+    expect(result.current.currentWorkout?.type).toBe('Trening A');
+  });
+
+  it('keeps an existing draft unless replacing it was requested', () => {
+    const { result } = startedHook();
+    act(() => result.current.updateSet(0, 0, 'weight', '80'));
+
+    let started = true;
+    act(() => {
+      started = result.current.startWorkout(otherTemplate);
+    });
+    expect(started).toBe(false);
+    expect(result.current.currentWorkout?.exercises[0].sets[0].weight).toBe('80');
+    expect(storedDraft().type).toBe('Trening A');
+
+    act(() => {
+      started = result.current.startWorkout(otherTemplate, { replaceDraft: true });
+    });
+    expect(started).toBe(true);
+    expect(result.current.currentWorkout?.type).toBe('Trening B');
+    expect(storedDraft().type).toBe('Trening B');
+  });
+
+  it('starts a new workout while the previous one is saving and keeps it after that save', async () => {
+    const { result } = startedHook();
+    let resolveSave: (saved: boolean) => void = () => {};
+    const save = vi.fn(() => new Promise<boolean>(resolve => (resolveSave = resolve)));
+
+    let finishing: Promise<boolean> = Promise.resolve(false);
+    act(() => {
+      finishing = result.current.finishWorkout(save);
+    });
+    let started = false;
+    act(() => {
+      started = result.current.startWorkout(otherTemplate);
+    });
+    await act(async () => {
+      resolveSave(true);
+      await finishing;
+    });
+
+    expect(started).toBe(true);
+    expect(result.current.currentWorkout?.type).toBe('Trening B');
+    expect(storedDraft().type).toBe('Trening B');
   });
 });
 

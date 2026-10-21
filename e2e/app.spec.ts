@@ -133,7 +133,7 @@ test('a change made in one tab appears in another without a reload', async ({ pa
 test('a workout finished offline is stored once when the connection returns', async ({ page, context }) => {
   await openAsOwner(page);
   await page.getByText('Trening A - Klatka + Barki').click();
-  await page.getByRole('link', { name: 'Trening', exact: true }).click();
+  await expect(page).toHaveURL(/\/workout$/);
   await page.getByRole('button', { name: 'Dodaj serię' }).first().click();
   await page.getByPlaceholder('kg').fill('80');
 
@@ -149,6 +149,28 @@ test('a workout finished offline is stored once when the connection returns', as
   await expect(page.getByText('Trening A - Klatka + Barki')).toHaveCount(1);
 });
 
+test('choosing a template during a workout asks before replacing it', async ({ page }) => {
+  await openAsOwner(page);
+  await page.getByText('Trening A - Klatka + Barki').click();
+  await expect(page).toHaveURL(/\/workout$/);
+  await page.getByRole('button', { name: 'Dodaj serię' }).first().click();
+  await page.getByPlaceholder('kg').fill('80');
+
+  await page.getByRole('link', { name: 'Start', exact: true }).click();
+  await page.getByText('Trening B - Plecy + Barki Tylne').click();
+  await expect(page.getByRole('heading', { name: 'Trwa inny trening' })).toBeVisible();
+  await page.getByRole('button', { name: 'Wróć do treningu' }).click();
+  await expect(page).toHaveURL(/\/workout$/);
+  await expect(page.getByPlaceholder('kg')).toHaveValue('80');
+
+  await page.getByRole('link', { name: 'Start', exact: true }).click();
+  await page.getByText('Trening B - Plecy + Barki Tylne').click();
+  await page.getByRole('button', { name: 'Zacznij nowy trening' }).click();
+  await expect(page).toHaveURL(/\/workout$/);
+  await expect(page.getByRole('heading', { name: 'Trening B - Plecy + Barki Tylne' })).toBeVisible();
+  await expect(page.getByPlaceholder('kg')).toHaveCount(0);
+});
+
 test('signing out removes the local data cache', async ({ page }) => {
   await openAsOwner(page);
   const cacheNames = () =>
@@ -159,6 +181,33 @@ test('signing out removes the local data cache', async ({ page }) => {
   await Promise.all([page.waitForEvent('load'), page.getByRole('button', { name: 'Wyloguj' }).click()]);
   await expect(page.getByRole('button', { name: 'Kontynuuj z Google' })).toBeVisible();
   expect(await cacheNames()).toEqual([]);
+});
+
+test('signing out asks about the workout in progress and leaves nothing for the next account', async ({ page }) => {
+  await openAsOwner(page);
+  await page.getByText('Trening A - Klatka + Barki').click();
+  await page.getByRole('button', { name: 'Dodaj serię' }).first().click();
+  await page.getByPlaceholder('kg').fill('80');
+
+  await page.getByRole('button', { name: 'Wyloguj' }).click();
+  await expect(page.getByRole('heading', { name: 'Wylogować się?' })).toBeVisible();
+  await page.getByRole('button', { name: 'Anuluj' }).click();
+  await expect(page.getByPlaceholder('kg')).toHaveValue('80');
+
+  // Measurements kept in the browser by the first versions of the app.
+  await page.evaluate(() => localStorage.setItem('measurements', '[{"weight":"82"}]'));
+  await page.getByRole('button', { name: 'Wyloguj' }).click();
+  await Promise.all([page.waitForEvent('load'), page.getByRole('button', { name: 'Wyloguj i usuń trening' }).click()]);
+  await expect(page.getByRole('button', { name: 'Kontynuuj z Google' })).toBeVisible();
+  expect(
+    await page.evaluate(() => [localStorage.getItem('currentWorkoutDraft'), localStorage.getItem('measurements')]),
+  ).toEqual([null, null]);
+
+  const other = await signIn(page, 'other-owner@example.com');
+  await grantOwner(other);
+  await activateProfile(other, 'Ola');
+  await page.goto('/workout');
+  await expect(page.getByText('Brak aktywnego treningu')).toBeVisible();
 });
 
 test('the owner activates the account with the consent and deactivates it by withdrawing it', async ({ page }) => {

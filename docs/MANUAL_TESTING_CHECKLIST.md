@@ -1,13 +1,28 @@
 # Dziennik Treningowy — ręczna lista kontrolna testów
 
 **Ostatnie pełne przejście:** brak.
-**Automatyzacja:** ekran logowania, brak dostępu, aktywacja konta i wycofanie zgody, sekcja 1a (bez produkcji), 2.2–2.3, 3.3–3.6 oraz sekcja 8 (bez telefonu) są testami end-to-end w `e2e/` (`npm run test:e2e`, na zbudowanej wersji); ręcznie sprawdzamy pozostałe i całość na produkcji.
+**Automatyzacja:** ekran logowania, brak dostępu, aktywacja konta i wycofanie zgody, sekcja 1a (bez produkcji), 2.2–2.3, 2.7–2.8, 3.3–3.6 oraz sekcja 8 (bez telefonu) są testami end-to-end w `e2e/` (`npm run test:e2e`, na zbudowanej wersji); ręcznie sprawdzamy pozostałe i całość na produkcji.
 **Znane rozbieżności:** punkt z numerem KNOWN_ISSUES (np. „#1”) opisuje zachowanie docelowe, którego środowisko jeszcze nie spełnia — niepowodzenie potwierdza zgłoszony problem.
 **Cel:** weryfikacja funkcji aplikacji przed wdrożeniem na Vercel lub po większych zmianach.
 **Środowisko:** `npm run emulators` i `npm run dev` z `VITE_USE_EMULATORS=true` ([README](../README.md#-uruchomienie-lokalne)); przeglądarka desktopowa i widok mobilny (DevTools, szerokość 375 px).
 **Konta:** konto właściciela (dokument `owners/{uid}` w Firestore, profil z zaakceptowaną zgodą w `users/{uid}`) i drugie konto bez dokumentu w `owners`.
 
 Nowy przypadek: warunki wstępne, kroki, oczekiwany wynik.
+
+## Kiedy i co sprawdzać
+
+| Kiedy | Zakres | Gdzie |
+|---|---|---|
+| Przed wdrożeniem większej zmiany | Cała lista; punkty z testów end-to-end można pominąć, gdy `npm run test:e2e` przeszedł. Po przejściu wpisz datę w „Ostatnie pełne przejście” | Emulatory |
+| Po każdym wdrożeniu | Test dymny poniżej (ok. 10 minut) | Produkcja, komputer i telefon |
+| Po zmianie jednego obszaru | Sekcja tego obszaru i test dymny | Emulatory, potem produkcja |
+
+**Test dymny na produkcji.** Na produkcji nie zapisuj danych testowych: pomiaru i treningu nie da się jeszcze usunąć ani poprawić (#26), więc zapis sprawdzaj prawdziwym treningiem lub pomiarem.
+
+- [ ] Logowanie kontem właściciela otwiera dziennik bez błędów w konsoli; liczba treningów w nagłówku, ostatnie pomiary, plan tygodnia i szablony są takie jak przed wdrożeniem
+- [ ] Odświeżenie strony (F5) na zakładce innej niż Start zostawia tę zakładkę i dane
+- [ ] Na telefonie wszystkie zakładki otwierają się i są czytelne przy szerokości ekranu
+- [ ] Przy najbliższym treningu: „Zakończ trening” przenosi do „Historii”, trening jest na górze listy i widać go na drugim urządzeniu bez odświeżania
 
 ---
 
@@ -52,7 +67,8 @@ Nowy przypadek: warunki wstępne, kroki, oczekiwany wynik.
 - [ ] 2.4 Data z przyszłości → komunikat przy polu daty; „Anuluj” zamyka okno bez zapisu
 - [ ] 2.5 Zapis pomiaru odrzucony przez Firestore → komunikat w oknie, okno pozostaje otwarte z wpisanymi wartościami
 - [ ] 2.6 Kolejność pomiarów w „Postępach” nie zmienia się po wejściu na „Start”
-- [ ] 2.7 Kliknięcie szablonu rozpoczyna trening z jego ćwiczeniami w zakładce „Trening”
+- [ ] 2.7 Bez rozpoczętego treningu kliknięcie szablonu otwiera zakładkę „Trening” z ćwiczeniami tego szablonu
+- [ ] 2.8 Trening rozpoczęty, wpisana seria, kliknięcie innego szablonu na „Start” → okno „Trwa inny trening” z nazwami obu treningów; „Wróć do treningu” (albo „X”) → zakładka „Trening” z wpisanymi wartościami; „Zacznij nowy trening” → zakładka „Trening” z ćwiczeniami nowego szablonu, bez wcześniejszych serii
 
 ## 3. Trening
 
@@ -96,6 +112,7 @@ Nowy przypadek: warunki wstępne, kroki, oczekiwany wynik.
 - [ ] Otwarcie lub odświeżenie strony bez sieci pokazuje aplikację z danymi (#17)
 - [ ] Bez sieci pomiar trafia od razu na listę, a okno pomiaru czeka z „Zapisywanie...” do powrotu sieci; po powrocie zamyka się, pomiar jest zapisany raz
 - [ ] „Wyloguj” → ekran logowania; po ponownym zalogowaniu innym kontem nie widać danych poprzedniego (pamięć w przeglądarce jest czyszczona)
+- [ ] Trening rozpoczęty, wpisana seria, „Wyloguj” → okno „Wylogować się?”; „Anuluj” zostawia trening z wartościami; „Wyloguj i usuń trening” → ekran logowania; po zalogowaniu innym kontem zakładka „Trening” pokazuje stan pusty
 
 ## 7. Postępy
 

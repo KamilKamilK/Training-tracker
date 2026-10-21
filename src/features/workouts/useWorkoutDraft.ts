@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { Workout, WorkoutSet, WorkoutTemplate } from '../../types/index.js';
 import { getCurrentDate } from '../../utils/date.utils.js';
 import { parseWorkoutDraft } from '../../utils/parse.utils.js';
@@ -40,13 +40,22 @@ const updateSets = (
 export const useWorkoutDraft = () => {
   const [currentWorkout, setCurrentWorkoutState] = useState<Workout | null>(loadDraft);
   const [isFinishing, setIsFinishing] = useState(false);
+  // The latest draft, read when a save resolves: by then another workout may have been started.
+  const draftRef = useRef(currentWorkout);
 
   const setCurrentWorkout = useCallback((workout: Workout | null) => {
+    draftRef.current = workout;
     setCurrentWorkoutState(workout);
     persistDraft(workout);
   }, []);
 
-  const startWorkout = (template: WorkoutTemplate) => {
+  /**
+   * Starts a workout from the template and resolves to whether it started. A draft is replaced only
+   * with `replaceDraft`, so entered sets are never lost by accident; a draft whose save is pending
+   * is already handed to Firestore and does not block a new workout.
+   */
+  const startWorkout = (template: WorkoutTemplate, { replaceDraft = false } = {}): boolean => {
+    if (currentWorkout && !isFinishing && !replaceDraft) return false;
     setCurrentWorkout({
       id: crypto.randomUUID(),
       type: template.name,
@@ -55,6 +64,7 @@ export const useWorkoutDraft = () => {
       notes: '',
       completed: false,
     });
+    return true;
   };
 
   const addSet = (exerciseIndex: number) => {
@@ -80,17 +90,19 @@ export const useWorkoutDraft = () => {
 
   /**
    * Marks the workout as completed and passes it to `save`. The draft is cleared only
-   * when `save` resolves to true, so a failed write keeps every entered set. While a save
-   * is pending (Firestore waits for the connection when offline) further calls are ignored,
-   * so the workout cannot be stored twice.
+   * when `save` resolves to true, so a failed write keeps every entered set, and only if it is
+   * still the saved workout, so a workout started meanwhile stays. While a save is pending
+   * (Firestore waits for the connection when offline) further calls are ignored, so the workout
+   * cannot be stored twice.
    */
   const finishWorkout = async (save: (workout: Workout) => Promise<boolean>): Promise<boolean> => {
     if (!currentWorkout || isFinishing) return false;
     setIsFinishing(true);
     try {
-      const id = currentWorkout.id || crypto.randomUUID();
+      const draftId = currentWorkout.id;
+      const id = draftId || crypto.randomUUID();
       const saved = await save({ ...currentWorkout, id, completed: true, date: getCurrentDate() });
-      if (saved) setCurrentWorkout(null);
+      if (saved && draftRef.current?.id === draftId) setCurrentWorkout(null);
       return saved;
     } finally {
       setIsFinishing(false);
