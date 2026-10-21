@@ -183,6 +183,29 @@ test('signing out removes the local data cache', async ({ page }) => {
   expect(await cacheNames()).toEqual([]);
 });
 
+test('signing out asks about the workout in progress and leaves nothing for the next account', async ({ page }) => {
+  await openAsOwner(page);
+  await page.getByText('Trening A - Klatka + Barki').click();
+  await page.getByRole('button', { name: 'Dodaj serię' }).first().click();
+  await page.getByPlaceholder('kg').fill('80');
+
+  await page.getByRole('button', { name: 'Wyloguj' }).click();
+  await expect(page.getByRole('heading', { name: 'Wylogować się?' })).toBeVisible();
+  await page.getByRole('button', { name: 'Anuluj' }).click();
+  await expect(page.getByPlaceholder('kg')).toHaveValue('80');
+
+  await page.getByRole('button', { name: 'Wyloguj' }).click();
+  await Promise.all([page.waitForEvent('load'), page.getByRole('button', { name: 'Wyloguj i usuń trening' }).click()]);
+  await expect(page.getByRole('button', { name: 'Kontynuuj z Google' })).toBeVisible();
+  expect(await page.evaluate(() => localStorage.getItem('currentWorkoutDraft'))).toBeNull();
+
+  const other = await signIn(page, 'other-owner@example.com');
+  await grantOwner(other);
+  await activateProfile(other, 'Ola');
+  await page.goto('/workout');
+  await expect(page.getByText('Brak aktywnego treningu')).toBeVisible();
+});
+
 test('the owner activates the account with the consent and deactivates it by withdrawing it', async ({ page }) => {
   await page.goto('/');
   await grantOwner(await signIn(page, OWNER));

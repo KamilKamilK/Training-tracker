@@ -106,7 +106,7 @@ Dane konta leżą w `users/{uid}/…` ([ADR-0005](adr/0005-data-model-and-access
 Poza Firestore:
 
 - **Szablony domyślne** są w kodzie (`src/features/templates/defaultTemplates.ts`), nie w bazie.
-- **LocalStorage**: `currentWorkoutDraft` — szkic trwającego treningu, usuwany dopiero po potwierdzonym zapisie; `customTemplates` — szablony z dawnych wersji, przenoszone jednorazowo do Firestore i potem usuwane (`useTemplates`).
+- **LocalStorage**: `currentWorkoutDraft` — szkic trwającego treningu, usuwany po potwierdzonym zapisie albo przy wylogowaniu; `customTemplates` — szablony z dawnych wersji, przenoszone jednorazowo do Firestore i potem usuwane (`useTemplates`). Szkic nie jest związany z kontem, dlatego wylogowanie usuwa wszystkie wpisy aplikacji (`STORAGE_KEYS`).
 
 Ograniczenia obecnego modelu, które zmienia etap 1 ([ADR-0007](adr/0007-exercises-and-sets.md)):
 
@@ -134,7 +134,7 @@ Reguły w `firestore.rules` składają się z trzech warunków dostępu i walida
 
 - `persistentLocalCache` z `persistentMultipleTabManager`: dane w IndexedDB wspólnej dla kart. Zapisy offline czekają w kolejce i wysyłają się po powrocie sieci.
 - Zmiana w jednej karcie pojawia się w innej bez odświeżania, bo działają nasłuchy.
-- Wylogowanie czyści cache i przeładowuje stronę, żeby dane nie zostały na wspólnym komputerze.
+- Wylogowanie czyści cache Firestore i wpisy LocalStorage aplikacji, a potem przeładowuje stronę, żeby dane nie zostały na wspólnym komputerze ani nie trafiły do następnego konta. Przy trwającym treningu aplikacja najpierw pyta o potwierdzenie. Zapisy czekające offline giną razem z cache ([KNOWN_ISSUES #30](KNOWN_ISSUES.md)).
 - Strona nie otworzy się bez sieci, jeśli wcześniej nie była otwarta, bo nie ma service workera ([ADR-0013](adr/0013-offline-app-shell.md), [KNOWN_ISSUES #17](KNOWN_ISSUES.md)).
 
 ## Środowiska, build i wdrożenie

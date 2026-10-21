@@ -79,6 +79,7 @@ const TrainingTracker: React.FC<TrainingTrackerProps> = ({
   const [isMeasurementFormOpen, setIsMeasurementFormOpen] = useState(false);
   // A template chosen while another workout is in progress, waiting for the user's decision.
   const [pendingTemplate, setPendingTemplate] = useState<WorkoutTemplate | null>(null);
+  const [isSignOutConfirmOpen, setIsSignOutConfirmOpen] = useState(false);
 
   const {
     workouts,
@@ -127,6 +128,16 @@ const TrainingTracker: React.FC<TrainingTrackerProps> = ({
     navigate(ROUTES.workout);
   };
 
+  // Signing out deletes the workout draft from this browser, so a workout not yet saved on the
+  // server (also one whose save waits for the connection) is discarded only after confirmation.
+  const handleSignOut = () => {
+    if (currentWorkout) {
+      setIsSignOutConfirmOpen(true);
+    } else {
+      onSignOut();
+    }
+  };
+
   const handleFinishWorkout = async () => {
     if (await finishWorkout(saveWorkout)) {
       navigate(ROUTES.history);
@@ -145,7 +156,7 @@ const TrainingTracker: React.FC<TrainingTrackerProps> = ({
             templatesCount={templates.length}
             workoutsCount={workouts.length}
             email={email}
-            onSignOut={onSignOut}
+            onSignOut={handleSignOut}
           />
           <TabNavigation tabs={tabs} />
 
@@ -244,6 +255,23 @@ const TrainingTracker: React.FC<TrainingTrackerProps> = ({
             <p>
               Masz rozpoczęty trening „{currentWorkout?.type}”. Rozpoczęcie treningu „{pendingTemplate?.name}” usunie
               wpisane w nim serie.
+            </p>
+          </ConfirmDialog>
+
+          <ConfirmDialog
+            isOpen={isSignOutConfirmOpen}
+            title="Wylogować się?"
+            confirmLabel="Wyloguj i usuń trening"
+            cancelLabel="Anuluj"
+            onConfirm={() => {
+              setIsSignOutConfirmOpen(false);
+              onSignOut();
+            }}
+            onCancel={() => setIsSignOutConfirmOpen(false)}
+          >
+            <p>
+              Trening „{currentWorkout?.type}” nie jest jeszcze zapisany na serwerze. Wylogowanie usunie go z tej
+              przeglądarki razem z wpisanymi seriami.
             </p>
           </ConfirmDialog>
         </div>

@@ -97,6 +97,7 @@ Nowy przypadek: warunki wstępne, kroki, oczekiwany wynik.
 - [ ] Otwarcie lub odświeżenie strony bez sieci pokazuje aplikację z danymi (#17)
 - [ ] Bez sieci pomiar trafia od razu na listę, a okno pomiaru czeka z „Zapisywanie...” do powrotu sieci; po powrocie zamyka się, pomiar jest zapisany raz
 - [ ] „Wyloguj” → ekran logowania; po ponownym zalogowaniu innym kontem nie widać danych poprzedniego (pamięć w przeglądarce jest czyszczona)
+- [ ] Trening rozpoczęty, wpisana seria, „Wyloguj” → okno „Wylogować się?”; „Anuluj” zostawia trening z wartościami; „Wyloguj i usuń trening” → ekran logowania; po zalogowaniu innym kontem zakładka „Trening” pokazuje stan pusty
 
 ## 7. Postępy
 
