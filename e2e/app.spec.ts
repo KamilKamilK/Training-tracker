@@ -1,5 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import { activateProfile, grantOwner, rejectWorkoutWrites, resetEmulators, restoreRules } from './emulators.js';
+import { AFTER_RELOAD } from './load.js';
 
 const OWNER = 'owner@example.com';
 const STRANGER = 'stranger@example.com';
@@ -16,7 +17,7 @@ const openAsOwner = async (page: Page) => {
   await grantOwner(uid);
   await activateProfile(uid);
   await page.reload();
-  await expect(page.getByRole('heading', { name: 'Rozpocznij Trening' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Rozpocznij Trening' })).toBeVisible(AFTER_RELOAD);
   return uid;
 };
 
@@ -70,7 +71,7 @@ test('a workout survives a reload and a rejected save, then saves on retry', asy
 
   await page.reload();
   await expect(page).toHaveURL(/\/workout$/);
-  await expect(page.getByPlaceholder('kg')).toHaveValue('80');
+  await expect(page.getByPlaceholder('kg')).toHaveValue('80', AFTER_RELOAD);
 
   await rejectWorkoutWrites();
   await page.getByRole('button', { name: 'Zakończ trening' }).click();
@@ -101,7 +102,7 @@ test('every tab has its own address that survives a reload and the back button',
 
   await page.reload();
   await expect(page).toHaveURL(/\/progress$/);
-  await expect(page.getByText(/Twoje Postępy/)).toBeVisible();
+  await expect(page.getByText(/Twoje Postępy/)).toBeVisible(AFTER_RELOAD);
 
   await page.goBack();
   await expect(page).toHaveURL(/\/history$/);
@@ -112,7 +113,7 @@ test('an unknown address leads to the start page', async ({ page }) => {
   await openAsOwner(page);
   await page.goto('/does-not-exist');
   await expect(page).toHaveURL(/\/$/);
-  await expect(page.getByRole('heading', { name: 'Rozpocznij Trening' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Rozpocznij Trening' })).toBeVisible(AFTER_RELOAD);
 });
 
 test('a change made in one tab appears in another without a reload', async ({ page, context }) => {
@@ -120,7 +121,7 @@ test('a change made in one tab appears in another without a reload', async ({ pa
   const other = await context.newPage();
   other.on('pageerror', error => pageErrors.push(error.message));
   await other.goto('/');
-  await expect(other.getByRole('heading', { name: 'Rozpocznij Trening' })).toBeVisible();
+  await expect(other.getByRole('heading', { name: 'Rozpocznij Trening' })).toBeVisible(AFTER_RELOAD);
 
   await page.getByRole('button', { name: 'Dodaj', exact: true }).click();
   await page.getByLabel('Waga (kg)').fill('81');
@@ -146,7 +147,7 @@ test('a workout finished offline is stored once when the connection returns', as
   await context.setOffline(false);
   await expect(page).toHaveURL(/\/history$/);
   await page.reload();
-  await expect(page.getByText('Trening A - Klatka + Barki')).toHaveCount(1);
+  await expect(page.getByText('Trening A - Klatka + Barki')).toHaveCount(1, AFTER_RELOAD);
 });
 
 test('choosing a template during a workout asks before replacing it', async ({ page }) => {
@@ -207,7 +208,7 @@ test('signing out asks about the workout in progress and leaves nothing for the 
   await grantOwner(other);
   await activateProfile(other, 'Ola');
   await page.goto('/workout');
-  await expect(page.getByText('Brak aktywnego treningu')).toBeVisible();
+  await expect(page.getByText('Brak aktywnego treningu')).toBeVisible(AFTER_RELOAD);
 });
 
 test('the owner activates the account with the consent and deactivates it by withdrawing it', async ({ page }) => {
@@ -215,7 +216,7 @@ test('the owner activates the account with the consent and deactivates it by wit
   await grantOwner(await signIn(page, OWNER));
   await page.reload();
   const activate = page.getByRole('button', { name: 'Aktywuj konto' });
-  await expect(activate).toBeVisible();
+  await expect(activate).toBeVisible(AFTER_RELOAD);
 
   await page.getByLabel('Imię').fill('Anna');
   await activate.click();
@@ -230,7 +231,7 @@ test('the owner activates the account with the consent and deactivates it by wit
   await page.getByRole('button', { name: 'Zapisz' }).click();
   await expect(page.getByRole('status')).toHaveText('Zapisano.');
   await page.reload();
-  await expect(page.getByLabel('Imię')).toHaveValue('Anna Nowak');
+  await expect(page.getByLabel('Imię')).toHaveValue('Anna Nowak', AFTER_RELOAD);
 
   await page.getByRole('button', { name: 'Wycofaj zgodę' }).click();
   // The second button is the confirmation in the modal.
@@ -238,7 +239,7 @@ test('the owner activates the account with the consent and deactivates it by wit
   await expect(activate).toBeVisible();
   await expect(page.getByLabel('Imię')).toHaveValue('Anna Nowak');
   await page.reload();
-  await expect(activate).toBeVisible();
+  await expect(activate).toBeVisible(AFTER_RELOAD);
 
   await page.getByRole('checkbox').check();
   await activate.click();
@@ -284,7 +285,7 @@ test('custom templates are stored in the account, including ones saved before in
   // A fresh browser profile has no local copy: the templates come from Firestore.
   await page.evaluate(() => localStorage.clear());
   await page.reload();
-  await page.getByRole('link', { name: 'Szablony', exact: true }).click();
+  await page.getByRole('link', { name: 'Szablony', exact: true }).click(AFTER_RELOAD);
   await expect(page.getByText('Stary szablon')).toBeVisible();
   await expect(page.getByText('Basen')).toBeVisible();
 });

@@ -29,6 +29,7 @@ Nowy przypadek: warunki wstępne, kroki, oczekiwany wynik.
 ## 0. Przygotowanie
 
 - [ ] Aplikacja ładuje się bez błędów w konsoli przeglądarki
+- [ ] Wczytywanie dłuższe niż 3 s (DevTools → Network → „Slow 3G” i odświeżenie strony): pod „Ładowanie danych...” pojawia się „Wczytywanie trwa dłużej niż zwykle…”; przy zwykłym wczytaniu komunikatu nie ma
 
 ## 1. Logowanie i dostęp
 

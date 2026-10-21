@@ -11,6 +11,7 @@ Nawigacja to dziś stan zakładki w `TrainingTracker.tsx` — brak adresów URL,
 1. **Routing:** React Router z trasami per widok i rolą (`/today`, `/history`, `/progress`, `/coach/athletes/:id`, `/invite/:token`); strony ładowane leniwie.
 2. **Dane:** nasłuchy Firestore (`onSnapshot`) w hookach per widok, bez dodatkowej biblioteki pamięci podręcznej — Firestore SDK sam trzyma cache i aktualizuje dane na żywo.
 3. **Offline:** `persistentLocalCache` z `persistentMultipleTabManager` (IndexedDB, wiele kart); czyszczenie pamięci (`terminate` + `clearIndexedDbPersistence`) przy wylogowaniu, aby dane nie zostały na wspólnym komputerze.
+   Wiele kart zostaje mimo błędu w SDK (decyzja właściciela 2026-10-21): po odświeżeniu nowa strona czasem czeka, aż wygaśnie dzierżawa karty głównej w IndexedDB odnowiona tuż przed przeładowaniem — do ok. 9 s przy ok. 1% odświeżeń, także w Firebase 13 ([KNOWN_ISSUES #19](../KNOWN_ISSUES.md)). Ekran ładowania po 3 s wyjaśnia dłuższe oczekiwanie (`LoadingSpinner`), a testy end-to-end dają pierwszemu ekranowi po przeładowaniu 15 s (`e2e/load.ts`).
 4. **Walidacja:** schematy Zod jako jedno źródło typów (`z.infer`) i walidacji odczytu, formularzy i wejścia funkcji; zastępują ręczne parsery.
 5. **Struktura kodu:** podział według funkcji (`src/features/<obszar>/` z komponentami, hookami i serwisami), wspólne komponenty w `src/components/common/`.
 
@@ -40,6 +41,13 @@ Nawigacja to dziś stan zakładki w `TrainingTracker.tsx` — brak adresów URL,
 | TanStack Router | Typowane parametry tras | Mniejsza popularność; więcej konfiguracji |
 | Własny stan zakładek jak dziś | Brak zależności | Brak linków, przycisku „wstecz” i podziału kodu |
 
+**Pamięć offline w kilku kartach** (pomiar 2026-10-21, Firebase 13: 300 przeładowań i `npx playwright test --repeat-each=20`)
+
+| Wariant | Zalety | Wady |
+|---|---|---|
+| **`persistentMultipleTabManager` (przyjęty)** | Każda otwarta karta ma pamięć offline i zapisy bez sieci | Wyścig dzierżawy w SDK: 1 z 320 testów czekał ponad 5 s |
+| `persistentSingleTabManager` | 320 z 320 testów i 300 przeładowań bez opóźnienia | Druga karta otwarta obok działa tylko z pamięcią w RAM: jej zapisy bez sieci giną po zamknięciu karty |
+
 ## Konsekwencje
 
 - Przebudowa nawigacji i hooków danych w etapie 0, przed modelem z wieloma użytkownikami.
@@ -47,4 +55,4 @@ Nawigacja to dziś stan zakładki w `TrainingTracker.tsx` — brak adresów URL,
 
 ## Warunek rewizji
 
-Wydajność list przy dużej liczbie dokumentów albo koszt odczytów nasłuchów powyżej progu — wtedy paginacja i odczyty jednorazowe dla historii.
+Wydajność list przy dużej liczbie dokumentów albo koszt odczytów nasłuchów powyżej progu — wtedy paginacja i odczyty jednorazowe dla historii. Opóźnienie po odświeżeniu częstsze lub dłuższe niż opisane w pkt 3 albo poprawka w Firebase — wtedy ponowny wybór sposobu obsługi kart.

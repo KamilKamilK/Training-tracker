@@ -1,5 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import { confirmEmail, grantOwner, passwordResetSent, resetEmulators, uidOf } from './emulators.js';
+import { AFTER_RELOAD } from './load.js';
 
 const EMAIL = 'anna@example.com';
 const PASSWORD = 'Silne1haslo';
@@ -38,7 +39,7 @@ test('a new account sees no data until the e-mail is confirmed', async ({ page }
 
   await grantOwner(await uidOf(EMAIL));
   await page.reload();
-  await page.getByLabel('Imię').fill('Anna');
+  await page.getByLabel('Imię').fill('Anna', AFTER_RELOAD);
   await page.getByRole('checkbox').check();
   await page.getByRole('button', { name: 'Aktywuj konto' }).click();
   await expect(page.getByRole('heading', { name: 'Rozpocznij Trening' })).toBeVisible();
