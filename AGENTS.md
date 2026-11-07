@@ -76,10 +76,11 @@ Instrukcje dla agentów (Claude Code, Codex i inne) oraz osób pracujących nad 
 
 - Conventional Commits (`feat:`, `fix:`, `refactor:`, `test:`, `docs:`, `chore:`) z krótkim opisem i — gdy zasadne — uzasadnieniem naprawy u źródła.
 - Przed commitem uruchom kontrole z części [Weryfikacja](#weryfikacja); błędy naprawiaj, nie omijaj.
-- Pracuj na własnej gałęzi; zweryfikowane zmiany wypychaj, nie trzymaj ich tylko lokalnie.
+- Pracuj na własnej gałęzi. Zadanie jest zakończone dopiero po zatwierdzeniu i wypchnięciu zweryfikowanych zmian oraz potwierdzeniu, że lokalny commit jest na zdalnej gałęzi.
 - Zachowuj cudze, niezatwierdzone zmiany: dodawaj do commitu jawną listę plików i sprawdź staged diff.
 - Pliki robocze twórz poza repozytorium; nie commituj `dist/`, `.env` ani `tsconfig.tsbuildinfo`.
 - Nie dodawaj do commitów stopki `Co-Authored-By` ani innych stopek współautorstwa — autorem commitu jest właściciel repozytorium.
+- Sprzątanie jest częścią zadania i nie wymaga osobnego przypomnienia. Przed końcową odpowiedzią zatrzymaj procesy uruchomione na potrzeby zadania i usuń utworzone dla niego pliki tymczasowe, logi, zrzuty ekranu, konfiguracje, kopie robocze, worktree oraz lokalne gałęzie, których commity są już wypchnięte. Przywróć tymczasowo zmienioną konfigurację i sprawdź końcowy stan repozytorium. Nie usuwaj cudzych zmian ani zasobów innych aktywnych zadań; zachowaj trwałe rezultaty i kopie zapasowe danych produkcyjnych.
 
 ### 11. Problemy poza zakresem — `docs/KNOWN_ISSUES.md`
 
