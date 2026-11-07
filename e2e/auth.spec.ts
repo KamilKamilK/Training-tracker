@@ -30,7 +30,7 @@ test('a new account sees no data until the e-mail is confirmed', async ({ page }
   await register(page);
 
   await page.getByRole('button', { name: 'Potwierdziłem adres' }).click();
-  await expect(page.getByRole('status')).toContainText('nie jest jeszcze potwierdzony');
+  await expect(page.getByRole('status').filter({ hasText: 'nie jest jeszcze potwierdzony' })).toContainText('nie jest jeszcze potwierdzony');
 
   await confirmEmail(EMAIL);
   await page.getByRole('button', { name: 'Potwierdziłem adres' }).click();
@@ -66,6 +66,6 @@ test('a password reset link is sent without revealing whether the account exists
   await page.getByRole('button', { name: 'Nie pamiętasz hasła?' }).click();
   await page.getByLabel('E-mail').fill(EMAIL);
   await page.getByRole('button', { name: 'Wyślij link' }).click();
-  await expect(page.getByRole('status')).toContainText('Jeśli konto z tym adresem istnieje');
+  await expect(page.getByRole('status').filter({ hasText: 'Jeśli konto z tym adresem istnieje' })).toContainText('Jeśli konto z tym adresem istnieje');
   expect(await passwordResetSent(EMAIL)).toBe(true);
 });
