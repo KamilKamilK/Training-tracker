@@ -16,6 +16,19 @@ const props = () => ({
 });
 
 describe('HistoryTab corrections', () => {
+  it('opens workout details as a named dialog and returns focus after closing', async () => {
+    const user = userEvent.setup();
+    render(<HistoryTab {...props()} />);
+    const preview = screen.getByRole('button', { name: 'Podgląd' });
+    await user.click(preview);
+    const dialog = screen.getByRole('dialog', { name: workout.type });
+    expect(dialog.contains(document.activeElement)).toBe(true);
+    expect(screen.getByText('80 kg × 8 powt.')).toBeTruthy();
+    await user.click(screen.getByRole('button', { name: 'Zamknij' }));
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(document.activeElement).toBe(preview);
+  });
+
   it('edits sets and notes under the same id while preserving date and metadata', async () => {
     const callbacks = props();
     const user = userEvent.setup();

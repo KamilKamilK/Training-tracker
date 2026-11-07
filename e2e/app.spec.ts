@@ -59,6 +59,35 @@ test('the owner adds a measurement after fixing invalid values', async ({ page }
   await expect(page.getByText('82.5 kg | 90 cm')).toBeVisible();
 });
 
+test('a modal excludes the background from keyboard navigation and restores focus after closing', async ({ page }) => {
+  await openAsOwner(page);
+  const opener = page.getByRole('button', { name: 'Dodaj', exact: true });
+  await opener.focus();
+  await page.keyboard.press('Enter');
+  const dialog = page.getByRole('dialog', { name: 'Nowy pomiar' });
+  await expect(dialog).toBeVisible();
+  const close = dialog.getByRole('button', { name: 'Zamknij' });
+  await expect(close).toBeFocused();
+
+  for (const key of ['Tab', 'Shift+Tab']) {
+    for (let index = 0; index < 10; index++) {
+      await page.keyboard.press(key);
+      // Native dialogs allow focusing browser chrome, while keeping the page behind them inert.
+      await expect.poll(() => dialog.evaluate(element =>
+        !document.hasFocus() || element.contains(document.activeElement),
+      )).toBe(true);
+    }
+  }
+
+  await page.keyboard.press('Escape');
+  await expect(dialog).toHaveCount(0);
+  await expect(opener).toBeFocused();
+  await page.keyboard.press('Enter');
+  await close.click();
+  await expect(dialog).toHaveCount(0);
+  await expect(opener).toBeFocused();
+});
+
 test('a measurement can be corrected and deleted with confirmation, also after a reload', async ({ page }) => {
   const uid = await openAsOwner(page);
   await page.getByRole('button', { name: 'Dodaj', exact: true }).click();
@@ -141,9 +170,14 @@ test('a saved workout can be corrected and deleted without touching the active w
   await page.reload();
   expect(await journalDocumentIds(uid, 'sessions')).toEqual(originalIds);
   await page.getByRole('button', { name: 'Podgląd' }).click();
+  const preview = page.getByRole('dialog', { name: 'Trening A - Klatka + Barki' });
+  await expect(preview).toBeVisible();
   await expect(page.getByText('85 kg × 10 powt.')).toBeVisible();
   await expect(page.getByText('RIR: 1')).toBeVisible();
   await expect(page.getByText('Poprawiony ciężar')).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(preview).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Podgląd' })).toBeFocused();
   await page.reload();
   await page.getByRole('button', { name: /Usuń trening/ }).click();
   await page.getByRole('button', { name: 'Anuluj' }).click();
@@ -402,8 +436,7 @@ test('the owner activates the account with the consent and deactivates it by wit
   await expect(page.getByLabel('Imię')).toHaveValue('Anna Nowak');
 
   await page.getByRole('button', { name: 'Wycofaj zgodę' }).click();
-  // The second button is the confirmation in the modal.
-  await page.getByRole('button', { name: 'Wycofaj zgodę' }).last().click();
+  await page.getByRole('dialog', { name: 'Wycofać zgodę?' }).getByRole('button', { name: 'Wycofaj zgodę' }).click();
   await expect(activate).toBeVisible();
   await expect(page.getByLabel('Imię')).toHaveValue('Anna Nowak');
   await page.reload();
