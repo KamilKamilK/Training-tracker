@@ -30,3 +30,4 @@ Indeks decyzji. Każda decyzja ma krótki dokument ADR w [`adr/`](adr/).
 | [0015](adr/0015-accounts-roles-consent.md) | Zgoda na dane o zdrowiu warunkiem aktywacji; rolę trenera nadaje administrator; konta zakładane przez trenera; usunięcie konta przez funkcję | Przyjęta 2026-10-10 |
 | [0016](adr/0016-roles-views-exercise-library.md) | Role w `users/{uid}`; trener CRUD, podopieczny edytuje swoje wyniki i kopię planu; widoki według roli; biblioteka z free-exercise-db; migracja w dwóch krokach | Przyjęta 2026-10-11 |
 | [0017](adr/0017-architecture-document.md) | Opis bieżącej budowy aplikacji w `docs/ARCHITECTURE.md`; instrukcje agentów do niego odsyłają | Przyjęta 2026-10-21 |
+| [0018](adr/0018-single-tab-persistence.md) | Trwała pamięć Firestore dla jednej karty, z ograniczeniem trwałej pracy offline w pozostałych kartach | Proponowana 2026-11-07; wymaga decyzji właściciela przed implementacją |
