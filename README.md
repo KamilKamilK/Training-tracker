@@ -16,6 +16,8 @@ Na razie z aplikacji korzystają tylko konta z listy dostępu (`owners`). Docelo
 - ✅ **Zgoda na dane o zdrowiu** wymagana do aktywacji konta, wycofanie w Ustawieniach
 - 📱 **Responsywny, ciemny interfejs**
 
+Do pracy bez sieci używaj jednej karty dziennika. Dodatkowe karty działają z siecią, ale ich niewysłane zapisy offline mogą zginąć po zamknięciu lub odświeżeniu ([szczegóły pamięci offline](docs/ARCHITECTURE.md#offline-i-dane-na-żywo)).
+
 Budowa aplikacji: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md); decyzje: [docs/DECISIONS.md](docs/DECISIONS.md); plan rozwoju: [docs/ROADMAP.md](docs/ROADMAP.md).
 
 ---

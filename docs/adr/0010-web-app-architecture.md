@@ -1,6 +1,6 @@
 # ADR-0010: Architektura aplikacji webowej — routing, dane, offline, walidacja
 
-- **Status:** przyjęta 2026-10-10
+- **Status:** przyjęta 2026-10-10; wybór zarządcy kart w pkt 3 zastąpiony przez [ADR-0018](0018-single-tab-persistence.md)
 
 ## Kontekst
 

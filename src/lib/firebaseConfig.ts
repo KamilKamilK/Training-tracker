@@ -4,7 +4,7 @@ import {
   connectFirestoreEmulator,
   initializeFirestore,
   persistentLocalCache,
-  persistentMultipleTabManager,
+  persistentSingleTabManager,
 } from "firebase/firestore";
 
 const firebaseConfig = {
@@ -17,11 +17,12 @@ const firebaseConfig = {
 };
 
 const app = initializeApp(firebaseConfig);
-// Data is cached in IndexedDB (shared by all open tabs), so the app shows workouts and accepts
-// writes without a connection; queued writes are sent when the connection returns. Signing out
-// clears the cache (AuthService.signOut).
+// One tab keeps data and queued offline writes in IndexedDB. Other tabs use memory cache and
+// synchronize through the server; closing them can discard unsent writes (ADR-0018). Single-tab
+// persistence avoids waiting for a previous primary tab's lease after a reload. Signing out
+// clears the persistent cache (AuthService.signOut).
 export const db = initializeFirestore(app, {
-  localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }),
+  localCache: persistentLocalCache({ tabManager: persistentSingleTabManager(undefined) }),
 });
 export const auth = getAuth(app);
 // Verification and password reset e-mails from Firebase are sent in Polish.
