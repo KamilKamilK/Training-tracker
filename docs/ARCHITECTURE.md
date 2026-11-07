@@ -134,8 +134,8 @@ Reguły w `firestore.rules` składają się z trzech warunków dostępu i walida
 
 ## Offline i dane na żywo
 
-- `persistentLocalCache` z `persistentMultipleTabManager`: dane w IndexedDB wspólnej dla kart. Zapisy offline czekają w kolejce i wysyłają się po powrocie sieci.
-- Zmiana w jednej karcie pojawia się w innej bez odświeżania, bo działają nasłuchy.
+- `persistentLocalCache` z `persistentSingleTabManager`: jedna karta przechowuje dane i kolejkę zapisów offline w IndexedDB. Zapisane wcześniej dane IndexedDB są odczytywane bez migracji. Przy zajętej pamięci kolejne karty używają pamięci ulotnej i łączą się z serwerem niezależnie; ich niewysłane zapisy mogą zginąć po zamknięciu lub odświeżeniu karty. Do pracy offline używamy jednej karty ([ADR-0018](adr/0018-single-tab-persistence.md)).
+- Przy dostępie do sieci zmiana w jednej karcie pojawia się w innej bez odświeżania, bo działają nasłuchy i synchronizacja przez serwer.
 - Wylogowanie czyści cache Firestore i wpisy LocalStorage aplikacji, a potem przeładowuje stronę, żeby dane nie zostały na wspólnym komputerze ani nie trafiły do następnego konta. Przy trwającym treningu aplikacja najpierw pyta o potwierdzenie. Zapisy czekające offline giną razem z cache ([KNOWN_ISSUES #30](KNOWN_ISSUES.md)).
 - Strona nie otworzy się bez sieci, jeśli wcześniej nie była otwarta, bo nie ma service workera ([ADR-0013](adr/0013-offline-app-shell.md), [KNOWN_ISSUES #17](KNOWN_ISSUES.md)).
 

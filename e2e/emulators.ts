@@ -32,6 +32,13 @@ export const journalDocumentIds = async (uid: string, collection: 'measurements'
   return (data.documents ?? []).map(document => document.name.split('/').at(-1)).sort();
 };
 
+export const measurementCount = async (uid: string) => {
+  const response = await fetch(`${FIRESTORE}/users/${uid}/measurements`, { headers: ADMIN });
+  if (!response.ok) throw new Error(`Reading emulator measurements failed with ${response.status}`);
+  const data = (await response.json()) as { documents?: unknown[] };
+  return data.documents?.length ?? 0;
+};
+
 /** Stores a profile with the accepted health consent, as the activation screen would. */
 export const activateProfile = (uid: string, displayName = 'Anna') =>
   request(`${FIRESTORE}/users?documentId=${uid}`, {

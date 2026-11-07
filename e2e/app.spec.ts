@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { activateProfile, grantOwner, journalDocumentIds, rejectJournalDeletes, rejectMeasurementWrites, rejectWorkoutWrites, resetEmulators, restoreRules } from './emulators.js';
+import { activateProfile, grantOwner, journalDocumentIds, measurementCount, rejectJournalDeletes, rejectMeasurementWrites, rejectWorkoutWrites, resetEmulators, restoreRules } from './emulators.js';
 
 const OWNER = 'owner@example.com';
 const STRANGER = 'stranger@example.com';
@@ -219,6 +219,37 @@ test('an unknown address leads to the start page', async ({ page }) => {
   await expect(page.getByRole('heading', { name: 'Rozpocznij Trening' })).toBeVisible();
 });
 
+test('a fresh page connects within five seconds when the previous primary lease remains', async ({ page }) => {
+  await openAsOwner(page);
+  // A same-origin empty page lets the old client shut down before recreating the lease left
+  // by an interrupted unload. This reproduces the race without depending on reload timing.
+  await page.route('**/__cache-fixture', route => route.fulfill({ contentType: 'text/html', body: '<!doctype html>' }));
+  await page.goto('/__cache-fixture');
+  await page.evaluate(async () => {
+    const databases = await indexedDB.databases();
+    const name = databases.find(database => database.name?.startsWith('firestore/'))?.name;
+    if (!name) throw new Error('No persistent Firestore cache');
+    await new Promise<void>((resolve, reject) => {
+      const request = indexedDB.open(name);
+      request.onerror = () => reject(request.error);
+      request.onsuccess = () => {
+        const database = request.result;
+        const transaction = database.transaction('owner', 'readwrite');
+        // Firestore's lease format: a live multi-tab primary that did not mark itself closed.
+        transaction.objectStore('owner').put({
+          ownerId: 'previous-page',
+          allowTabSynchronization: true,
+          leaseTimestampMs: Date.now(),
+        }, 'owner');
+        transaction.oncomplete = () => { database.close(); resolve(); };
+        transaction.onabort = () => { database.close(); reject(transaction.error); };
+      };
+    });
+  });
+  await page.goto('/');
+  await expect(page.getByRole('heading', { name: 'Rozpocznij Trening' })).toBeVisible({ timeout: 5_000 });
+});
+
 test('a change made in one tab appears in another without a reload', async ({ page, context }) => {
   await openAsOwner(page);
   const other = await context.newPage();
@@ -232,6 +263,40 @@ test('a change made in one tab appears in another without a reload', async ({ pa
   await page.getByRole('button', { name: 'Zapisz pomiar' }).click();
 
   await expect(other.getByText('81 kg | 89 cm')).toBeVisible();
+
+  await other.reload();
+  await expect(other.getByText('81 kg | 89 cm')).toBeVisible();
+
+  // The second tab also writes through its own server connection while IndexedDB is occupied.
+  await other.getByRole('button', { name: 'Dodaj', exact: true }).click();
+  await other.getByLabel('Waga (kg)').fill('82');
+  await other.getByLabel('Obwód talii (cm)').fill('90');
+  await other.getByRole('button', { name: 'Zapisz pomiar' }).click();
+  await expect(page.getByText('82 kg | 90 cm')).toBeVisible();
+});
+
+test('an offline measurement survives closing the last tab and is sent once after reopening', async ({ page, context }) => {
+  const uid = await openAsOwner(page);
+  await context.setOffline(true);
+  await page.getByRole('button', { name: 'Dodaj', exact: true }).click();
+  await page.getByLabel('Waga (kg)').fill('83');
+  await page.getByLabel('Obwód talii (cm)').fill('91');
+  await page.getByRole('button', { name: 'Zapisz pomiar' }).click();
+  await expect(page.getByRole('button', { name: 'Zapisywanie...' })).toBeDisabled();
+  await page.getByRole('button', { name: 'Anuluj' }).click();
+  await expect(page.getByText('83 kg | 91 cm')).toBeVisible();
+  expect(await measurementCount(uid)).toBe(0);
+  await page.close();
+
+  await context.setOffline(false);
+  const reopened = await context.newPage();
+  reopened.on('pageerror', error => pageErrors.push(error.message));
+  await reopened.goto('/');
+  await expect(reopened.getByText('83 kg | 91 cm')).toBeVisible();
+  await expect.poll(() => measurementCount(uid)).toBe(1);
+  await reopened.reload();
+  await expect(reopened.getByText('83 kg | 91 cm')).toBeVisible();
+  expect(await measurementCount(uid)).toBe(1);
 });
 
 test('a workout finished offline is stored once when the connection returns', async ({ page, context }) => {
