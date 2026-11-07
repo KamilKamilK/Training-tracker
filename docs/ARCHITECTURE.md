@@ -28,7 +28,6 @@ flowchart LR
 | Dane | Cloud Firestore na planie Spark ([ADR-0009](adr/0009-cloud-functions-aggregates.md)) | serwisy w `src/features/*/` |
 | Bezpieczeństwo | reguły z walidacją zapisów | `firestore.rules`, testy w `tests/rules/` |
 | Hosting | Vercel, wdrożenie z gałęzi `main` ([ADR-0011](adr/0011-environments-hosting-monitoring.md)) | `vercel.json` |
-| Skrypty danych | Firebase Admin SDK, uruchamiane lokalnie | `scripts/`, testy w `tests/scripts/` |
 
 ## Start aplikacji i dostęp
 
@@ -103,7 +102,6 @@ Dane konta leżą w `users/{uid}/…` ([ADR-0005](adr/0005-data-model-and-access
 | `users/{uid}/weekPlans/default_week_plan` | `WeekPlanDocumentSchema` | `isValidWeekPlan` | dzień tygodnia → id szablonu albo `null` (odpoczynek) |
 | `users/{uid}/templates/{id}` | `WorkoutTemplateSchema` | `isValidTemplate` | szablony własne: nazwa, lista ćwiczeń (tekst), kategoria, wygląd |
 | `owners/{uid}` | — | tylko `get` własnego | lista dostępu, zakładana w konsoli |
-| `workouts`, `measurements`, `weekPlans` w korzeniu | — | brak dostępu | dane sprzed migracji do usunięcia skryptem ([KNOWN_ISSUES #21](KNOWN_ISSUES.md)) |
 
 Poza Firestore:
 
@@ -155,25 +153,8 @@ Reguły w `firestore.rules` składają się z trzech warunków dostępu i walida
 | Rodzaj | Narzędzie | Gdzie | Co sprawdza |
 |---|---|---|---|
 | Jednostkowe i komponentów | Vitest, Testing Library, jsdom | `src/**/*.test.ts(x)` | logika, hooki, formularze |
-| Reguły i skrypty danych | Vitest + emulator Firestore | `tests/rules/`, `tests/scripts/` | dostęp własne/cudze, walidacja zapisów, migracja |
+| Reguły | Vitest + emulator Firestore | `tests/rules/` | dostęp własne/cudze, walidacja zapisów, odmowa dostępu do kolekcji sprzed migracji |
 | End-to-end | Playwright na zbudowanej aplikacji i emulatorach | `e2e/` | logowanie, zgoda, trening po odświeżeniu i offline, trasy |
 | Ręczne | lista kontrolna | [MANUAL_TESTING_CHECKLIST.md](MANUAL_TESTING_CHECKLIST.md) | scenariusze, których nie da się zautomatyzować |
 
 Hook `pre-push` w `.githooks/` uruchamia lint, build i testy jednostkowe. Testy reguł i E2E uruchamia, gdy zmiana ich dotyczy. Trzeba go włączyć raz na klon. CI w GitHub Actions robi to samo, ale uruchamiane jest tylko ręcznie. Polecenia: [AGENTS.md](../AGENTS.md#weryfikacja).
-
-## Skrypty danych
-
-`scripts/` zawiera jednorazowe operacje na produkcji, które wymagają uprawnień administratora. Zasady wspólne dla skryptów:
-
-- domyślnie działają w trybie próbnym, a zapisują dopiero z `--apply`;
-- są idempotentne (te same identyfikatory dokumentów);
-- nie zmieniają danych źródłowych, a usuwają je tylko po sprawdzeniu, że każdy dokument ma identyczną kopię, i po zapisaniu ich do pliku;
-- na końcu sprawdzają wynik;
-- mają testy na emulatorze w `tests/scripts/`.
-
-| Skrypt | Działanie |
-|---|---|
-| `migrate-to-users.ts` | kopiuje `workouts` → `users/{uid}/sessions`, `measurements` i `weekPlans` do `users/{uid}/…` ([ADR-0016](adr/0016-roles-views-exercise-library.md), pkt 7) |
-| `remove-root-collections.ts` | zapisuje `workouts`, `measurements` i `weekPlans` z korzenia bazy do pliku JSON i usuwa je, gdy każdy dokument ma identyczną kopię w `users/{uid}/…` |
-
-Skrypty są w TypeScripcie i uruchamia je bezpośrednio Node.js 22.18 lub nowszy. Poświadczenia: `gcloud auth application-default login`. Instrukcja: [README](../README.md#usunięcie-kolekcji-sprzed-migracji-jednorazowo).
