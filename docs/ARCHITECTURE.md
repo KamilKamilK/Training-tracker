@@ -60,10 +60,10 @@ Kod jest podzielony według funkcji ([ADR-0010](adr/0010-web-app-architecture.md
 | `src/features/profile/` | profil, zgoda na dane o zdrowiu, ekran zgody, Ustawienia (`/settings`) |
 | `src/features/dashboard/` | Start (`/`): szybkie statystyki, ostatnie pomiary, szablony do rozpoczęcia treningu |
 | `src/features/workouts/` | trening (`/workout`): szkic w LocalStorage, serie, zapis do `sessions` |
-| `src/features/history/` | historia (`/history`): lista i szczegóły treningów, usuwanie |
+| `src/features/history/` | historia (`/history`): lista i szczegóły treningów, edycja serii i notatek, usuwanie z potwierdzeniem |
 | `src/features/templates/` | szablony (`/templates`): domyślne w kodzie, własne w Firestore, import z przeglądarki |
 | `src/features/plan/` | plan tygodnia (`/plan`): szablon przypisany do dnia |
-| `src/features/measurements/` | pomiary: formularz, widżet, różnice wagi i talii |
+| `src/features/measurements/` | pomiary: dodawanie i edycja, widżet z dostępem do wszystkich wpisów, usuwanie z potwierdzeniem, różnice wagi i talii |
 | `src/features/progress/` | postępy (`/progress`): liczba treningów, zmiany pomiarów |
 | `src/components/common/` | wspólne elementy UI: modal, toasty, formularz, nawigacja, nagłówek |
 | `src/hooks/` | hooki wspólne dla obszarów (`useModal`) |
@@ -88,6 +88,8 @@ komponent  →  hook obszaru  →  serwis *.service.ts  →  Firestore SDK (cach
 3. **Stan po zapisie aktualizuje nasłuch**, nie kod. Hook zwraca `true`, gdy Firestore potwierdził zapis.
 4. **Błędy.** Serwis loguje (`console.error` z nazwą operacji) i przepuszcza wyjątek. Hook zamienia go na komunikat z `src/constants/messages.ts`, a UI pokazuje go w toaście albo w formularzu.
 5. **Granice importów.** Komponenty i hooki nie importują `firebase/firestore` ani `firebase/auth`; pilnuje tego ESLint (`no-restricted-imports`).
+
+Edycja pomiaru i treningu zapisuje dokument pod jego dotychczasowym identyfikatorem, bez pola `id` w danych. Formularze zachowują pola opcjonalne ze starszych zapisów. Edycja treningu z Historii nie korzysta ze szkicu bieżącego treningu w LocalStorage.
 
 ## Model danych
 

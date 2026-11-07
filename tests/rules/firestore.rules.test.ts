@@ -185,6 +185,12 @@ describe('workout validation', () => {
 });
 
 describe('measurement validation', () => {
+  it('validates corrections and permits deletion of the owner measurement', async () => {
+    const ref = doc(ownerDb(), MEASUREMENTS, 'm1');
+    await assertSucceeds(setDoc(ref, { ...measurement, weight: 81, waist: 89 }));
+    await assertFails(setDoc(ref, { ...measurement, weight: 20 }));
+    await assertSucceeds(deleteDoc(ref));
+  });
   it('accepts the range boundaries', async () => {
     await assertSucceeds(addDoc(collection(ownerDb(), MEASUREMENTS), { date: '2026-10-07', weight: 30, waist: 200 }));
     await assertSucceeds(addDoc(collection(ownerDb(), MEASUREMENTS), { date: '2026-10-07', weight: 300, waist: 50 }));
@@ -279,6 +285,9 @@ describe('per-user journal', () => {
     }
     await assertFails(getDoc(own(other)('weekPlans', 'default_week_plan')));
     await assertFails(setDoc(own(other)('sessions', 'w2'), workout));
+    await assertFails(setDoc(own(other)('sessions', 'w1'), { ...workout, notes: 'Korekta' }));
+    await assertFails(deleteDoc(own(other)('sessions', 'w1')));
+    await assertFails(setDoc(own(other)('measurements', 'm1'), { ...measurement, weight: 81 }));
     await assertFails(setDoc(own(other)('templates', 't2'), template));
     await assertFails(deleteDoc(own(other)('measurements', 'm1')));
   });

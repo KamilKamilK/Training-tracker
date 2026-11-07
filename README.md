@@ -9,9 +9,9 @@ Na razie z aplikacji korzystają tylko konta z listy dostępu (`owners`). Docelo
 
 - 🏋️ **Rejestrowanie treningów** z szablonów — serie z ciężarem, powtórzeniami i RIR
 - 💾 **Szkic treningu w przeglądarce** — wpisane serie przetrwają odświeżenie strony
-- 📅 **Plan tygodnia** i **historia treningów**
+- 📅 **Plan tygodnia** i **historia treningów** — korekta serii i notatek, usuwanie z potwierdzeniem
 - 📋 **Szablony** domyślne i własne (własne zapisane w koncie, widoczne na każdym urządzeniu)
-- ⚖️ **Pomiary ciała** — waga i obwód talii, zmiany w czasie
+- ⚖️ **Pomiary ciała** — waga i obwód talii, zmiany w czasie, edycja i usuwanie z potwierdzeniem
 - 🔐 **Logowanie Google albo e-mailem z hasłem** (potwierdzenie adresu, reset hasła); dane w Cloud Firestore dostępne tylko dla właściciela konta
 - ✅ **Zgoda na dane o zdrowiu** wymagana do aktywacji konta, wycofanie w Ustawieniach
 - 📱 **Responsywny, ciemny interfejs**
