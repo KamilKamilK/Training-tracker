@@ -29,6 +29,7 @@ Nowy przypadek: warunki wstępne, kroki, oczekiwany wynik.
 ## 0. Przygotowanie
 
 - [ ] Aplikacja ładuje się bez błędów w konsoli przeglądarki
+- [ ] Warunki: zainstalowane zależności, Java i Chromium dla Playwright. Uruchom `npm run build`, następnie `npm run test:e2e` → build nie ostrzega o plikach większych niż 500 kB, test limitu rozmiaru przechodzi, a testy logowania, zapisu danych i nawigacji działają na zbudowanej aplikacji bez błędów inicjalizacji modułów
 
 ## 1. Logowanie i dostęp
 

@@ -145,7 +145,7 @@ Reguły w `firestore.rules` składają się z trzech warunków dostępu i walida
 | Testy | te same emulatory | `npm run test:rules`, `npm run test:e2e` |
 | Produkcja | `training-tracker-6d13b` | Vercel buduje `main`; podglądy PR nie logują się do produkcji |
 
-- Vite dzieli kod zewnętrzny na stałe części: `react`, `zod`, `react-router` i `vendor` (głównie Firebase). Część `vendor` przekracza ostrzeżenie 500 kB ([KNOWN_ISSUES #22](KNOWN_ISSUES.md)).
+- Vite dzieli kod zewnętrzny na części `react`, `zod`, `react-router`, `firebase-app` (wspólna podstawa Firebase), `firebase-auth`, `re2js` (silnik wyrażeń regularnych używany przez Firestore), `firebase-firestore` i `vendor` (pozostałe biblioteki). Wspólne zależności są wydzielane przed bibliotekami, które z nich korzystają, aby uniknąć cykli importów. Test `e2e/bundle.spec.ts` pilnuje limitu 500 kB na plik JavaScript po minifikacji w zbudowanej aplikacji testowej; limit ostrzeżenia Vite pozostaje domyślny.
 - `vercel.json` kieruje każdy adres do `index.html`, więc odświeżenie zakładki działa.
 
 ## Testy i kontrola jakości

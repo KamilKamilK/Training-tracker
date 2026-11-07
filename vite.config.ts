@@ -3,10 +3,10 @@ import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 
 // Third-party code changes less often than the app, so it gets its own long-cached chunks.
-// A package gets a separate chunk only when the chunks cannot import each other in a cycle,
-// which fails at startup ("Cannot access ... before initialization"): other libraries import
-// React but React imports none of them, and Zod and React Router are imported only by the app,
-// never by another library. A module goes to the first group whose test it matches.
+// Capture shared dependencies before their consumers to keep chunk imports acyclic:
+// Firebase Auth and Firestore both use the Firebase app, but the app imports neither.
+// Firestore's standalone regexp engine (re2js) has no dependency on Firebase.
+// Rolldown includes each group's dependencies recursively; the first matching group wins.
 const packages = (...names: string[]) => new RegExp(`node_modules[\\\\/](${names.join('|')})[\\\\/]`)
 
 // https://vite.dev/config/
@@ -20,6 +20,10 @@ export default defineConfig({
             { name: 'react', test: packages('react', 'react-dom', 'scheduler') },
             { name: 'zod', test: packages('zod') },
             { name: 'react-router', test: packages('react-router') },
+            { name: 'firebase-app', test: packages('@firebase/app') },
+            { name: 'firebase-auth', test: packages('@firebase/auth') },
+            { name: 're2js', test: packages('re2js') },
+            { name: 'firebase-firestore', test: packages('@firebase/firestore') },
             { name: 'vendor', test: /node_modules[\\/]/ },
           ],
         },
