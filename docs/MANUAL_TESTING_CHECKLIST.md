@@ -48,7 +48,7 @@ Nowy przypadek: warunki wstępne, kroki, oczekiwany wynik.
 - [ ] „Wycofaj zgodę” → okno z opisem skutków; „Anuluj” nic nie zmienia; potwierdzenie → ekran „Aktywuj konto”, także po odświeżeniu; ponowna zgoda przywraca dziennik z wcześniejszymi danymi, bez komunikatów błędu wczytywania na żadnej zakładce
 - [ ] „Wyloguj” w nagłówku → powrót do ekranu logowania; odświeżenie strony nie loguje ponownie
 - [ ] Produkcja: właściciel widzi swoje dane po aktywacji konta, inne konto — ekran braku dostępu
-- [ ] Produkcja po migracji (`scripts/migrate-to-users.ts --apply`): liczba treningów w nagłówku, pomiary i plan tygodnia takie jak przed wdrożeniem
+- [ ] Produkcja po usunięciu kolekcji sprzed migracji: warunki — aktywne konto właściciela i dane w `users/{uid}/…`; otwórz Historię, Postępy i Plan, potem odśwież każdą zakładkę → te same treningi, pomiary i plan tygodnia, bez błędów wczytywania
 
 ## 1a. Nawigacja
 

@@ -95,7 +95,7 @@ Instrukcje dla agentów (Claude Code, Codex i inne) oraz osób pracujących nad 
 ## Zakres repozytorium
 
 - Jednostronicowa aplikacja (SPA) do rejestrowania treningów, planu tygodnia, szablonów i pomiarów ciała. Stack i architektura: [ADR-0002](docs/adr/0002-spa-firebase.md); uruchomienie: [README.md](README.md).
-- Struktura kodu, przepływ danych, model danych (ścieżka Firestore → schemat Zod → reguła), środowiska i skrypty danych: [ARCHITECTURE.md](docs/ARCHITECTURE.md) ([ADR-0017](docs/adr/0017-architecture-document.md)). W skrócie: `src/features/<obszar>/` trzyma komponenty, hook, serwis Firebase i testy jednego obszaru, `src/types/` — schematy Zod, `scripts/` — jednorazowe skrypty danych.
+- Struktura kodu, przepływ danych, model danych (ścieżka Firestore → schemat Zod → reguła) i środowiska: [ARCHITECTURE.md](docs/ARCHITECTURE.md) ([ADR-0017](docs/adr/0017-architecture-document.md)). W skrócie: `src/features/<obszar>/` trzyma komponenty, hook, serwis Firebase i testy jednego obszaru, `src/types/` — schematy Zod. Jednorazowe skrypty danych dodawaj do `scripts/`.
 - Konfiguracja Firebase: `firebase.json` (także emulatory), `firestore.rules`, `firestore.indexes.json`, projekt w `.firebaserc`; zmienne środowiskowe w `.env.example`.
 
 ## Weryfikacja
