@@ -27,7 +27,7 @@ export const useMeasurements = (uid: string) => {
   );
 
   /** Resolves to true only when Firestore confirmed the write. */
-  const saveMeasurement = useCallback(async (measurement: Omit<Measurement, 'id'>): Promise<boolean> => {
+  const saveMeasurement = useCallback(async (measurement: Measurement & { id: string }): Promise<boolean> => {
     try {
       await MeasurementsService.save(uid, measurement);
       setError(null);

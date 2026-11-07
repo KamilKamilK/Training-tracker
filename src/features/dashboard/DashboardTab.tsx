@@ -10,6 +10,8 @@ interface DashboardTabProps {
   templates: WorkoutTemplate[];
   onStartWorkout: (template: WorkoutTemplate) => void;
   onAddMeasurement: () => void;
+  onEditMeasurement: (measurement: Measurement) => void;
+  onDeleteMeasurement: (measurement: Measurement) => void;
 }
 
 export const DashboardTab: React.FC<DashboardTabProps> = ({
@@ -18,13 +20,15 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({
   templates,
   onStartWorkout,
   onAddMeasurement,
+  onEditMeasurement,
+  onDeleteMeasurement,
 }) => {
   return (
     <div className="space-y-6">
       <h2 className="text-2xl font-bold">Rozpocznij Trening</h2>
       <QuickStats workouts={workouts} measurements={measurements} />
       <TemplateGrid templates={templates} workouts={workouts} onStart={onStartWorkout} />
-      <MeasurementsWidget measurements={measurements} onAdd={onAddMeasurement} />
+      <MeasurementsWidget measurements={measurements} onAdd={onAddMeasurement} onEdit={onEditMeasurement} onDelete={onDeleteMeasurement} />
     </div>
   );
 };

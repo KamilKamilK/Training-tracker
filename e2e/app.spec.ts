@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { activateProfile, grantOwner, measurementCount, rejectWorkoutWrites, resetEmulators, restoreRules } from './emulators.js';
+import { activateProfile, grantOwner, journalDocumentIds, measurementCount, rejectJournalDeletes, rejectMeasurementWrites, rejectWorkoutWrites, resetEmulators, restoreRules } from './emulators.js';
 
 const OWNER = 'owner@example.com';
 const STRANGER = 'stranger@example.com';
@@ -57,6 +57,110 @@ test('the owner adds a measurement after fixing invalid values', async ({ page }
   await page.getByLabel('Obwód talii (cm)').fill('90');
   await page.getByRole('button', { name: 'Zapisz pomiar' }).click();
   await expect(page.getByText('82.5 kg | 90 cm')).toBeVisible();
+});
+
+test('a measurement can be corrected and deleted with confirmation, also after a reload', async ({ page }) => {
+  const uid = await openAsOwner(page);
+  await page.getByRole('button', { name: 'Dodaj', exact: true }).click();
+  await page.getByLabel('Data pomiaru').fill('2026-10-01');
+  await page.getByLabel('Waga (kg)').fill('82');
+  await page.getByLabel('Obwód talii (cm)').fill('90');
+  await page.getByRole('button', { name: 'Zapisz pomiar' }).click();
+  await expect(page.getByRole('heading', { name: 'Nowy pomiar' })).toHaveCount(0);
+  const originalIds = await journalDocumentIds(uid, 'measurements');
+  expect(originalIds).toHaveLength(1);
+
+  await page.getByRole('button', { name: /Edytuj pomiar/ }).click();
+  await expect(page.getByLabel('Waga (kg)')).toHaveValue('82');
+  await page.getByLabel('Waga (kg)').fill('83');
+  await page.getByRole('button', { name: 'Anuluj' }).click();
+  await expect(page.getByText('82 kg | 90 cm')).toBeVisible();
+
+  await page.getByRole('button', { name: /Edytuj pomiar/ }).click();
+  await page.getByLabel('Data pomiaru').fill('2026-10-02');
+  await page.getByLabel('Waga (kg)').fill('81,5');
+  await page.getByLabel('Obwód talii (cm)').fill('89');
+  await rejectMeasurementWrites();
+  await page.getByRole('button', { name: 'Zapisz pomiar' }).click();
+  await expect(page.getByRole('alert')).toContainText('Nie udało się zapisać pomiaru');
+  await expect(page.getByLabel('Waga (kg)')).toHaveValue('81,5');
+  await restoreRules();
+  await page.getByRole('button', { name: 'Zapisz pomiar' }).click();
+  await expect(page.getByRole('heading', { name: 'Edytuj pomiar' })).toHaveCount(0);
+  await page.reload();
+  await expect(page.getByText('81.5 kg | 89 cm')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Edytuj pomiar z 02.10.2026' })).toBeVisible();
+  expect(await journalDocumentIds(uid, 'measurements')).toEqual(originalIds);
+
+  await page.getByRole('button', { name: /Usuń pomiar/ }).click();
+  await page.getByRole('button', { name: 'Anuluj' }).click();
+  await expect(page.getByText('81.5 kg | 89 cm')).toBeVisible();
+  await rejectJournalDeletes();
+  await page.getByRole('button', { name: /Usuń pomiar/ }).click();
+  await page.getByRole('button', { name: 'Usuń', exact: true }).click();
+  await expect(page.getByRole('alert')).toContainText('Nie udało się usunąć pomiaru');
+  await expect.poll(() => journalDocumentIds(uid, 'measurements')).toEqual(originalIds);
+  await restoreRules();
+  await page.getByRole('button', { name: 'Usuń', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Usunąć pomiar?' })).toHaveCount(0);
+  await page.reload();
+  await expect(page.getByText('Brak pomiarów. Dodaj pierwszy!')).toBeVisible();
+  expect(await journalDocumentIds(uid, 'measurements')).toEqual([]);
+});
+
+test('a saved workout can be corrected and deleted without touching the active workout draft', async ({ page }) => {
+  const uid = await openAsOwner(page);
+  await page.getByText('Trening A - Klatka + Barki').click();
+  await page.getByRole('button', { name: 'Dodaj serię' }).first().click();
+  await page.getByPlaceholder('kg').fill('80');
+  await page.getByPlaceholder('powt.').fill('8');
+  await page.getByPlaceholder('RIR').fill('2');
+  await page.getByRole('button', { name: 'Zakończ trening' }).click();
+  await expect(page).toHaveURL(/\/history$/);
+  const originalIds = await journalDocumentIds(uid, 'sessions');
+  expect(originalIds).toHaveLength(1);
+
+  await page.getByRole('link', { name: 'Start', exact: true }).click();
+  await page.getByText('Trening B - Plecy + Barki Tylne').click();
+  await page.getByRole('button', { name: 'Dodaj serię' }).first().click();
+  await page.getByPlaceholder('kg').fill('50');
+  const activeDraft = await page.evaluate(() => localStorage.getItem('currentWorkoutDraft'));
+  await page.getByRole('link', { name: 'Historia', exact: true }).click();
+  await page.getByRole('button', { name: /Edytuj trening/ }).click();
+  await page.getByPlaceholder('kg').fill('85');
+  await page.getByPlaceholder('powt.').fill('10');
+  await page.getByPlaceholder('RIR').fill('1');
+  await page.getByLabel('Notatki treningu').fill('Poprawiony ciężar');
+  await rejectWorkoutWrites();
+  await page.getByRole('button', { name: 'Zapisz zmiany' }).click();
+  await expect(page.getByRole('alert')).toContainText('Nie udało się zapisać treningu');
+  await expect(page.getByPlaceholder('kg')).toHaveValue('85');
+  await restoreRules();
+  await page.getByRole('button', { name: 'Zapisz zmiany' }).click();
+  await expect(page.getByLabel('Notatki treningu')).toHaveCount(0);
+  await page.reload();
+  expect(await journalDocumentIds(uid, 'sessions')).toEqual(originalIds);
+  await page.getByRole('button', { name: 'Podgląd' }).click();
+  await expect(page.getByText('85 kg × 10 powt.')).toBeVisible();
+  await expect(page.getByText('RIR: 1')).toBeVisible();
+  await expect(page.getByText('Poprawiony ciężar')).toBeVisible();
+  await page.reload();
+  await page.getByRole('button', { name: /Usuń trening/ }).click();
+  await page.getByRole('button', { name: 'Anuluj' }).click();
+  expect(await journalDocumentIds(uid, 'sessions')).toEqual(originalIds);
+  await rejectJournalDeletes();
+  await page.getByRole('button', { name: /Usuń trening/ }).click();
+  await page.getByRole('button', { name: 'Usuń', exact: true }).click();
+  await expect(page.getByRole('alert')).toContainText('Nie udało się usunąć treningu');
+  await restoreRules();
+  await page.getByRole('button', { name: 'Usuń', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Usunąć trening?' })).toHaveCount(0);
+  await page.reload();
+  await expect(page.getByText('Brak treningów w historii.')).toBeVisible();
+  expect(await journalDocumentIds(uid, 'sessions')).toEqual([]);
+  expect(await page.evaluate(() => localStorage.getItem('currentWorkoutDraft'))).toBe(activeDraft);
+  await page.getByRole('link', { name: 'Trening', exact: true }).click();
+  await expect(page.getByPlaceholder('kg')).toHaveValue('50');
 });
 
 test('a workout survives a reload and a rejected save, then saves on retry', async ({ page }) => {
