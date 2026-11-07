@@ -1,7 +1,7 @@
 # Dziennik Treningowy — ręczna lista kontrolna testów
 
 **Ostatnie pełne przejście:** brak.
-**Automatyzacja:** ekran logowania, brak dostępu, aktywacja konta i wycofanie zgody, sekcja 1a (bez produkcji), 2.2–2.3, 2.7–2.8, 3.3–3.6 oraz sekcja 8 (bez telefonu) są testami end-to-end w `e2e/` (`npm run test:e2e`, na zbudowanej wersji); ręcznie sprawdzamy pozostałe i całość na produkcji.
+**Automatyzacja:** ekran logowania, brak dostępu, aktywacja konta i wycofanie zgody, sekcja 1a (bez produkcji), 2.2–2.3, 2.7–2.8, 3.3–3.6 oraz wybrane przypadki sekcji 8 (synchronizacja kart, przechowanie zapisu offline, wylogowanie i szybkie wczytanie przy pozostawionej dzierżawie) są testami end-to-end w `e2e/` (`npm run test:e2e`, na zbudowanej wersji); ręcznie sprawdzamy pozostałe i całość na produkcji.
 **Znane rozbieżności:** punkt z numerem KNOWN_ISSUES (np. „#1”) opisuje zachowanie docelowe, którego środowisko jeszcze nie spełnia — niepowodzenie potwierdza zgłoszony problem.
 **Cel:** weryfikacja funkcji aplikacji przed wdrożeniem na Vercel lub po większych zmianach.
 **Środowisko:** `npm run emulators` i `npm run dev` z `VITE_USE_EMULATORS=true` ([README](../README.md#-uruchomienie-lokalne)); przeglądarka desktopowa i widok mobilny (DevTools, szerokość 375 px).
@@ -107,10 +107,14 @@ Nowy przypadek: warunki wstępne, kroki, oczekiwany wynik.
 
 ## 8. Dane na żywo i praca offline
 
-- [ ] Dwie karty (albo komputer i telefon) z dziennikiem: pomiar lub trening zapisany w jednej pojawia się w drugiej bez odświeżania
-- [ ] Zalogowany, strona otwarta, potem bez sieci (DevTools → Offline albo tryb samolotowy w telefonie): wszystkie zakładki otwierają się i pokazują dane, także te, których jeszcze nie otwierano po zalogowaniu
+- [ ] Warunki: konto właściciela, sieć dostępna. Otwórz dwie karty dziennika, dodaj pomiar w pierwszej, odśwież drugą i dodaj w niej następny pomiar → oba pomiary są widoczne w obu kartach, druga karta działa także po odświeżeniu przy zajętej pamięci IndexedDB
+- [ ] Jedna karta dziennika: zalogowany, strona otwarta, potem bez sieci (DevTools → Offline albo tryb samolotowy w telefonie): wszystkie zakładki otwierają się i pokazują dane, także te, których jeszcze nie otwierano po zalogowaniu
+- [ ] Warunki: zalogowany właściciel, jedna karta, sieć dostępna. Odśwież dziennik wielokrotnie, także od razu po jego pojawieniu się → dane są widoczne w ciągu 5 sekund w środowisku lokalnym; bez wielosekundowego oczekiwania na poprzednią kartę
+- [ ] Warunki: właściciel, tylko jedna otwarta karta dziennika. Wyłącz sieć, dodaj pomiar, poczekaj na „Zapisywanie...”, zamknij okno pomiaru i kartę. Przywróć sieć i otwórz dziennik w tej samej przeglądarce → pomiar zostaje wysłany raz i pozostaje widoczny po odświeżeniu
+- [ ] Warunki: pamięć IndexedDB utworzona przez wersję z obsługą wielu kart, z pomiarem czekającym offline. Zamknij starą wersję, otwórz nową po przywróceniu sieci w tej samej przeglądarce → stare dane pozostają, oczekujący pomiar wysyła się raz, bez czyszczenia pamięci
+- [ ] Warunki: pierwsza karta dziennika pozostaje otwarta, druga działa z siecią. Wyłącz sieć i dodaj pomiar w drugiej → jest widoczny lokalnie; po zamknięciu drugiej karty przed powrotem sieci pomiar nie jest trwale zachowany. To zaakceptowane ograniczenie [ADR-0018](adr/0018-single-tab-persistence.md); do pracy offline używaj jednej karty
 - [ ] Otwarcie lub odświeżenie strony bez sieci pokazuje aplikację z danymi (#17)
-- [ ] Bez sieci pomiar trafia od razu na listę, a okno pomiaru czeka z „Zapisywanie...” do powrotu sieci; po powrocie zamyka się, pomiar jest zapisany raz
+- [ ] Jedna karta dziennika: bez sieci pomiar trafia od razu na listę, a okno pomiaru czeka z „Zapisywanie...” do powrotu sieci; po powrocie zamyka się, pomiar jest zapisany raz
 - [ ] „Wyloguj” → ekran logowania; po ponownym zalogowaniu innym kontem nie widać danych poprzedniego (pamięć w przeglądarce jest czyszczona)
 - [ ] Trening rozpoczęty, wpisana seria, „Wyloguj” → okno „Wylogować się?”; „Anuluj” zostawia trening z wartościami; „Wyloguj i usuń trening” → ekran logowania; po zalogowaniu innym kontem zakładka „Trening” pokazuje stan pusty
 

@@ -1,19 +1,19 @@
 # ADR-0018: Trwała pamięć Firestore dla jednej karty
 
-- **Status:** proponowana 2026-11-07; po przyjęciu zastępuje wyłącznie wybór zarządcy kart w pkt 3 [ADR-0010](0010-web-app-architecture.md)
+- **Status:** przyjęta 2026-11-07 przez właściciela repozytorium; zastępuje wyłącznie wybór zarządcy kart w pkt 3 [ADR-0010](0010-web-app-architecture.md)
 
 ## Kontekst
 
-[KNOWN_ISSUES #19](../KNOWN_ISSUES.md) opisuje opóźnienie po odświeżeniu: nowa strona czasem czeka na wygaśnięcie dzierżawy poprzedniej karty w `persistentMultipleTabManager`. Zapisane tam pomiary na Firebase 13.0.0 wykazały ten sam objaw; próba z `persistentSingleTabManager` przeszła 320 testów i 300 przeładowań bez opóźnienia. Są to wyniki wcześniejszej próby, a nie weryfikacja wdrożonej poprawki.
+[KNOWN_ISSUES #19](../KNOWN_ISSUES.md) opisuje opóźnienie po odświeżeniu: nowa strona czasem czeka na wygaśnięcie dzierżawy poprzedniej karty w `persistentMultipleTabManager`. Pomiary na Firebase 13.0.0 wykazały ten sam objaw; próba z `persistentSingleTabManager` przeszła 320 testów i 300 przeładowań bez opóźnienia. Są to wyniki wcześniejszej próby, a nie weryfikacja wdrożonej poprawki.
 
-Aktualny kod w `src/lib/firebaseConfig.ts` nadal używa `persistentMultipleTabManager`. [Dokumentacja Firebase](https://firebase.google.com/docs/firestore/manage-data/enable-offline#web) udostępnia osobne tryby trwałej pamięci dla jednej i wielu kart.
+[Dokumentacja Firebase](https://firebase.google.com/docs/firestore/manage-data/enable-offline#web) udostępnia osobne tryby trwałej pamięci dla jednej i wielu kart.
 
 ## Decyzja
 
-Proponowany wariant, wymagający przyjęcia przez właściciela przed implementacją:
+Trwała pamięć Firestore jest dostępna dla jednej karty:
 
 1. Użyć `persistentLocalCache({ tabManager: persistentSingleTabManager(undefined) })` w `src/lib/firebaseConfig.ts`. Nie włączać `forceOwnership`: wymuszenie własności może przerwać działanie pamięci w innych kartach.
-2. Trwałą pamięć IndexedDB udostępniać jednej karcie. Kolejne karty mogą pracować z siecią i synchronizować dane przez serwer; przy zajętej pamięci SDK przechodzi w nich na pamięć ulotną, zgodnie z wcześniejszą próbą opisaną w #19.
+2. Trwałą pamięć IndexedDB udostępniać jednej karcie. Kolejne karty mogą pracować z siecią i synchronizować dane przez serwer; przy zajętej pamięci SDK przechodzi w nich na pamięć ulotną.
 3. Zaakceptować ograniczenie: niewysłane zapisy Firestore w karcie z pamięcią ulotną mogą zginąć po jej zamknięciu lub odświeżeniu bez odzyskania sieci. Do pracy offline używać jednej karty dziennika. Szkic rozpoczętego treningu nadal przechowuje dotychczasowy `LocalStorageService`.
 4. Zachować istniejące dane IndexedDB oraz kontrakty dokumentów Firestore i kluczy LocalStorage. Zmiana nie wymaga migracji danych ani zmiany reguł dostępu. Odczyt istniejącej pamięci i zachowanie niewysłanych zapisów należy potwierdzić testem przed wdrożeniem.
 5. Zachować limit 5 sekund w asercjach E2E. Warunkiem wdrożenia jest przejście pełnego zestawu z `--repeat-each=20`, testy odświeżania i pracy offline oraz aktualizacja opisu offline w `ARCHITECTURE.md` i instrukcji testów ręcznych.
@@ -22,8 +22,8 @@ Proponowany wariant, wymagający przyjęcia przez właściciela przed implementa
 
 | Wariant | Zalety | Koszty i ograniczenia |
 |---|---|---|
-| **Trwała pamięć jednej karty (proponowany)** | Wcześniejsza próba nie wykazała opóźnienia; mała zmiana konfiguracji; trwała kolejka offline w karcie posiadającej IndexedDB | Pozostałe karty nie zachowują niewysłanych zapisów po zamknięciu; trzeba sprawdzić odświeżenie przy zajętej pamięci |
-| Pozostawić wiele kart i sprawdzić nowszy SDK | Zachowanie wspólnej trwałej pamięci dla wszystkich kart | Aktualizacja wymaga ponowienia pomiarów; komunikat o dłuższym łączeniu sam nie usuwa przyczyny; ewentualne zgłoszenie do Firebase wymaga osobnej zgody na publikację |
+| **Trwała pamięć jednej karty (wybrany)** | Wcześniejsza próba nie wykazała opóźnienia; mała zmiana konfiguracji; trwała kolejka offline w karcie posiadającej IndexedDB | Pozostałe karty nie zachowują niewysłanych zapisów po zamknięciu; trzeba sprawdzić odświeżenie przy zajętej pamięci |
+| Pozostawić wiele kart i sprawdzić nowszy SDK | Zachowanie wspólnej trwałej pamięci dla wszystkich kart | Aktualizacja wymaga ponowienia pomiarów; komunikat o dłuższym łączeniu sam nie usuwa przyczyny |
 | Pamięć wyłącznie ulotna dla wszystkich kart | Brak dzierżawy IndexedDB | Utrata trwałej kolejki offline we wszystkich kartach |
 
 ## Konsekwencje
@@ -31,7 +31,7 @@ Proponowany wariant, wymagający przyjęcia przez właściciela przed implementa
 - Przyjęcie oznacza zgodę na ograniczenie trwałej pracy offline do jednej karty, opisane w pkt 3.
 - Przed wdrożeniem testy obejmą: wielokrotne odświeżenia jednej karty, dwie karty online, odświeżenie drugiej karty przy zajętej pamięci, zachowanie zapisów offline w karcie z IndexedDB oraz odczyt pamięci utworzonej przez dotychczasowy tryb wielu kart.
 - Testy używają wyłącznie emulatorów. Powtórzenia pełnego zestawu uruchamia polecenie: `npx firebase emulators:exec --only auth,firestore --project demo-training-tracker "npx playwright test --repeat-each=20"`.
-- Do przyjęcia tej propozycji nadal obowiązuje ADR-0010, a #19 pozostaje otwarty. Po przyjęciu ADR-0010 dostanie odsyłacz informujący o zastąpieniu wyboru zarządcy kart.
+- Pozostałe ustalenia ADR-0010 nadal obowiązują. #19 pozostaje otwarty do wdrożenia i sprawdzenia poprawki na produkcji.
 
 ## Warunek rewizji
 
