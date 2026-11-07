@@ -19,7 +19,8 @@ import { TabNavigation } from '../components/common/TabNavigation.js';
 import { DashboardTab } from '../features/dashboard/DashboardTab.js';
 import { WorkoutTab } from '../features/workouts/WorkoutTab.js';
 import { SettingsTab } from '../features/profile/SettingsTab.js';
-import { UserProfile, WorkoutTemplate } from '../types/index.js';
+import { Measurement, UserProfile, WorkoutTemplate } from '../types/index.js';
+import { formatDate } from '../utils/date.utils.js';
 
 // Tabs other than the start page and the active workout are separate chunks, so the first screen
 // loads faster. They are fetched in the background right after sign-in: without that, a tab opened
@@ -77,6 +78,9 @@ const TrainingTracker: React.FC<TrainingTrackerProps> = ({
     void prefetchTabs();
   }, []);
   const [isMeasurementFormOpen, setIsMeasurementFormOpen] = useState(false);
+  const [editingMeasurement, setEditingMeasurement] = useState<Measurement | undefined>();
+  const [pendingMeasurementDelete, setPendingMeasurementDelete] = useState<Measurement | null>(null);
+  const [isDeletingMeasurement, setIsDeletingMeasurement] = useState(false);
   // A template chosen while another workout is in progress, waiting for the user's decision.
   const [pendingTemplate, setPendingTemplate] = useState<WorkoutTemplate | null>(null);
   const [isSignOutConfirmOpen, setIsSignOutConfirmOpen] = useState(false);
@@ -92,6 +96,7 @@ const TrainingTracker: React.FC<TrainingTrackerProps> = ({
   const {
     measurements,
     saveMeasurement,
+    deleteMeasurement,
     isLoading: measurementsLoading,
     error: measurementsError,
     clearError: clearMeasurementsError,
@@ -144,6 +149,20 @@ const TrainingTracker: React.FC<TrainingTrackerProps> = ({
     }
   };
 
+  const openMeasurementForm = (measurement?: Measurement) => {
+    clearMeasurementsError();
+    setEditingMeasurement(measurement);
+    setIsMeasurementFormOpen(true);
+  };
+
+  const confirmMeasurementDelete = async () => {
+    if (!pendingMeasurementDelete?.id || isDeletingMeasurement) return;
+    setIsDeletingMeasurement(true);
+    const deleted = await deleteMeasurement(pendingMeasurementDelete.id);
+    setIsDeletingMeasurement(false);
+    if (deleted) setPendingMeasurementDelete(null);
+  };
+
   if (workoutsLoading || measurementsLoading) {
     return <LoadingSpinner />;
   }
@@ -160,11 +179,11 @@ const TrainingTracker: React.FC<TrainingTrackerProps> = ({
           />
           <TabNavigation tabs={tabs} />
 
-          {workoutsError && pathname !== ROUTES.workout && (
+          {workoutsError && pathname !== ROUTES.workout && pathname !== ROUTES.history && (
             <ErrorToast message={workoutsError} onDismiss={clearWorkoutsError} />
           )}
           {templatesError && <ErrorToast message={templatesError} onDismiss={clearTemplatesError} />}
-          {measurementsError && !isMeasurementFormOpen && (
+          {measurementsError && !isMeasurementFormOpen && !pendingMeasurementDelete && (
             <ErrorToast message={measurementsError} onDismiss={clearMeasurementsError} />
           )}
 
@@ -179,7 +198,9 @@ const TrainingTracker: React.FC<TrainingTrackerProps> = ({
                       measurements={measurements}
                       templates={templates}
                       onStartWorkout={handleStartWorkout}
-                      onAddMeasurement={() => setIsMeasurementFormOpen(true)}
+                      onAddMeasurement={() => openMeasurementForm()}
+                      onEditMeasurement={openMeasurementForm}
+                      onDeleteMeasurement={measurement => { clearMeasurementsError(); setPendingMeasurementDelete(measurement); }}
                     />
                   }
                 />
@@ -213,7 +234,9 @@ const TrainingTracker: React.FC<TrainingTrackerProps> = ({
                     />
                   }
                 />
-                <Route path={ROUTES.history} element={<HistoryTab workouts={workouts} onDelete={deleteWorkout} />} />
+                <Route path={ROUTES.history} element={
+                  <HistoryTab workouts={workouts} onSave={saveWorkout} onDelete={deleteWorkout} error={workoutsError} onDismissError={clearWorkoutsError} />
+                } />
                 <Route path={ROUTES.progress} element={<ProgressTab measurements={measurements} workouts={workouts} />} />
                 <Route
                   path={ROUTES.settings}
@@ -238,11 +261,24 @@ const TrainingTracker: React.FC<TrainingTrackerProps> = ({
           <Modal
             isOpen={isMeasurementFormOpen}
             onClose={() => setIsMeasurementFormOpen(false)}
-            title="Nowy pomiar"
+            title={editingMeasurement ? 'Edytuj pomiar' : 'Nowy pomiar'}
           >
             {measurementsError && <ErrorBanner message={measurementsError} onDismiss={clearMeasurementsError} />}
-            <MeasurementForm onSubmit={saveMeasurement} onCancel={() => setIsMeasurementFormOpen(false)} />
+            <MeasurementForm initialMeasurement={editingMeasurement} onSubmit={saveMeasurement} onCancel={() => setIsMeasurementFormOpen(false)} />
           </Modal>
+
+          <ConfirmDialog
+            isOpen={pendingMeasurementDelete !== null}
+            title="Usunąć pomiar?"
+            confirmLabel="Usuń"
+            cancelLabel="Anuluj"
+            onConfirm={() => void confirmMeasurementDelete()}
+            onCancel={() => setPendingMeasurementDelete(null)}
+            isPending={isDeletingMeasurement}
+          >
+            <p>Pomiar z {pendingMeasurementDelete && formatDate(pendingMeasurementDelete.date)} zostanie trwale usunięty.</p>
+            {measurementsError && <ErrorBanner message={measurementsError} onDismiss={clearMeasurementsError} />}
+          </ConfirmDialog>
 
           <ConfirmDialog
             isOpen={pendingTemplate !== null}
