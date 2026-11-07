@@ -14,7 +14,7 @@ Główna przewaga nad Excelem: plan i wykonanie są w jednym miejscu, porównani
 
 ## Stan wyjściowy
 
-Co już działa: zapis treningu z szablonu ze szkicem odpornym na odświeżenie, plan tygodnia, historia, pomiary, szablony własne w koncie, logowanie Google albo e-mailem z hasłem (potwierdzenie adresu, reset hasła), zgoda na dane o zdrowiu i Ustawienia, dane każdego konta w `users/{uid}/…`, reguły Firestore z walidacją, adresy URL zakładek, dane na żywo i praca offline na otwartej stronie, testy jednostkowe, reguł i end-to-end. Budowa aplikacji: [ARCHITECTURE.md](ARCHITECTURE.md).
+Co już działa: zapis treningu z szablonu ze szkicem odpornym na odświeżenie, plan tygodnia, historia, pomiary, szablony własne w koncie, logowanie Google albo e-mailem z hasłem (potwierdzenie adresu, reset hasła), zgoda na dane o zdrowiu i Ustawienia, dane każdego konta w `users/{uid}/…`, reguły Firestore z walidacją, adresy URL zakładek, dane na żywo i otwieranie aplikacji offline po pierwszej wizycie online, testy jednostkowe, reguł i end-to-end. Budowa aplikacji: [ARCHITECTURE.md](ARCHITECTURE.md).
 
 Co ogranicza rozwój:
 
@@ -44,7 +44,7 @@ Zasada: trener widzi dane podopiecznego tylko podczas aktywnej współpracy; po 
 
 **Podopieczny**
 - „Dzisiaj”: trening z planu z zadanymi seriami (powtórzenia, zakres, RIR/RPE, tempo, przerwa, uwagi, wideo techniki) i wynikami z poprzedniego razu przy każdym ćwiczeniu.
-- Szybki zapis serii, minutnik przerwy, odhaczanie serii, praca offline na otwartej stronie z synchronizacją.
+- Szybki zapis serii, minutnik przerwy, odhaczanie serii, praca offline z synchronizacją i ponownym otwieraniem po pierwszej wizycie online.
 - Trening spoza planu (dzisiejsze szablony) — dziennik bez trenera działa dalej.
 - Postęp: wykres e1RM i najlepszej serii dla ćwiczenia, rekordy, tygodniowa objętość (tonaż, serie na partię mięśniową), regularność wobec planu, waga ze średnią 7-dniową, obwody; zdjęcia sylwetki po przejściu na plan Blaze ([ADR-0009](adr/0009-cloud-functions-aggregates.md)).
 - Cotygodniowy check-in dla trenera (samopoczucie, sen, waga, komentarz).
@@ -92,7 +92,7 @@ Wszystkie decyzje potrzebne do etapów 1–3 są przyjęte (2026-10-10):
 | [0014](adr/0014-server-functions-and-email.md) | Funkcje Vercel z Firebase Admin SDK; e-maile przez Brevo po zakupie domeny |
 | [0015](adr/0015-accounts-roles-consent.md) | Zgoda na dane o zdrowiu warunkiem aktywacji; rola trenera od administratora; konta zakładane przez trenera; usunięcie konta |
 
-Backlog decyzji: zdjęcia sylwetki (Cloud Storage na planie Blaze albo inny dostawca); drugi dostawca chmury, np. Azure z kolejką zadań — gdy pojawi się praca w tle (eksporty, przeliczanie statystyk), wymaga nowego ADR; własna domena: e-maile przez Brevo, adres aplikacji i strona `/konto/akcja` ([ADR-0014](adr/0014-server-functions-and-email.md)); otwieranie aplikacji bez sieci ([ADR-0013](adr/0013-offline-app-shell.md), odłożona razem z wersją mobilną); plan Blaze (warunki w ADR-0009); model cenowy i operator płatności — przed etapem 5.
+Backlog decyzji: zdjęcia sylwetki (Cloud Storage na planie Blaze albo inny dostawca); drugi dostawca chmury, np. Azure z kolejką zadań — gdy pojawi się praca w tle (eksporty, przeliczanie statystyk), wymaga nowego ADR; własna domena: e-maile przez Brevo, adres aplikacji i strona `/konto/akcja` ([ADR-0014](adr/0014-server-functions-and-email.md)); plan Blaze (warunki w ADR-0009); model cenowy i operator płatności — przed etapem 5.
 
 ## Etapy
 
@@ -100,7 +100,7 @@ Rozmiar: S — kilka dni, M — 1–2 tygodnie, L — 3+ tygodnie pracy jednej o
 
 | Etap | Zakres | Gotowe, gdy | Rozmiar |
 |---|---|---|---|
-| **0. Fundament** | Schematy Zod, routing, nasłuchy danych, cache offline i podział kodu według funkcji — wdrożone ([ADR-0010](adr/0010-web-app-architecture.md)); testy E2E Playwright na emulatorach i na zbudowanej wersji — wdrożone (`e2e/`, [ADR-0011](adr/0011-environments-hosting-monitoring.md)) | Scenariusze z checklisty mają testy E2E, aplikacja działa offline na otwartej stronie | M |
+| **0. Fundament** | Schematy Zod, routing, nasłuchy danych, cache offline i podział kodu według funkcji — wdrożone ([ADR-0010](adr/0010-web-app-architecture.md)); testy E2E Playwright na emulatorach i na zbudowanej wersji — wdrożone (`e2e/`, [ADR-0011](adr/0011-environments-hosting-monitoring.md)) | Scenariusze z checklisty mają testy E2E, aplikacja otwiera się offline po pierwszej wizycie online | M |
 | **1. Wiele kont, nowy model danych** | **Wdrożone:** ekran „Zaloguj / Zarejestruj” (Google albo e-mail z hasłem, potwierdzenie adresu, reset hasła); profil, zgoda wymagana do aktywacji, Ustawienia; dane w `users/{uid}/…` i szablony w Firestore (migracja, krok 1 — dane właściciela przeniesione na produkcji 2026-10-21: 3 treningi, 2 pomiary, plan tygodnia). **Zostało:** biblioteka ćwiczeń; serie liczbowe i `exerciseId` (migracja, krok 2); usunięcie konta (funkcja Vercel) — szczegóły w [Najbliższych krokach](#najbliższe-kroki) | Dwa konta nie widzą swoich danych (testy reguł A/B), konto bez potwierdzonego adresu nie ma dostępu, dane właściciela przeniesione bez strat | L |
 | **2. Postęp** | Wyniki z poprzedniego razu przy ćwiczeniu; wykresy e1RM, rekordy, objętość tygodniowa, regularność; trend wagi; minutnik przerwy | Podopieczny widzi postęp dla dowolnego ćwiczenia z historii; obliczenia mają testy jednostkowe | M |
 | **3. Trener** | Rola trenera nadawana przez administratora; konta zakładane przez trenera i zaproszenia linkiem ([ADR-0015](adr/0015-accounts-roles-consent.md)); lista podopiecznych z sygnałami; kreator planu wielotygodniowego z kopiowaniem i progresją; przypisanie planu; „zadane / wykonane”; komentarze; check-iny; import CSV/Excel | Pilotaż: 2–3 trenerów prowadzi realnych podopiecznych przez 4 tygodnie bez arkusza | L |

@@ -15,6 +15,7 @@ Na razie z aplikacji korzystają tylko konta z listy dostępu (`owners`). Docelo
 - 🔐 **Logowanie Google albo e-mailem z hasłem** (potwierdzenie adresu, reset hasła); dane w Cloud Firestore dostępne tylko dla właściciela konta
 - ✅ **Zgoda na dane o zdrowiu** wymagana do aktywacji konta, wycofanie w Ustawieniach
 - 📱 **Responsywny, ciemny interfejs**
+- 📴 **Otwieranie bez sieci po pierwszej wizycie online** — lokalne pliki aplikacji, dane wcześniej wczytane na urządzeniu i szkic treningu
 
 Do pracy bez sieci używaj jednej karty dziennika. Dodatkowe karty działają z siecią, ale ich niewysłane zapisy offline mogą zginąć po zamknięciu lub odświeżeniu ([szczegóły pamięci offline](docs/ARCHITECTURE.md#offline-i-dane-na-żywo)).
 
@@ -41,6 +42,8 @@ npm run dev            # http://localhost:5173
 ```
 
 Praca bez dotykania danych produkcyjnych: ustaw `VITE_USE_EMULATORS=true` w `.env`, uruchom `npm run emulators` w osobnym terminalu, a potem `npm run dev`. Dokument właściciela (patrz niżej) utwórz w emulatorze Firestore.
+
+Service worker zapisuje pliki aplikacji tylko w zbudowanej wersji (`npm run build` i `npm run preview` albo hosting HTTPS). `npm run dev` go nie uruchamia. Do sprawdzania offline lokalnie użyj buildu z emulatorami: `npx vite build --mode e2e`, potem `npm run preview` przy działającym `npm run emulators`. Po komunikacie „Pliki aplikacji są gotowe do pracy bez sieci” można zamknąć kartę i otworzyć ją ponownie offline. Zalogowane konto i wcześniej wczytane dane muszą być zachowane w tej przeglądarce. Przy nowej wersji komunikat „Dostępna nowa wersja aplikacji” pozwala wybrać „Odśwież” albo „Później”; dokończ edycję formularza przed odświeżeniem. Szkic bieżącego treningu pozostaje zapisany.
 
 | Polecenie | Działanie |
 |---|---|

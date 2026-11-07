@@ -28,6 +28,7 @@ flowchart LR
 | Dane | Cloud Firestore na planie Spark ([ADR-0009](adr/0009-cloud-functions-aggregates.md)) | serwisy w `src/features/*/` |
 | Bezpieczeństwo | reguły z walidacją zapisów | `firestore.rules`, testy w `tests/rules/` |
 | Hosting | Vercel, wdrożenie z gałęzi `main` ([ADR-0011](adr/0011-environments-hosting-monitoring.md)) | `vercel.json` |
+| Pliki aplikacji offline | `vite-plugin-pwa`, Workbox: precache plików buildu, bez manifestu instalacji ([ADR-0013](adr/0013-offline-app-shell.md)) | `vite.config.ts`, `src/components/common/ServiceWorkerPrompt.tsx` |
 
 ## Start aplikacji i dostęp
 
@@ -135,7 +136,8 @@ Reguły w `firestore.rules` składają się z trzech warunków dostępu i walida
 - `persistentLocalCache` z `persistentSingleTabManager`: jedna karta przechowuje dane i kolejkę zapisów offline w IndexedDB. Zapisane wcześniej dane IndexedDB są odczytywane bez migracji. Przy zajętej pamięci kolejne karty używają pamięci ulotnej i łączą się z serwerem niezależnie; ich niewysłane zapisy mogą zginąć po zamknięciu lub odświeżeniu karty. Do pracy offline używamy jednej karty ([ADR-0018](adr/0018-single-tab-persistence.md)).
 - Przy dostępie do sieci zmiana w jednej karcie pojawia się w innej bez odświeżania, bo działają nasłuchy i synchronizacja przez serwer.
 - Wylogowanie czyści cache Firestore i wpisy LocalStorage aplikacji, a potem przeładowuje stronę, żeby dane nie zostały na wspólnym komputerze ani nie trafiły do następnego konta. Przy trwającym treningu aplikacja najpierw pyta o potwierdzenie. Zapisy czekające offline giną razem z cache ([KNOWN_ISSUES #30](KNOWN_ISSUES.md)).
-- Strona nie otworzy się bez sieci, jeśli wcześniej nie była otwarta, bo nie ma service workera ([ADR-0013](adr/0013-offline-app-shell.md), [KNOWN_ISSUES #17](KNOWN_ISSUES.md)).
+- Service worker zapisuje HTML, JS (także leniwe zakładki), CSS i SVG z buildu w Cache Storage. Po pierwszej wizycie online aplikacja otwiera się i odświeża bez sieci, także pod adresem zakładki. Firebase nadal odpowiada za sesję i cache danych; service worker nie przechowuje odpowiedzi Auth ani Firestore. Dostępne offline są dane wcześniej wczytane na tym urządzeniu. Wyczyszczenie danych przeglądarki usuwa także możliwość otwierania offline.
+- `ServiceWorkerPrompt` w `main.tsx` rejestruje service workera i pokazuje gotowość plików do pracy offline lub oczekującą aktualizację. Nowa wersja czeka na „Odśwież”; „Później” pozwala kontynuować pracę. Odświeżenie zachowuje szkic treningu w LocalStorage; niezapisane formularze trzeba wcześniej dokończyć ([ADR-0013](adr/0013-offline-app-shell.md)).
 
 ## Środowiska, build i wdrożenie
 
@@ -147,6 +149,7 @@ Reguły w `firestore.rules` składają się z trzech warunków dostępu i walida
 
 - Vite dzieli kod zewnętrzny na stałe części: `react`, `zod`, `react-router` i `vendor` (głównie Firebase). Część `vendor` przekracza ostrzeżenie 500 kB ([KNOWN_ISSUES #22](KNOWN_ISSUES.md)).
 - `vercel.json` kieruje każdy adres do `index.html`, więc odświeżenie zakładki działa.
+- Build generuje `sw.js` i plik Workbox. `sw.js` ma nagłówek `Cache-Control: no-store` na Vercel. Service worker działa na HTTPS i localhost, w buildach produkcyjnych oraz E2E; w `npm run dev` jest wyłączony.
 
 ## Testy i kontrola jakości
 
@@ -154,7 +157,7 @@ Reguły w `firestore.rules` składają się z trzech warunków dostępu i walida
 |---|---|---|---|
 | Jednostkowe i komponentów | Vitest, Testing Library, jsdom | `src/**/*.test.ts(x)` | logika, hooki, formularze |
 | Reguły | Vitest + emulator Firestore | `tests/rules/` | dostęp własne/cudze, walidacja zapisów, odmowa dostępu do kolekcji sprzed migracji |
-| End-to-end | Playwright na zbudowanej aplikacji i emulatorach | `e2e/` | logowanie, zgoda, trening po odświeżeniu i offline, trasy |
+| End-to-end | Playwright na zbudowanej aplikacji i emulatorach | `e2e/` | logowanie, zgoda, trening po odświeżeniu i offline, otwarcie karty offline z danymi i szkicem, aktualizacja za potwierdzeniem, trasy |
 | Ręczne | lista kontrolna | [MANUAL_TESTING_CHECKLIST.md](MANUAL_TESTING_CHECKLIST.md) | scenariusze, których nie da się zautomatyzować |
 
 Hook `pre-push` w `.githooks/` uruchamia lint, build i testy jednostkowe. Testy reguł i E2E uruchamia, gdy zmiana ich dotyczy. Trzeba go włączyć raz na klon. CI w GitHub Actions robi to samo, ale uruchamiane jest tylko ręcznie. Polecenia: [AGENTS.md](../AGENTS.md#weryfikacja).
