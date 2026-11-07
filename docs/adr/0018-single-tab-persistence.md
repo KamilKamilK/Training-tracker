@@ -4,7 +4,7 @@
 
 ## Kontekst
 
-[KNOWN_ISSUES #19](../KNOWN_ISSUES.md) opisuje opóźnienie po odświeżeniu: nowa strona czasem czeka na wygaśnięcie dzierżawy poprzedniej karty w `persistentMultipleTabManager`. Pomiary na Firebase 13.0.0 wykazały ten sam objaw; próba z `persistentSingleTabManager` przeszła 320 testów i 300 przeładowań bez opóźnienia. Są to wyniki wcześniejszej próby, a nie weryfikacja wdrożonej poprawki.
+Mechanizm współdzielonej pamięci `persistentMultipleTabManager` może po odświeżeniu pozostawić aktywną dzierżawę poprzedniej strony w IndexedDB. Nowa strona czeka wtedy na jej wygaśnięcie, co opóźnia pierwsze zapytanie Firestore i otwarcie dziennika o kilka sekund.
 
 [Dokumentacja Firebase](https://firebase.google.com/docs/firestore/manage-data/enable-offline#web) udostępnia osobne tryby trwałej pamięci dla jednej i wielu kart.
 
@@ -22,16 +22,16 @@ Trwała pamięć Firestore jest dostępna dla jednej karty:
 
 | Wariant | Zalety | Koszty i ograniczenia |
 |---|---|---|
-| **Trwała pamięć jednej karty (wybrany)** | Wcześniejsza próba nie wykazała opóźnienia; mała zmiana konfiguracji; trwała kolejka offline w karcie posiadającej IndexedDB | Pozostałe karty nie zachowują niewysłanych zapisów po zamknięciu; trzeba sprawdzić odświeżenie przy zajętej pamięci |
+| **Trwała pamięć jednej karty (wybrany)** | Połączenie bez oczekiwania na dzierżawę poprzedniej karty; trwała kolejka offline w karcie posiadającej IndexedDB | Pozostałe karty nie zachowują niewysłanych zapisów po zamknięciu |
 | Pozostawić wiele kart i sprawdzić nowszy SDK | Zachowanie wspólnej trwałej pamięci dla wszystkich kart | Aktualizacja wymaga ponowienia pomiarów; komunikat o dłuższym łączeniu sam nie usuwa przyczyny |
 | Pamięć wyłącznie ulotna dla wszystkich kart | Brak dzierżawy IndexedDB | Utrata trwałej kolejki offline we wszystkich kartach |
 
 ## Konsekwencje
 
 - Przyjęcie oznacza zgodę na ograniczenie trwałej pracy offline do jednej karty, opisane w pkt 3.
-- Przed wdrożeniem testy obejmą: wielokrotne odświeżenia jednej karty, dwie karty online, odświeżenie drugiej karty przy zajętej pamięci, zachowanie zapisów offline w karcie z IndexedDB oraz odczyt pamięci utworzonej przez dotychczasowy tryb wielu kart.
+- Testy obejmują: wielokrotne odświeżenia jednej karty, dwie karty online, odświeżenie drugiej karty przy zajętej pamięci, zachowanie zapisów offline w karcie z IndexedDB oraz odczyt pamięci utworzonej przez dotychczasowy tryb wielu kart.
 - Testy używają wyłącznie emulatorów. Powtórzenia pełnego zestawu uruchamia polecenie: `npx firebase emulators:exec --only auth,firestore --project demo-training-tracker "npx playwright test --repeat-each=20"`.
-- Pozostałe ustalenia ADR-0010 nadal obowiązują. #19 pozostaje otwarty do wdrożenia i sprawdzenia poprawki na produkcji.
+- Pozostałe ustalenia ADR-0010 nadal obowiązują.
 
 ## Warunek rewizji
 
