@@ -8,7 +8,8 @@ import {
 } from './measurement.utils.js';
 
 interface MeasurementFormProps {
-  onSubmit: (measurement: Omit<Measurement, 'id'>) => Promise<boolean>;
+  initialMeasurement?: Measurement;
+  onSubmit: (measurement: Measurement & { id: string }) => Promise<boolean>;
   onCancel: () => void;
 }
 
@@ -20,13 +21,19 @@ const fields: { key: keyof MeasurementInput; label: string; type: string; inputM
   { key: 'waist', label: 'Obwód talii (cm)', type: 'text', inputMode: 'decimal' },
 ];
 
-export const MeasurementForm: React.FC<MeasurementFormProps> = ({ onSubmit, onCancel }) => {
-  const [input, setInput] = useState<MeasurementInput>({ date: today(), weight: '', waist: '' });
+export const MeasurementForm: React.FC<MeasurementFormProps> = ({ initialMeasurement, onSubmit, onCancel }) => {
+  const [id] = useState(() => initialMeasurement?.id ?? crypto.randomUUID());
+  const [input, setInput] = useState<MeasurementInput>(() => ({
+    date: initialMeasurement?.date ?? today(),
+    weight: initialMeasurement ? String(initialMeasurement.weight) : '',
+    waist: initialMeasurement ? String(initialMeasurement.waist) : '',
+  }));
   const [errors, setErrors] = useState<MeasurementInputErrors>({});
   const [isSaving, setIsSaving] = useState(false);
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
+    if (isSaving) return;
     const result = validateMeasurementInput(input);
     if ('errors' in result) {
       setErrors(result.errors);
@@ -34,7 +41,7 @@ export const MeasurementForm: React.FC<MeasurementFormProps> = ({ onSubmit, onCa
     }
     setErrors({});
     setIsSaving(true);
-    const saved = await onSubmit(result.measurement);
+    const saved = await onSubmit({ ...initialMeasurement, ...result.measurement, id });
     setIsSaving(false);
     if (saved) onCancel();
   };

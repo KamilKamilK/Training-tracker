@@ -1,7 +1,7 @@
 # Dziennik Treningowy — ręczna lista kontrolna testów
 
 **Ostatnie pełne przejście:** brak.
-**Automatyzacja:** ekran logowania, brak dostępu, aktywacja konta i wycofanie zgody, sekcja 1a (bez produkcji), 2.2–2.3, 2.7–2.8, 3.3–3.6 oraz wybrane przypadki sekcji 8 (synchronizacja kart, przechowanie zapisu offline, wylogowanie i szybkie wczytanie przy pozostawionej dzierżawie) są testami end-to-end w `e2e/` (`npm run test:e2e`, na zbudowanej wersji); ręcznie sprawdzamy pozostałe i całość na produkcji.
+**Automatyzacja:** ekran logowania, brak dostępu, aktywacja konta i wycofanie zgody, sekcja 1a (bez produkcji), 2.2–2.3, 2.7–2.9, 2.11, 3.3–3.6, edycja i usuwanie z sekcji 4 oraz wybrane przypadki sekcji 8 (synchronizacja kart, przechowanie zapisu offline, wylogowanie i szybkie wczytanie przy pozostawionej dzierżawie) są testami end-to-end w `e2e/` (`npm run test:e2e`, na zbudowanej wersji); ręcznie sprawdzamy pozostałe i całość na produkcji.
 **Znane rozbieżności:** punkt z numerem KNOWN_ISSUES (np. „#1”) opisuje zachowanie docelowe, którego środowisko jeszcze nie spełnia — niepowodzenie potwierdza zgłoszony problem.
 **Cel:** weryfikacja funkcji aplikacji przed wdrożeniem na Vercel lub po większych zmianach.
 **Środowisko:** `npm run emulators` i `npm run dev` z `VITE_USE_EMULATORS=true` ([README](../README.md#-uruchomienie-lokalne)); przeglądarka desktopowa i widok mobilny (DevTools, szerokość 375 px).
@@ -17,7 +17,7 @@ Nowy przypadek: warunki wstępne, kroki, oczekiwany wynik.
 | Po każdym wdrożeniu | Test dymny poniżej (ok. 10 minut) | Produkcja, komputer i telefon |
 | Po zmianie jednego obszaru | Sekcja tego obszaru i test dymny | Emulatory, potem produkcja |
 
-**Test dymny na produkcji.** Na produkcji nie zapisuj danych testowych: pomiaru i treningu nie da się jeszcze usunąć ani poprawić (#26), więc zapis sprawdzaj prawdziwym treningiem lub pomiarem.
+**Test dymny na produkcji.** Na produkcji zapis sprawdzaj prawdziwym treningiem lub pomiarem; przypadki z celowo błędnymi danymi wykonuj na emulatorach.
 
 - [ ] Logowanie kontem właściciela otwiera dziennik bez błędów w konsoli; liczba treningów w nagłówku, ostatnie pomiary, plan tygodnia i szablony są takie jak przed wdrożeniem
 - [ ] Odświeżenie strony (F5) na zakładce innej niż Start zostawia tę zakładkę i dane
@@ -48,7 +48,7 @@ Nowy przypadek: warunki wstępne, kroki, oczekiwany wynik.
 - [ ] „Wycofaj zgodę” → okno z opisem skutków; „Anuluj” nic nie zmienia; potwierdzenie → ekran „Aktywuj konto”, także po odświeżeniu; ponowna zgoda przywraca dziennik z wcześniejszymi danymi, bez komunikatów błędu wczytywania na żadnej zakładce
 - [ ] „Wyloguj” w nagłówku → powrót do ekranu logowania; odświeżenie strony nie loguje ponownie
 - [ ] Produkcja: właściciel widzi swoje dane po aktywacji konta, inne konto — ekran braku dostępu
-- [ ] Produkcja po migracji (`scripts/migrate-to-users.ts --apply`): liczba treningów w nagłówku, pomiary i plan tygodnia takie jak przed wdrożeniem
+- [ ] Produkcja po usunięciu kolekcji sprzed migracji: warunki — aktywne konto właściciela i dane w `users/{uid}/…`; otwórz Historię, Postępy i Plan, potem odśwież każdą zakładkę → te same treningi, pomiary i plan tygodnia, bez błędów wczytywania
 
 ## 1a. Nawigacja
 
@@ -69,6 +69,9 @@ Nowy przypadek: warunki wstępne, kroki, oczekiwany wynik.
 - [ ] 2.6 Kolejność pomiarów w „Postępach” nie zmienia się po wejściu na „Start”
 - [ ] 2.7 Bez rozpoczętego treningu kliknięcie szablonu otwiera zakładkę „Trening” z ćwiczeniami tego szablonu
 - [ ] 2.8 Trening rozpoczęty, wpisana seria, kliknięcie innego szablonu na „Start” → okno „Trwa inny trening” z nazwami obu treningów; „Wróć do treningu” (albo „X”) → zakładka „Trening” z wpisanymi wartościami; „Zacznij nowy trening” → zakładka „Trening” z ćwiczeniami nowego szablonu, bez wcześniejszych serii
+- [ ] 2.9 Warunki: właściciel, zapisany pomiar. „Edytuj pomiar” na Starcie → formularz zawiera zapisaną datę, wagę i talię; „Anuluj” nie zmienia danych. Popraw datę, wagę (także z przecinkiem) i talię, zapisz, odśwież → jeden poprawiony wpis, aktualne statystyki i „Postępy”
+- [ ] 2.10 Warunki: więcej niż pięć pomiarów. „Pokaż wszystkie pomiary” → także starsze wpisy mają przyciski edycji i usuwania; popraw najstarszy i odśwież → korekta pozostaje
+- [ ] 2.11 Warunki: zapisany pomiar. „Usuń pomiar” → okno z datą; „Anuluj” zostawia wpis; potwierdzenie usuwa go także po odświeżeniu. Przy odrzuconym usunięciu w emulatorze → błąd w oknie, można ponowić, dane na serwerze pozostają
 
 ## 3. Trening
 
@@ -84,7 +87,10 @@ Nowy przypadek: warunki wstępne, kroki, oczekiwany wynik.
 - [ ] Lista treningów posortowana od najnowszego
 - [ ] Kliknięcie treningu otwiera szczegóły z seriami; zamknięcie okna działa
 - [ ] Usunięcie: anulowanie potwierdzenia nic nie zmienia; potwierdzenie usuwa trening także po odświeżeniu
-- [ ] Nieudane usunięcie → komunikat nad treścią zakładki, trening pozostaje na liście
+- [ ] Warunki: zapisany trening, emulator odrzuca usunięcie. Potwierdź usunięcie → komunikat w oknie potwierdzenia, dane na serwerze pozostają; po przywróceniu reguł ponów → okno zamyka się, trening znika
+- [ ] Warunki: zapisany trening z seriami i notatką. „Edytuj trening” → popraw kg/powtórzenia/RIR, dodaj i usuń serię, zmień notatki, „Anuluj” → zapisany trening bez zmian. Ponów i „Zapisz zmiany”, odśwież, otwórz podgląd → nowe serie i notatki; data oraz liczba treningów bez zmian
+- [ ] Warunki: edycja zapisanego treningu, emulator odrzuca zapis. „Zapisz zmiany” → błąd w formularzu, wartości pozostają; przywróć reguły, ponów → korekta zapisana pod tym samym wpisem
+- [ ] Warunki: rozpoczęty inny trening z wpisaną serią. Popraw lub usuń zapisany trening z Historii, odśwież i przejdź do „Trening” → bieżący szkic i jego serie pozostają
 
 ## 5. Szablony
 

@@ -1,4 +1,4 @@
-import { addDoc, collection, deleteDoc, doc, onSnapshot } from 'firebase/firestore';
+import { collection, deleteDoc, doc, onSnapshot, setDoc } from 'firebase/firestore';
 import { db } from '../../lib/firebaseConfig.js';
 import { Measurement } from '../../types/index.js';
 import { parseMeasurement } from '../../utils/parse.utils.js';
@@ -36,9 +36,10 @@ export class MeasurementsService {
     );
   }
 
-  static async save(uid: string, measurement: Omit<Measurement, 'id'>): Promise<void> {
+  static async save(uid: string, measurement: Measurement & { id: string }): Promise<void> {
     try {
-      await addDoc(measurements(uid), measurement);
+      const { id, ...data } = measurement;
+      await setDoc(doc(measurements(uid), id), data);
     } catch (err) {
       console.error('MeasurementsService.save error:', err);
       throw err;

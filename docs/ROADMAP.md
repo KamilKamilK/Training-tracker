@@ -73,7 +73,7 @@ Zasada: trener widzi dane podopiecznego tylko podczas aktywnej współpracy; po 
 | `exercises/{id}` | biblioteka globalna: nazwa, partie mięśniowe, sprzęt, wideo | wszyscy zalogowani (odczyt) |
 | `invites/{token}` | zaproszenie: losowy token 128-bit, trener, ważność ≤ 7 dni, jednorazowe użycie ([ADR-0008](adr/0008-accounts-and-invitations.md)) | tworzy trener; odczyt pojedynczego dokumentu z linku, lista zabroniona |
 
-Obecne dane właściciela przechodzą do `users/{uid}/…` w dwóch krokach ([ADR-0016](adr/0016-roles-views-exercise-library.md)): przeniesienie bez zmiany kształtu (`scripts/migrate-to-users.ts`), potem serie liczbowe i `exerciseId` po wgraniu biblioteki — każdy krok z trybem próbnym, po akceptacji właściciela.
+Dane właściciela są w `users/{uid}/…` ([ADR-0016](adr/0016-roles-views-exercise-library.md)). Kolejny krok migracji to serie liczbowe i `exerciseId` po wgraniu biblioteki — z trybem próbnym, po akceptacji właściciela.
 
 ## Decyzje
 
@@ -101,7 +101,7 @@ Rozmiar: S — kilka dni, M — 1–2 tygodnie, L — 3+ tygodnie pracy jednej o
 | Etap | Zakres | Gotowe, gdy | Rozmiar |
 |---|---|---|---|
 | **0. Fundament** | Schematy Zod, routing, nasłuchy danych, cache offline i podział kodu według funkcji — wdrożone ([ADR-0010](adr/0010-web-app-architecture.md)); testy E2E Playwright na emulatorach i na zbudowanej wersji — wdrożone (`e2e/`, [ADR-0011](adr/0011-environments-hosting-monitoring.md)) | Scenariusze z checklisty mają testy E2E, aplikacja otwiera się offline po pierwszej wizycie online | M |
-| **1. Wiele kont, nowy model danych** | **Wdrożone:** ekran „Zaloguj / Zarejestruj” (Google albo e-mail z hasłem, potwierdzenie adresu, reset hasła); profil, zgoda wymagana do aktywacji, Ustawienia; dane w `users/{uid}/…` i szablony w Firestore (migracja, krok 1 — dane właściciela przeniesione na produkcji 2026-10-21: 3 treningi, 2 pomiary, plan tygodnia). **Zostało:** biblioteka ćwiczeń; serie liczbowe i `exerciseId` (migracja, krok 2); usunięcie starych kolekcji; usunięcie konta (funkcja Vercel) — szczegóły w [Najbliższych krokach](#najbliższe-kroki) | Dwa konta nie widzą swoich danych (testy reguł A/B), konto bez potwierdzonego adresu nie ma dostępu, dane właściciela przeniesione bez strat | L |
+| **1. Wiele kont, nowy model danych** | **Wdrożone:** ekran „Zaloguj / Zarejestruj” (Google albo e-mail z hasłem, potwierdzenie adresu, reset hasła); profil, zgoda wymagana do aktywacji, Ustawienia; dane w `users/{uid}/…` i szablony w Firestore (migracja, krok 1 — dane właściciela przeniesione na produkcji 2026-10-21: 3 treningi, 2 pomiary, plan tygodnia). **Zostało:** biblioteka ćwiczeń; serie liczbowe i `exerciseId` (migracja, krok 2); usunięcie konta (funkcja Vercel) — szczegóły w [Najbliższych krokach](#najbliższe-kroki) | Dwa konta nie widzą swoich danych (testy reguł A/B), konto bez potwierdzonego adresu nie ma dostępu, dane właściciela przeniesione bez strat | L |
 | **2. Postęp** | Wyniki z poprzedniego razu przy ćwiczeniu; wykresy e1RM, rekordy, objętość tygodniowa, regularność; trend wagi; minutnik przerwy | Podopieczny widzi postęp dla dowolnego ćwiczenia z historii; obliczenia mają testy jednostkowe | M |
 | **3. Trener** | Rola trenera nadawana przez administratora; konta zakładane przez trenera i zaproszenia linkiem ([ADR-0015](adr/0015-accounts-roles-consent.md)); lista podopiecznych z sygnałami; kreator planu wielotygodniowego z kopiowaniem i progresją; przypisanie planu; „zadane / wykonane”; komentarze; check-iny; import CSV/Excel | Pilotaż: 2–3 trenerów prowadzi realnych podopiecznych przez 4 tygodnie bez arkusza | L |
 | **4. Mobile — odłożony** | Do wznowienia decyzją właściciela ([ADR-0004](adr/0004-firebase-multi-user.md)); wtedy PWA, a później Capacitor | — | M |
@@ -116,7 +116,6 @@ Kolejność pracy do końca etapu 1 i na początek etapu 2. 🖐️ — właści
 | # | Krok | Wykonanie | Zależy od | Gotowe, gdy |
 |---|---|---|---|---|
 | 1 | **Sprawdzenie po wdrożeniu (migracja, krok 1).** Reguły, kopia danych i wdrożenie są wykonane; zostało porównanie w aplikacji z danymi zapisanymi poza aplikacją — test dymny z [listy kontrolnej](MANUAL_TESTING_CHECKLIST.md#kiedy-i-co-sprawdzać) | 🖐️ | — | Wdrożona wersja pokazuje te same treningi, pomiary, plan i szablony co przed wdrożeniem |
-| 2 | **Usunięcie starych kolekcji.** Reguły bez tych kolekcji i skrypt z kopią do pliku JSON są gotowe; zostało opublikowanie reguł i uruchomienie skryptu według [README](../README.md#usunięcie-kolekcji-sprzed-migracji-jednorazowo), potem usunięcie skryptów migracji ([KNOWN_ISSUES #21](KNOWN_ISSUES.md)) | 🖐️💻 | — | Reguły na produkcji zawierają tylko `users` i `owners`, a kolekcje w korzeniu bazy są puste |
 | 3 | **Biblioteka ćwiczeń** ([ADR-0016](adr/0016-roles-views-exercise-library.md), pkt 6). Najpierw arkusz 120–150 ćwiczeń z free-exercise-db i z obecnych szablonów (nazwa PL/EN, partie mięśni, sprzęt) do przeglądu przez właściciela. Potem kolekcja `exercises` z regułami (odczyt dla aktywnych kont, zapis tylko przez skrypt administratora) i testami. Na koniec skrypt wgrania z trybem próbnym. Ustalenia właściciela (2026-10-21): wariant ćwiczenia (np. wyciskanie na skosie) to osobne ćwiczenie, bo postęp liczy się osobno; nazwa polska główna, angielska pomocnicza; wideo techniki później | 💻🖐️ | — | Zatwierdzona lista jest w `exercises` na produkcji |
 | 4 | **Serie liczbowe i `exerciseId` (migracja, krok 2)** ([ADR-0007](adr/0007-exercises-and-sets.md)). Nowe schematy Zod i reguły, formularz serii przyjmujący liczby (także z przecinkiem), szablony domyślne rozdzielone na ćwiczenie i zalecenie. W tej samej zmianie kształtu `sessions`: identyfikator szablonu, czas rozpoczęcia i notatki ([KNOWN_ISSUES #28, #29](KNOWN_ISSUES.md)). Tabela mapowań „nazwa → `exerciseId`” do przeglądu przez właściciela, skrypt z trybem próbnym i raportem liczby sesji i serii | 💻🖐️ | 3 | Każdy trening ma ćwiczenia z `exerciseId` i liczbowe serie, a raport liczby sesji i serii zgadza się przed i po |
 | 5 | **Etap 2: postęp.** Wyniki z poprzedniego razu przy ćwiczeniu, e1RM, rekordy, objętość tygodniowa — jako czyste funkcje z testami | 💻 | 4 | Jak w tabeli etapów |
@@ -129,7 +128,7 @@ Dlaczego tak:
 - Etap 2 daje wartość bez trenerów i korzysta z nowego modelu, więc sprawdza go w praktyce przed etapem 3.
 - Usunięcie konta i opinia prawna blokują otwarcie rejestracji dla innych osób, więc nie mogą czekać na koniec etapu 3.
 
-Między krokami warto zamykać drobne punkty z [KNOWN_ISSUES.md](KNOWN_ISSUES.md). Programistycznie najpierw #27 (formularz serii na telefonie), potem #25, #26 (pomiary), #18 i #22; #28 i #29 wchodzą do kroku 4, a edycja zapisanego treningu z #26 — po nim.
+Między krokami warto zamykać drobne punkty z [KNOWN_ISSUES.md](KNOWN_ISSUES.md). Programistycznie najpierw #27 (formularz serii na telefonie), potem #25, #18 i #22; #28 i #29 wchodzą do kroku 4.
 
 ## Jakość — zasady przekrojowe
 
