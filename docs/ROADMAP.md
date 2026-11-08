@@ -14,7 +14,7 @@ Główna przewaga nad Excelem: plan i wykonanie są w jednym miejscu, porównani
 
 ## Stan wyjściowy
 
-Co już działa: zapis treningu z szablonu ze szkicem odpornym na odświeżenie, plan tygodnia, historia, pomiary, szablony własne w koncie, logowanie Google albo e-mailem z hasłem (potwierdzenie adresu, reset hasła), zgoda na dane o zdrowiu i Ustawienia, dane każdego konta w `users/{uid}/…`, reguły Firestore z walidacją, adresy URL zakładek, dane na żywo i praca offline na otwartej stronie, testy jednostkowe, reguł i end-to-end. Budowa aplikacji: [ARCHITECTURE.md](ARCHITECTURE.md).
+Co już działa: zapis treningu z szablonu ze szkicem odpornym na odświeżenie, plan tygodnia, historia, pomiary, szablony własne w koncie, logowanie Google albo e-mailem z hasłem (potwierdzenie adresu, reset hasła), zgoda na dane o zdrowiu i Ustawienia, dane każdego konta w `users/{uid}/…`, reguły Firestore z walidacją, adresy URL zakładek, dane na żywo i otwieranie aplikacji offline po pierwszej wizycie online, testy jednostkowe, reguł i end-to-end. Budowa aplikacji: [ARCHITECTURE.md](ARCHITECTURE.md).
 
 Co ogranicza rozwój:
 
@@ -44,7 +44,7 @@ Zasada: trener widzi dane podopiecznego tylko podczas aktywnej współpracy; po 
 
 **Podopieczny**
 - „Dzisiaj”: trening z planu z zadanymi seriami (powtórzenia, zakres, RIR/RPE, tempo, przerwa, uwagi, wideo techniki) i wynikami z poprzedniego razu przy każdym ćwiczeniu.
-- Szybki zapis serii, minutnik przerwy, odhaczanie serii, praca offline na otwartej stronie z synchronizacją.
+- Szybki zapis serii, minutnik przerwy, odhaczanie serii, praca offline z synchronizacją i ponownym otwieraniem po pierwszej wizycie online.
 - Trening spoza planu (dzisiejsze szablony) — dziennik bez trenera działa dalej.
 - Postęp: wykres e1RM i najlepszej serii dla ćwiczenia, rekordy, tygodniowa objętość (tonaż, serie na partię mięśniową), regularność wobec planu, waga ze średnią 7-dniową, obwody; zdjęcia sylwetki po przejściu na plan Blaze ([ADR-0009](adr/0009-cloud-functions-aggregates.md)).
 - Cotygodniowy check-in dla trenera (samopoczucie, sen, waga, komentarz).
@@ -73,7 +73,7 @@ Zasada: trener widzi dane podopiecznego tylko podczas aktywnej współpracy; po 
 | `exercises/{id}` | biblioteka globalna: nazwa, partie mięśniowe, sprzęt, wideo | wszyscy zalogowani (odczyt) |
 | `invites/{token}` | zaproszenie: losowy token 128-bit, trener, ważność ≤ 7 dni, jednorazowe użycie ([ADR-0008](adr/0008-accounts-and-invitations.md)) | tworzy trener; odczyt pojedynczego dokumentu z linku, lista zabroniona |
 
-Obecne dane właściciela przechodzą do `users/{uid}/…` w dwóch krokach ([ADR-0016](adr/0016-roles-views-exercise-library.md)): przeniesienie bez zmiany kształtu (`scripts/migrate-to-users.ts`), potem serie liczbowe i `exerciseId` po wgraniu biblioteki — każdy krok z trybem próbnym, po akceptacji właściciela.
+Dane właściciela są w `users/{uid}/…` ([ADR-0016](adr/0016-roles-views-exercise-library.md)). Kolejny krok migracji to serie liczbowe i `exerciseId` po wgraniu biblioteki — z trybem próbnym, po akceptacji właściciela.
 
 ## Decyzje
 
@@ -92,7 +92,7 @@ Wszystkie decyzje potrzebne do etapów 1–3 są przyjęte (2026-10-10):
 | [0014](adr/0014-server-functions-and-email.md) | Funkcje Vercel z Firebase Admin SDK; e-maile przez Brevo po zakupie domeny |
 | [0015](adr/0015-accounts-roles-consent.md) | Zgoda na dane o zdrowiu warunkiem aktywacji; rola trenera od administratora; konta zakładane przez trenera; usunięcie konta |
 
-Backlog decyzji: zdjęcia sylwetki (Cloud Storage na planie Blaze albo inny dostawca); drugi dostawca chmury, np. Azure z kolejką zadań — gdy pojawi się praca w tle (eksporty, przeliczanie statystyk), wymaga nowego ADR; własna domena: e-maile przez Brevo, adres aplikacji i strona `/konto/akcja` ([ADR-0014](adr/0014-server-functions-and-email.md)); otwieranie aplikacji bez sieci ([ADR-0013](adr/0013-offline-app-shell.md), odłożona razem z wersją mobilną); plan Blaze (warunki w ADR-0009); model cenowy i operator płatności — przed etapem 5.
+Backlog decyzji: zdjęcia sylwetki (Cloud Storage na planie Blaze albo inny dostawca); drugi dostawca chmury, np. Azure z kolejką zadań — gdy pojawi się praca w tle (eksporty, przeliczanie statystyk), wymaga nowego ADR; własna domena: e-maile przez Brevo, adres aplikacji i strona `/konto/akcja` ([ADR-0014](adr/0014-server-functions-and-email.md)); plan Blaze (warunki w ADR-0009); model cenowy i operator płatności — przed etapem 5.
 
 ## Etapy
 
@@ -100,8 +100,8 @@ Rozmiar: S — kilka dni, M — 1–2 tygodnie, L — 3+ tygodnie pracy jednej o
 
 | Etap | Zakres | Gotowe, gdy | Rozmiar |
 |---|---|---|---|
-| **0. Fundament** | Schematy Zod, routing, nasłuchy danych, cache offline i podział kodu według funkcji — wdrożone ([ADR-0010](adr/0010-web-app-architecture.md)); testy E2E Playwright na emulatorach i na zbudowanej wersji — wdrożone (`e2e/`, [ADR-0011](adr/0011-environments-hosting-monitoring.md)) | Scenariusze z checklisty mają testy E2E, aplikacja działa offline na otwartej stronie | M |
-| **1. Wiele kont, nowy model danych** | **Wdrożone:** ekran „Zaloguj / Zarejestruj” (Google albo e-mail z hasłem, potwierdzenie adresu, reset hasła); profil, zgoda wymagana do aktywacji, Ustawienia; dane w `users/{uid}/…` i szablony w Firestore (migracja, krok 1 — dane właściciela przeniesione na produkcji 2026-10-21: 3 treningi, 2 pomiary, plan tygodnia). **Zostało:** biblioteka ćwiczeń; serie liczbowe i `exerciseId` (migracja, krok 2); usunięcie starych kolekcji; usunięcie konta (funkcja Vercel) — szczegóły w [Najbliższych krokach](#najbliższe-kroki) | Dwa konta nie widzą swoich danych (testy reguł A/B), konto bez potwierdzonego adresu nie ma dostępu, dane właściciela przeniesione bez strat | L |
+| **0. Fundament** | Schematy Zod, routing, nasłuchy danych, cache offline i podział kodu według funkcji — wdrożone ([ADR-0010](adr/0010-web-app-architecture.md)); testy E2E Playwright na emulatorach i na zbudowanej wersji — wdrożone (`e2e/`, [ADR-0011](adr/0011-environments-hosting-monitoring.md)) | Scenariusze z checklisty mają testy E2E, aplikacja otwiera się offline po pierwszej wizycie online | M |
+| **1. Wiele kont, nowy model danych** | **Wdrożone:** ekran „Zaloguj / Zarejestruj” (Google albo e-mail z hasłem, potwierdzenie adresu, reset hasła); profil, zgoda wymagana do aktywacji, Ustawienia; dane w `users/{uid}/…` i szablony w Firestore (migracja, krok 1 — dane właściciela przeniesione na produkcji 2026-10-21: 3 treningi, 2 pomiary, plan tygodnia). **Zostało:** biblioteka ćwiczeń; serie liczbowe i `exerciseId` (migracja, krok 2); usunięcie konta (funkcja Vercel) — szczegóły w [Najbliższych krokach](#najbliższe-kroki) | Dwa konta nie widzą swoich danych (testy reguł A/B), konto bez potwierdzonego adresu nie ma dostępu, dane właściciela przeniesione bez strat | L |
 | **2. Postęp** | Wyniki z poprzedniego razu przy ćwiczeniu; wykresy e1RM, rekordy, objętość tygodniowa, regularność; trend wagi; minutnik przerwy | Podopieczny widzi postęp dla dowolnego ćwiczenia z historii; obliczenia mają testy jednostkowe | M |
 | **3. Trener** | Rola trenera nadawana przez administratora; konta zakładane przez trenera i zaproszenia linkiem ([ADR-0015](adr/0015-accounts-roles-consent.md)); lista podopiecznych z sygnałami; kreator planu wielotygodniowego z kopiowaniem i progresją; przypisanie planu; „zadane / wykonane”; komentarze; check-iny; import CSV/Excel | Pilotaż: 2–3 trenerów prowadzi realnych podopiecznych przez 4 tygodnie bez arkusza | L |
 | **4. Mobile — odłożony** | Do wznowienia decyzją właściciela ([ADR-0004](adr/0004-firebase-multi-user.md)); wtedy PWA, a później Capacitor | — | M |
@@ -116,7 +116,6 @@ Kolejność pracy do końca etapu 1 i na początek etapu 2. 🖐️ — właści
 | # | Krok | Wykonanie | Zależy od | Gotowe, gdy |
 |---|---|---|---|---|
 | 1 | **Sprawdzenie po wdrożeniu (migracja, krok 1).** Reguły, kopia danych i wdrożenie są wykonane; zostało porównanie w aplikacji z danymi zapisanymi poza aplikacją — test dymny z [listy kontrolnej](MANUAL_TESTING_CHECKLIST.md#kiedy-i-co-sprawdzać) | 🖐️ | — | Wdrożona wersja pokazuje te same treningi, pomiary, plan i szablony co przed wdrożeniem |
-| 2 | **Usunięcie starych kolekcji.** Reguły bez tych kolekcji i skrypt z kopią do pliku JSON są gotowe; zostało opublikowanie reguł i uruchomienie skryptu według [README](../README.md#usunięcie-kolekcji-sprzed-migracji-jednorazowo), potem usunięcie skryptów migracji ([KNOWN_ISSUES #21](KNOWN_ISSUES.md)) | 🖐️💻 | — | Reguły na produkcji zawierają tylko `users` i `owners`, a kolekcje w korzeniu bazy są puste |
 | 3 | **Biblioteka ćwiczeń** ([ADR-0016](adr/0016-roles-views-exercise-library.md), pkt 6). Najpierw arkusz 120–150 ćwiczeń z free-exercise-db i z obecnych szablonów (nazwa PL/EN, partie mięśni, sprzęt) do przeglądu przez właściciela. Potem kolekcja `exercises` z regułami (odczyt dla aktywnych kont, zapis tylko przez skrypt administratora) i testami. Na koniec skrypt wgrania z trybem próbnym. Ustalenia właściciela (2026-10-21): wariant ćwiczenia (np. wyciskanie na skosie) to osobne ćwiczenie, bo postęp liczy się osobno; nazwa polska główna, angielska pomocnicza; wideo techniki później | 💻🖐️ | — | Zatwierdzona lista jest w `exercises` na produkcji |
 | 4 | **Serie liczbowe i `exerciseId` (migracja, krok 2)** ([ADR-0007](adr/0007-exercises-and-sets.md)). Nowe schematy Zod i reguły, formularz serii przyjmujący liczby (także z przecinkiem), szablony domyślne rozdzielone na ćwiczenie i zalecenie. W tej samej zmianie kształtu `sessions`: identyfikator szablonu, czas rozpoczęcia i notatki ([KNOWN_ISSUES #28, #29](KNOWN_ISSUES.md)). Tabela mapowań „nazwa → `exerciseId`” do przeglądu przez właściciela, skrypt z trybem próbnym i raportem liczby sesji i serii | 💻🖐️ | 3 | Każdy trening ma ćwiczenia z `exerciseId` i liczbowe serie, a raport liczby sesji i serii zgadza się przed i po |
 | 5 | **Etap 2: postęp.** Wyniki z poprzedniego razu przy ćwiczeniu, e1RM, rekordy, objętość tygodniowa — jako czyste funkcje z testami | 💻 | 4 | Jak w tabeli etapów |

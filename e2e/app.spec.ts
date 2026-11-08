@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { readFile, writeFile } from 'node:fs/promises';
 import { activateProfile, grantOwner, journalDocumentIds, measurementCount, rejectJournalDeletes, rejectMeasurementWrites, rejectWorkoutWrites, resetEmulators, restoreRules } from './emulators.js';
 
 const OWNER = 'owner@example.com';
@@ -352,6 +353,65 @@ test('a workout finished offline is stored once when the connection returns', as
   await expect(page.getByText('Trening A - Klatka + Barki')).toHaveCount(1);
 });
 
+test('the journal reopens and reloads offline with the account, data and workout draft', async ({ page, context }) => {
+  await openAsOwner(page);
+  await page.evaluate(() => navigator.serviceWorker.ready.then(() => undefined));
+  await page.getByRole('button', { name: 'Dodaj', exact: true }).click();
+  await page.getByLabel('Waga (kg)').fill('81');
+  await page.getByLabel('Obwód talii (cm)').fill('89');
+  await page.getByRole('button', { name: 'Zapisz pomiar' }).click();
+  await expect(page.getByRole('heading', { name: 'Nowy pomiar' })).toHaveCount(0);
+  await expect(page.getByText('81 kg | 89 cm')).toBeVisible();
+
+  await page.getByText('Trening A - Klatka + Barki').click();
+  await page.getByRole('button', { name: 'Dodaj serię' }).first().click();
+  await page.getByPlaceholder('kg').fill('80');
+  await page.close();
+  await context.setOffline(true);
+
+  const reopened = await context.newPage();
+  reopened.on('pageerror', error => pageErrors.push(error.message));
+  await reopened.goto('/workout');
+  await expect(reopened.getByPlaceholder('kg')).toHaveValue('80');
+  await reopened.reload();
+  await expect(reopened.getByPlaceholder('kg')).toHaveValue('80');
+  await reopened.getByRole('link', { name: 'Start', exact: true }).click();
+  await expect(reopened.getByText('81 kg | 89 cm')).toBeVisible();
+  await reopened.getByRole('link', { name: 'Szablony', exact: true }).click();
+  await expect(reopened.getByRole('heading', { name: /Szablony Treningów/ })).toBeVisible();
+  await context.setOffline(false);
+});
+
+test('a new app version waits for confirmation and keeps the workout draft after updating', async ({ page }) => {
+  await openAsOwner(page);
+  await page.evaluate(() => navigator.serviceWorker.ready.then(() => undefined));
+  await expect.poll(() => page.evaluate(() => navigator.serviceWorker.controller !== null)).toBe(true);
+  await page.getByText('Trening A - Klatka + Barki').click();
+  await page.getByRole('button', { name: 'Dodaj serię' }).first().click();
+  await page.getByPlaceholder('kg').fill('80');
+  const workerPath = 'dist-e2e/sw.js';
+  const original = await readFile(workerPath, 'utf8');
+  try {
+    // A changed worker script simulates the next deployment on the real preview server.
+    await writeFile(workerPath, `${original}\n// Next deployment\n`);
+    await page.evaluate(async () => { await (await navigator.serviceWorker.ready).update(); });
+    await expect(page.getByText('Dostępna nowa wersja aplikacji.')).toBeVisible();
+    await expect(page.getByPlaceholder('kg')).toHaveValue('80');
+    expect(await page.evaluate(async () => (await navigator.serviceWorker.ready).waiting !== null)).toBe(true);
+
+    await page.getByRole('button', { name: 'Później' }).click();
+    await expect(page.getByText('Dostępna nowa wersja aplikacji.')).toHaveCount(0);
+    await expect(page.getByPlaceholder('kg')).toHaveValue('80');
+    await page.reload();
+    await expect(page.getByText('Dostępna nowa wersja aplikacji.')).toBeVisible();
+    await Promise.all([page.waitForEvent('load'), page.getByRole('button', { name: 'Odśwież', exact: true }).click()]);
+    await expect(page.getByPlaceholder('kg')).toHaveValue('80');
+    await expect(page.getByText('Dostępna nowa wersja aplikacji.')).toHaveCount(0);
+  } finally {
+    await writeFile(workerPath, original);
+  }
+});
+
 test('choosing a template during a workout asks before replacing it', async ({ page }) => {
   await openAsOwner(page);
   await page.getByText('Trening A - Klatka + Barki').click();
@@ -431,7 +491,7 @@ test('the owner activates the account with the consent and deactivates it by wit
   await expect(page).toHaveURL(/\/settings$/);
   await page.getByLabel('Imię').fill('Anna Nowak');
   await page.getByRole('button', { name: 'Zapisz' }).click();
-  await expect(page.getByRole('status')).toHaveText('Zapisano.');
+  await expect(page.getByRole('status').filter({ hasText: 'Zapisano.' })).toHaveText('Zapisano.');
   await page.reload();
   await expect(page.getByLabel('Imię')).toHaveValue('Anna Nowak');
 
