@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useId, useRef } from 'react';
 import { X } from 'lucide-react';
 
 interface ModalProps {
@@ -9,19 +9,46 @@ interface ModalProps {
 }
 
 export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children }) => {
+  const titleId = useId();
+  const dialogRef = useRef<HTMLDialogElement>(null);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+
+    const previousFocus = document.activeElement;
+    dialog.showModal();
+    closeButtonRef.current?.focus();
+
+    return () => {
+      dialog.close();
+      if (previousFocus instanceof HTMLElement && previousFocus.isConnected) previousFocus.focus();
+    };
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
-      <div className="bg-slate-800 rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6">
-        <div className="flex justify-between items-start mb-4">
-          <h2 className="text-2xl font-bold">{title}</h2>
-          <button onClick={onClose} className="text-slate-400 hover:text-white">
-            <X size={24} />
-          </button>
-        </div>
-        {children}
+    <dialog
+      ref={dialogRef}
+      aria-modal="true"
+      aria-labelledby={titleId}
+      onCancel={event => {
+        // The parent decides whether closing is allowed, including while a save is pending.
+        event.preventDefault();
+        onClose();
+      }}
+      className="fixed inset-0 m-auto bg-slate-800 text-inherit rounded-xl max-w-2xl w-[calc(100%-2rem)] max-h-[90vh] overflow-y-auto p-6 backdrop:bg-black/70"
+    >
+      <div className="flex justify-between items-start mb-4">
+        <h2 id={titleId} className="text-2xl font-bold">{title}</h2>
+        <button ref={closeButtonRef} type="button" onClick={onClose} aria-label="Zamknij" className="text-slate-400 hover:text-white">
+          <X size={24} aria-hidden="true" />
+        </button>
       </div>
-    </div>
+      {children}
+    </dialog>
   );
 };
