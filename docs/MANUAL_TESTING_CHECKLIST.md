@@ -1,7 +1,7 @@
 # Dziennik Treningowy — ręczna lista kontrolna testów
 
 **Ostatnie pełne przejście:** brak.
-**Automatyzacja:** ekran logowania, brak dostępu, aktywacja konta i wycofanie zgody, sekcja 1a (bez produkcji), 2.2–2.3, 2.7–2.9, 2.11, 3.3–3.6, edycja i usuwanie z sekcji 4 oraz wybrane przypadki sekcji 8 (synchronizacja kart, przechowanie zapisu offline, wylogowanie i szybkie wczytanie przy pozostawionej dzierżawie) są testami end-to-end w `e2e/` (`npm run test:e2e`, na zbudowanej wersji); ręcznie sprawdzamy pozostałe i całość na produkcji.
+**Automatyzacja:** ekran logowania, brak dostępu, aktywacja konta i wycofanie zgody, sekcja 1a (bez produkcji i ręcznego odsłuchu czytnikiem ekranu), 2.2–2.3, 2.7–2.9, 2.11, 3.3–3.6, edycja i usuwanie z sekcji 4 oraz wybrane przypadki sekcji 8 (synchronizacja kart, przechowanie zapisu offline, wylogowanie i szybkie wczytanie przy pozostawionej dzierżawie) są testami end-to-end w `e2e/` (`npm run test:e2e`, na zbudowanej wersji); ręcznie sprawdzamy pozostałe i całość na produkcji.
 **Znane rozbieżności:** punkt z numerem KNOWN_ISSUES (np. „#1”) opisuje zachowanie docelowe, którego środowisko jeszcze nie spełnia — niepowodzenie potwierdza zgłoszony problem.
 **Cel:** weryfikacja funkcji aplikacji przed wdrożeniem na Vercel lub po większych zmianach.
 **Środowisko:** `npm run emulators` i `npm run dev` z `VITE_USE_EMULATORS=true` ([README](../README.md#-uruchomienie-lokalne)); przeglądarka desktopowa i widok mobilny (DevTools, szerokość 375 px).
@@ -58,6 +58,8 @@ Nowy przypadek: warunki wstępne, kroki, oczekiwany wynik.
 - [ ] Nieznany adres (np. `/abc`) przenosi na Start
 - [ ] Błąd wczytania lub zapisu poza formularzem (np. reguły odrzucające odczyt historii w emulatorze) → czerwony dymek w prawym dolnym rogu (na telefonie na całą szerokość u dołu), widoczny na każdej zakładce do zamknięcia „X”; błąd zapisu treningu i pomiaru zostaje przy formularzu
 - [ ] Link do zakładki (np. `/history`) otwarty bez zalogowania → ekran logowania, po zalogowaniu ta sama zakładka
+- [ ] Warunki: zalogowany właściciel, klawiatura i czytnik ekranu. Na Starcie otwórz „Dodaj” klawiszem Enter → czytnik rozpoznaje dialog „Nowy pomiar”, fokus jest na przycisku „Zamknij”; Tab i Shift+Tab pomijają aplikację w tle (mogą przejść do paska przeglądarki). Escape zamyka okno i przywraca fokus na „Dodaj”; powtórz zamknięcie przyciskiem „Zamknij” i „Anuluj”
+- [ ] Warunki: właściciel, zapisany trening. Otwórz jego „Podgląd” w Historii oraz „Wycofaj zgodę” w Ustawieniach → każde okno ma nazwę z tytułu, fokus trafia do środka; Escape wraca do przycisku otwierającego bez usunięcia danych i wycofania zgody. Sprawdź też okno pomiaru na telefonie przy szerokości 375 px → treść mieści się na ekranie i przewija
 
 ## 2. Start (pulpit)
 
