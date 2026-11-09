@@ -2,6 +2,8 @@ import TrainingTracker from './app/TrainingTracker.js';
 import { AuthScreen } from './features/auth/AuthScreen.js';
 import { ConsentScreen } from './features/profile/ConsentScreen.js';
 import { LoadingSpinner } from './components/common/LoadingSpinner.js';
+import { ConfirmDialog } from './components/common/ConfirmDialog.js';
+import { ErrorBanner } from './components/common/ErrorBanner.js';
 import { useAuth } from './features/auth/useAuth.js';
 import { useProfile } from './features/profile/useProfile.js';
 import { isActive } from './features/profile/profile.utils.js';
@@ -11,55 +13,79 @@ function App() {
   const ownerUid = auth.status === 'owner' ? auth.uid : null;
   const account = useProfile(ownerUid);
 
-  if (auth.status === 'loading' || account.isLoading) return <LoadingSpinner />;
+  const renderScreen = () => {
+    if (auth.status === 'loading' || account.isLoading) return <LoadingSpinner />;
 
-  if (auth.status === 'owner' && ownerUid) {
-    // The journal opens only once the server confirmed the consent: its queries are checked by
-    // rules that read the stored profile, so opening earlier would get them rejected.
-    const confirmedActive = account.confirmedProfile !== null && isActive(account.confirmedProfile);
-    if (!account.profile || !isActive(account.profile) || !confirmedActive) {
+    if (auth.status === 'owner' && ownerUid) {
+      // The journal opens only once the server confirmed the consent: its queries are checked by
+      // rules that read the stored profile, so opening earlier would get them rejected.
+      const confirmedActive = account.confirmedProfile !== null && isActive(account.confirmedProfile);
+      if (!account.profile || !isActive(account.profile) || !confirmedActive) {
+        return (
+          <ConsentScreen
+            defaultName={account.profile?.displayName ?? auth.displayName ?? ''}
+            error={account.error}
+            onDismissError={account.clearError}
+            onActivate={account.activate}
+            onSignOut={auth.signOut}
+          />
+        );
+      }
       return (
-        <ConsentScreen
-          defaultName={account.profile?.displayName ?? auth.displayName ?? ''}
-          error={account.error}
-          onDismissError={account.clearError}
-          onActivate={account.activate}
+        <TrainingTracker
+          uid={ownerUid}
+          email={auth.email}
+          profile={account.profile}
+          profileError={account.error}
+          onDismissProfileError={account.clearError}
+          onUpdateDisplayName={account.updateDisplayName}
+          onWithdrawHealthConsent={account.withdrawHealthConsent}
           onSignOut={auth.signOut}
         />
       );
     }
+
+    // An owner always has a uid; the check only narrows the type.
+    if (auth.status === 'owner') return <LoadingSpinner />;
+
     return (
-      <TrainingTracker
-        uid={ownerUid}
+      <AuthScreen
+        variant={auth.status}
         email={auth.email}
-        profile={account.profile}
-        profileError={account.error}
-        onDismissProfileError={account.clearError}
-        onUpdateDisplayName={account.updateDisplayName}
-        onWithdrawHealthConsent={account.withdrawHealthConsent}
+        error={auth.error}
+        notice={auth.notice}
+        onDismissError={auth.clearError}
+        onGoogle={auth.signInWithGoogle}
+        onSignIn={auth.signInWithEmail}
+        onRegister={auth.register}
+        onReset={auth.sendPasswordReset}
+        onResendVerification={auth.resendVerification}
+        onCheckVerification={auth.checkVerification}
         onSignOut={auth.signOut}
       />
     );
-  }
-
-  // An owner always has a uid; the check only narrows the type.
-  if (auth.status === 'owner') return <LoadingSpinner />;
+  };
 
   return (
-    <AuthScreen
-      variant={auth.status}
-      email={auth.email}
-      error={auth.error}
-      notice={auth.notice}
-      onDismissError={auth.clearError}
-      onGoogle={auth.signInWithGoogle}
-      onSignIn={auth.signInWithEmail}
-      onRegister={auth.register}
-      onReset={auth.sendPasswordReset}
-      onResendVerification={auth.resendVerification}
-      onCheckVerification={auth.checkVerification}
-      onSignOut={auth.signOut}
-    />
+    <>
+      {renderScreen()}
+      <ConfirmDialog
+        isOpen={auth.isSignOutWarningOpen}
+        title="Niewysłane zmiany"
+        confirmLabel="Wyloguj i usuń zmiany"
+        cancelLabel="Anuluj"
+        onConfirm={() => void auth.confirmSignOut()}
+        onCancel={auth.cancelSignOut}
+        isPending={auth.isSigningOut}
+      >
+        <p>
+          Część zmian, np. pomiar dodany bez połączenia z internetem, nie jest jeszcze zapisana na serwerze.
+          Wylogowanie usunie je z tej przeglądarki. Aby je zachować, anuluj, połącz się z internetem i poczekaj, aż
+          zostaną wysłane.
+        </p>
+        {auth.error && <ErrorBanner message={auth.error} onDismiss={auth.clearError} />}
+      </ConfirmDialog>
+    </>
   );
 }
 

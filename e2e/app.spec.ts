@@ -525,6 +525,53 @@ test('signing out removes the local data cache', async ({ page }) => {
   expect(await cacheNames()).toEqual([]);
 });
 
+const addMeasurementOffline = async (page: Page) => {
+  await page.getByRole('button', { name: 'Dodaj', exact: true }).click();
+  await page.getByLabel('Waga (kg)').fill('83');
+  await page.getByLabel('Obwód talii (cm)').fill('91');
+  await page.getByRole('button', { name: 'Zapisz pomiar' }).click();
+  await expect(page.getByRole('button', { name: 'Zapisywanie...' })).toBeDisabled();
+  await page.getByRole('button', { name: 'Anuluj' }).click();
+  await expect(page.getByText('83 kg | 91 cm')).toBeVisible();
+};
+
+test('signing out with an unsent change asks first, and signs out at once after it was sent', async ({ page, context }) => {
+  const uid = await openAsOwner(page);
+  await context.setOffline(true);
+  await addMeasurementOffline(page);
+
+  await page.getByRole('button', { name: 'Wyloguj' }).click();
+  await expect(page.getByRole('heading', { name: 'Niewysłane zmiany' })).toBeVisible();
+  await page.getByRole('button', { name: 'Anuluj' }).click();
+  await expect(page.getByRole('heading', { name: 'Niewysłane zmiany' })).toHaveCount(0);
+  await expect(page.getByText('83 kg | 91 cm')).toBeVisible();
+
+  await context.setOffline(false);
+  await expect.poll(() => measurementCount(uid)).toBe(1);
+  await Promise.all([page.waitForEvent('load'), page.getByRole('button', { name: 'Wyloguj' }).click()]);
+  await expect(page.getByRole('button', { name: 'Kontynuuj z Google' })).toBeVisible();
+  expect(await measurementCount(uid)).toBe(1);
+});
+
+test('signing out offline after the confirmation deletes the unsent change', async ({ page, context }) => {
+  const uid = await openAsOwner(page);
+  // The sign-in screen reloads without a connection only from the service worker cache.
+  await page.evaluate(() => navigator.serviceWorker.ready.then(() => undefined));
+  await context.setOffline(true);
+  await addMeasurementOffline(page);
+
+  await page.getByRole('button', { name: 'Wyloguj' }).click();
+  await Promise.all([page.waitForEvent('load'), page.getByRole('button', { name: 'Wyloguj i usuń zmiany' }).click()]);
+  await expect(page.getByRole('button', { name: 'Kontynuuj z Google' })).toBeVisible();
+
+  await context.setOffline(false);
+  await signIn(page, OWNER);
+  await page.reload();
+  await expect(page.getByRole('heading', { name: 'Rozpocznij Trening' })).toBeVisible();
+  await expect(page.getByText('Brak pomiarów')).toBeVisible();
+  expect(await measurementCount(uid)).toBe(0);
+});
+
 test('signing out asks about the workout in progress and leaves nothing for the next account', async ({ page }) => {
   await openAsOwner(page);
   await page.getByText('Trening A - Klatka + Barki').click();
