@@ -9,12 +9,15 @@ import {
   signInWithPopup,
   signOut,
 } from 'firebase/auth';
-import { clearIndexedDbPersistence, doc, getDoc, terminate } from 'firebase/firestore';
+import { clearIndexedDbPersistence, doc, getDoc, terminate, waitForPendingWrites } from 'firebase/firestore';
 import { auth, db } from '../../lib/firebaseConfig.js';
 import { LocalStorageService } from '../../services/storage/localStorage.service.js';
 import { STORAGE_KEYS } from '../../constants/config.js';
 
 const OWNERS_COLLECTION = 'owners';
+// Writes sent over a working connection are acknowledged well within this time; offline they wait
+// for the connection, so the check does not hold up signing out for longer.
+const PENDING_WRITES_TIMEOUT_MS = 2000;
 
 /** The part of the Firebase user the app relies on. */
 export type AuthUser = Pick<User, 'uid' | 'email' | 'emailVerified' | 'displayName'>;
@@ -82,9 +85,28 @@ export class AuthService {
   }
 
   /**
+   * Whether Firestore holds writes the server has not acknowledged within the time limit (e.g. made
+   * offline). Signing out deletes them together with the local cache.
+   */
+  static hasPendingWrites(): Promise<boolean> {
+    return logged('hasPendingWrites', async () => {
+      let timer: ReturnType<typeof setTimeout> | undefined;
+      const timedOut = new Promise<boolean>(resolve => {
+        timer = setTimeout(() => resolve(true), PENDING_WRITES_TIMEOUT_MS);
+      });
+      try {
+        return await Promise.race([waitForPendingWrites(db).then(() => false), timedOut]);
+      } finally {
+        clearTimeout(timer);
+      }
+    });
+  }
+
+  /**
    * Signs out and deletes the local Firestore cache and the app's LocalStorage entries (workout
    * draft, legacy templates), so no data stays on a shared device or reaches the next account.
-   * The Firestore instance cannot be used afterwards: the caller reloads the app.
+   * Writes not yet sent to the server are deleted too (`hasPendingWrites`). The Firestore instance
+   * cannot be used afterwards: the caller reloads the app.
    */
   static signOut(): Promise<void> {
     return logged('signOut', async () => {

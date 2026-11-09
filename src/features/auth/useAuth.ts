@@ -13,6 +13,9 @@ export const useAuth = () => {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  // Sign-out waits for the user's decision because it would delete writes not yet on the server.
+  const [isSignOutWarningOpen, setIsSignOutWarningOpen] = useState(false);
+  const [isSigningOut, setIsSigningOut] = useState(false);
 
   const resolveAccess = useCallback((user: AuthUser | null, isCurrent: () => boolean) => {
     setUser(user);
@@ -98,12 +101,39 @@ export const useAuth = () => {
     [run, resolveAccess],
   );
 
-  const signOut = useCallback(async () => {
-    if (await run(() => AuthService.signOut())) {
-      // A fresh page load creates a new Firestore instance with an empty cache.
-      window.location.assign('/');
+  const signOutNow = useCallback(async () => {
+    await AuthService.signOut();
+    // A fresh page load creates a new Firestore instance with an empty cache.
+    window.location.assign('/');
+  }, []);
+
+  /** Signs out, or first opens the warning when writes are still waiting for the server. */
+  const signOut = useCallback(
+    () =>
+      run(async () => {
+        if (await AuthService.hasPendingWrites()) {
+          setIsSignOutWarningOpen(true);
+        } else {
+          await signOutNow();
+        }
+      }),
+    [run, signOutNow],
+  );
+
+  /** Signs out from the warning, deleting the unsent writes; on failure the warning stays open. */
+  const confirmSignOut = useCallback(async () => {
+    setIsSigningOut(true);
+    try {
+      await run(signOutNow);
+    } finally {
+      setIsSigningOut(false);
     }
-  }, [run]);
+  }, [run, signOutNow]);
+
+  const cancelSignOut = useCallback(() => {
+    setIsSignOutWarningOpen(false);
+    setError(null);
+  }, []);
 
   return {
     status,
@@ -120,5 +150,9 @@ export const useAuth = () => {
     resendVerification,
     checkVerification,
     signOut,
+    isSignOutWarningOpen,
+    isSigningOut,
+    confirmSignOut,
+    cancelSignOut,
   };
 };
