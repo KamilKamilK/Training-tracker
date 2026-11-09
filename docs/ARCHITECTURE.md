@@ -98,7 +98,7 @@ Dane konta leżą w `users/{uid}/…` ([ADR-0005](adr/0005-data-model-and-access
 | Ścieżka | Schemat (`src/types/`) | Reguła | Zawartość |
 |---|---|---|---|
 | `users/{uid}` | `UserProfileDocumentSchema` | `isValidProfile` | imię, zgoda `consents.health` (stan, wersja, czas serwera), `roles` |
-| `users/{uid}/sessions/{id}` | `WorkoutDocumentSchema` | `isValidWorkout` | trening: typ, data, ćwiczenia z nazwą i seriami (`weight`, `reps`, `rir` jako napisy), notatki |
+| `users/{uid}/sessions/{id}` | `WorkoutDocumentSchema` | `isValidWorkout` | trening: typ (nazwa szablonu przy rozpoczęciu), `templateId` (brak w treningach zapisanych wcześniej), data, ćwiczenia z nazwą i seriami (`weight`, `reps`, `rir` jako napisy), notatki |
 | `users/{uid}/measurements/{id}` | `MeasurementDocumentSchema` | `isValidMeasurement` | data, waga, obwód talii |
 | `users/{uid}/weekPlans/default_week_plan` | `WeekPlanDocumentSchema` | `isValidWeekPlan` | dzień tygodnia → id szablonu albo `null` (odpoczynek) |
 | `users/{uid}/templates/{id}` | `WorkoutTemplateSchema` | `isValidTemplate` | szablony własne: nazwa, lista ćwiczeń (tekst), kategoria, wygląd |

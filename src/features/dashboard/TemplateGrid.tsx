@@ -15,7 +15,7 @@ export const TemplateGrid: React.FC<TemplateGridProps> = ({ templates, workouts,
   return (
     <div className="grid md:grid-cols-3 gap-4 mb-6">
       {templates.map((template, index) => {
-        const last = getLastWorkout(workouts, template.name);
+        const last = getLastWorkout(workouts, template);
         const nameId = `${baseId}-${index}-name`;
         const detailsId = `${baseId}-${index}-details`;
         return (
