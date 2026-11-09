@@ -66,8 +66,8 @@ describe('HistoryTab corrections', () => {
     render(<HistoryTab {...callbacks} />);
     await user.click(screen.getByRole('button', { name: /Edytuj trening/ }));
     await user.click(screen.getAllByRole('button', { name: 'Dodaj serię' })[0]);
-    await user.type(screen.getAllByPlaceholderText('kg')[1], '90');
-    await user.click(screen.getAllByRole('button', { name: '✕' })[0]);
+    await user.type(screen.getByLabelText('Ciężar (kg), seria 2, Przysiad'), '90');
+    await user.click(screen.getByRole('button', { name: 'Usuń serię 1, Przysiad' }));
     await user.click(screen.getByRole('button', { name: 'Zapisz zmiany' }));
     expect(callbacks.onSave).toHaveBeenCalledWith({
       ...workout,
