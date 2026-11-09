@@ -26,7 +26,7 @@ Instrukcje dla agentów (Claude Code, Codex i inne) oraz osób pracujących nad 
 - Firebase (Firestore, Auth) tylko przez serwisy `*.service.ts` w `src/features/<obszar>/` i `src/lib/firebaseConfig.ts`; komponenty i hooki nie importują `firebase/firestore` ani `firebase/auth` — pilnuje tego ESLint (`no-restricted-imports`). Dostęp do LocalStorage tylko przez `LocalStorageService`, klucze z `STORAGE_KEYS`.
 - Nie dodawaj docbloków powtarzających typ z sygnatury. Komentarz zostaw, gdy opisuje zachowanie lub kontrakt, którego sygnatura nie wyraża.
 - Nowa zależność wymaga krótkiego uzasadnienia w commit message: potrzeba, aktywne utrzymanie, licencja. Preferuj natywne API przeglądarki i Reacta.
-- Zależności utrzymuj w najnowszych wersjach, także głównych (decyzja właściciela). Wersję, której nie da się zaktualizować, i zaakceptowane ryzyko zapisz w [KNOWN_ISSUES.md](docs/KNOWN_ISSUES.md).
+- Zależności utrzymuj w najnowszych wersjach, także głównych, opublikowanych co najmniej 7 dni temu (decyzja właściciela; pilnuje tego `min-release-age` w `.npmrc` — [opis](docs/ARCHITECTURE.md#skrypty-instalacyjne-i-wiek-wersji-zależności)). Wersję, której nie da się zaktualizować, i zaakceptowane ryzyko zapisz w [KNOWN_ISSUES.md](docs/KNOWN_ISSUES.md).
 - Unikaj oczywistych problemów wydajnościowych (pobieranie całych kolekcji w pętli, zbędne rendery całego drzewa); poza tym nie optymalizuj przedwcześnie.
 - Po zmianie usuń martwy kod, nieużywane importy, zakomentowane fragmenty i `console.log` dodane do debugowania.
 
@@ -101,12 +101,13 @@ Instrukcje dla agentów (Claude Code, Codex i inne) oraz osób pracujących nad 
 
 ## Weryfikacja
 
-Hook `pre-push` (`.githooks/`, aktywacja raz na klon: `git config core.hooksPath .githooks` — [opis](.githooks/README.md)) uruchamia poniższe kontrole przy każdym pushu; testy reguł i testy end-to-end — gdy zmiana ich dotyczy. Nie omijaj go `--no-verify`. Przed commitem zmian w kodzie uruchom:
+Hook `pre-push` (`.githooks/`, aktywacja raz na klon: `git config core.hooksPath .githooks` — [opis](.githooks/README.md)) uruchamia poniższe kontrole przy każdym pushu; testy reguł, testy end-to-end i podpisy pakietów — gdy zmiana ich dotyczy. Nie omijaj go `--no-verify`. Przed commitem zmian w kodzie uruchom:
 
 ```bash
 npm run lint        # ESLint (typescript-eslint, react-hooks, no-console)
 npm run build       # tsc -b (typecheck) + vite build
 npm test            # testy jednostkowe Vitest
+npm audit signatures # podpisy pakietów z rejestru npm (przy zmianie package-lock.json)
 npm run test:rules  # testy firestore.rules i skryptów danych na emulatorze (wymaga Javy)
 npm run test:e2e    # Playwright: zbudowana aplikacja na emulatorach (Java, Chromium)
 ```

@@ -3,7 +3,8 @@
 `pre-push` runs `npm run lint`, `npm run build` and `npm test` on every push. Depending on what the pushed commits change, it also runs:
 
 - `npm run test:rules` — when `firestore.rules`, `tests/rules/`, `firebase.json` or `vitest.rules.config.ts` change;
-- `npm run test:e2e` — when the app, its build configuration, dependencies, the rules or the end-to-end tests change.
+- `npm run test:e2e` — when the app, its build configuration, dependencies, the rules or the end-to-end tests change;
+- `npm audit signatures` — when `package-lock.json` changes (verifies registry signatures of installed packages; takes about 1.5 minutes).
 
 Both need Java 21 (Firebase emulators); the end-to-end tests also need Chromium for Playwright (`npx playwright install chromium`, once per machine).
 
