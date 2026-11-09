@@ -56,6 +56,8 @@ interface TrainingTrackerProps {
   profile: UserProfile;
   profileError: string | null;
   onDismissProfileError: () => void;
+  authError: string | null;
+  onDismissAuthError: () => void;
   onUpdateDisplayName: (displayName: string) => Promise<boolean>;
   onWithdrawHealthConsent: () => Promise<boolean>;
   onSignOut: () => void;
@@ -67,6 +69,8 @@ const TrainingTracker: React.FC<TrainingTrackerProps> = ({
   profile,
   profileError,
   onDismissProfileError,
+  authError,
+  onDismissAuthError,
   onUpdateDisplayName,
   onWithdrawHealthConsent,
   onSignOut,
@@ -194,6 +198,7 @@ const TrainingTracker: React.FC<TrainingTrackerProps> = ({
           />
           <TabNavigation tabs={tabs} />
 
+          {authError && <ErrorToast message={authError} onDismiss={onDismissAuthError} />}
           {workoutsError && pathname !== ROUTES.workout && pathname !== ROUTES.history && (
             <ErrorToast message={workoutsError} onDismiss={clearWorkoutsError} />
           )}

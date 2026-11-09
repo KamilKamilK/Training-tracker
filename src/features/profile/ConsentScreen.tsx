@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { LogOut, ShieldCheck } from 'lucide-react';
 import { CardScreen } from '../../components/common/CardScreen.js';
+import { ErrorBanner } from '../../components/common/ErrorBanner.js';
 import { FormField } from '../../components/common/FormField.js';
 import { HEALTH_CONSENT } from '../../constants/consent.js';
 import type { FieldErrors } from '../../utils/form.utils.js';
@@ -10,12 +11,16 @@ interface ConsentScreenProps {
   defaultName: string;
   error: string | null;
   onDismissError: () => void;
+  authError: string | null;
+  onDismissAuthError: () => void;
   onActivate: (displayName: string) => Promise<boolean>;
   onSignOut: () => void;
 }
 
 /** Activation of the account: name and the required health-data consent (ADR-0015). */
-export const ConsentScreen: React.FC<ConsentScreenProps> = ({ defaultName, error, onDismissError, onActivate, onSignOut }) => {
+export const ConsentScreen: React.FC<ConsentScreenProps> = ({
+  defaultName, error, onDismissError, authError, onDismissAuthError, onActivate, onSignOut,
+}) => {
   const [input, setInput] = useState<ActivationInput>({ displayName: defaultName, healthConsent: false });
   const [errors, setErrors] = useState<FieldErrors<ActivationInput>>({});
   const [isBusy, setIsBusy] = useState(false);
@@ -35,6 +40,7 @@ export const ConsentScreen: React.FC<ConsentScreenProps> = ({ defaultName, error
 
   return (
     <CardScreen error={error} onDismissError={onDismissError}>
+      {authError && <ErrorBanner message={authError} onDismiss={onDismissAuthError} />}
       <form onSubmit={submit} noValidate className="space-y-4 text-left">
         <div className="text-center">
           <ShieldCheck size={32} className="mx-auto text-blue-400 mb-2" />
