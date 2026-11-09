@@ -133,6 +133,8 @@ Nowy przypadek: warunki wstępne, kroki, oczekiwany wynik.
 - [ ] Jedna karta dziennika: bez sieci pomiar trafia od razu na listę, a okno pomiaru czeka z „Zapisywanie...” do powrotu sieci; po powrocie zamyka się, pomiar jest zapisany raz
 - [ ] „Wyloguj” → ekran logowania; po ponownym zalogowaniu innym kontem nie widać danych poprzedniego (pamięć w przeglądarce jest czyszczona)
 - [ ] Trening rozpoczęty, wpisana seria, „Wyloguj” → okno „Wylogować się?”; „Anuluj” zostawia trening z wartościami; „Wyloguj i usuń trening” → ekran logowania; po zalogowaniu innym kontem zakładka „Trening” pokazuje stan pusty
+- [ ] Warunki: właściciel, jedna karta dziennika, aplikacja otwarta online (pliki gotowe do pracy bez sieci). Wyłącz sieć, dodaj pomiar, zamknij okno pomiaru i kliknij „Wyloguj” → po chwili okno „Niewysłane zmiany”; „Anuluj” zostawia dziennik z pomiarem. Przywróć sieć, poczekaj na zapis i kliknij „Wyloguj” → od razu ekran logowania, bez okna. Powtórz bez sieci i wybierz „Wyloguj i usuń zmiany” → ekran logowania; po przywróceniu sieci i ponownym zalogowaniu pomiaru nie ma
+- [ ] Bez niewysłanych zmian „Wyloguj” (także bez sieci) → od razu ekran logowania, bez okna „Niewysłane zmiany”
 
 ## 7. Postępy
 
