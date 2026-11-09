@@ -132,3 +132,4 @@ Nowy przypadek: warunki wstępne, kroki, oczekiwany wynik.
 
 - [ ] Lista „Progresja Wagi i Talii” pokazuje ostatnie pomiary w kolejności dat, z różnicą względem poprzedniego
 - [ ] Kafelki „Treningi Łącznie”, „Ten Miesiąc”, „Ten Tydzień” zgadzają się z historią
+- [ ] Warunki: w historii jest trening z niedzieli i trening z bieżącego tygodnia. W poniedziałek (albo po zmianie daty systemowej na poniedziałek) otwórz „Start” i „Postępy” → „Ten Tydzień” liczy tylko treningi od poniedziałku 00:00 czasu lokalnego, niedzielny trening nie jest wliczony

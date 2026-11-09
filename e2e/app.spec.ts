@@ -223,6 +223,32 @@ test('a workout survives a reload and a rejected save, then saves on retry', asy
   await expect(page.getByText('Trening A - Klatka + Barki')).toBeVisible();
 });
 
+test.describe('in the Warsaw time zone', () => {
+  test.use({ timezoneId: 'Europe/Warsaw' });
+
+  test('"Ten Tydzień" counts workouts from Monday of the current calendar week', async ({ page }) => {
+    const tile = (name: string) => page.getByRole('heading', { name, exact: true }).locator('xpath=following-sibling::p[1]');
+
+    await page.clock.setFixedTime(new Date('2026-11-15T20:00:00+01:00'));
+    await openAsOwner(page);
+    await page.getByText('Trening A - Klatka + Barki').click();
+    await page.getByRole('button', { name: 'Dodaj serię' }).first().click();
+    await page.getByPlaceholder('kg').fill('80');
+    await page.getByRole('button', { name: 'Zakończ trening' }).click();
+    await expect(page).toHaveURL(/\/history$/);
+    await page.getByRole('link', { name: 'Start', exact: true }).click();
+    await expect(tile('Ten Tydzień')).toHaveText('1');
+
+    await page.clock.setFixedTime(new Date('2026-11-16T00:30:00+01:00'));
+    await page.reload();
+    await expect(tile('Ten Miesiąc')).toHaveText('1');
+    await expect(tile('Ten Tydzień')).toHaveText('0');
+    await page.getByRole('link', { name: 'Postępy', exact: true }).click();
+    await expect(tile('Treningi Łącznie')).toHaveText('1');
+    await expect(tile('Ten Tydzień')).toHaveText('0');
+  });
+});
+
 test('every tab has its own address that survives a reload and the back button', async ({ page }) => {
   await openAsOwner(page);
   const tabs = [

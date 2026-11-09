@@ -128,7 +128,7 @@ Dlaczego tak:
 - Etap 2 daje wartość bez trenerów i korzysta z nowego modelu, więc sprawdza go w praktyce przed etapem 3.
 - Usunięcie konta i opinia prawna blokują otwarcie rejestracji dla innych osób, więc nie mogą czekać na koniec etapu 3.
 
-Między krokami warto zamykać drobne punkty z [KNOWN_ISSUES.md](KNOWN_ISSUES.md). Programistycznie najpierw #27 (formularz serii na telefonie), potem #25; #28 i #29 wchodzą do kroku 4.
+Między krokami warto zamykać drobne punkty z [KNOWN_ISSUES.md](KNOWN_ISSUES.md). Programistycznie najpierw #27 (formularz serii na telefonie); #28 i #29 wchodzą do kroku 4.
 
 ## Jakość — zasady przekrojowe
 
