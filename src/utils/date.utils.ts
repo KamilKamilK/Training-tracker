@@ -3,11 +3,15 @@ export const formatDate = (dateStr: string): string => {
   return d.toLocaleDateString('pl-PL', { year: 'numeric', month: '2-digit', day: '2-digit' });
 };
 
+// Calendar week from Monday 00:00 to the next Monday 00:00 in the browser's time zone.
+// Building dates from local calendar fields keeps midnight correct across DST changes.
 export const isThisWeek = (dateStr: string): boolean => {
   const d = new Date(dateStr);
   const now = new Date();
-  const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-  return d >= weekAgo;
+  const daysSinceMonday = (now.getDay() + 6) % 7;
+  const start = new Date(now.getFullYear(), now.getMonth(), now.getDate() - daysSinceMonday);
+  const end = new Date(start.getFullYear(), start.getMonth(), start.getDate() + 7);
+  return d >= start && d < end;
 };
 
 export const isThisMonth = (dateStr: string): boolean => {
