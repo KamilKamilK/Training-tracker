@@ -8,7 +8,7 @@ Na razie z aplikacji korzystają tylko konta z listy dostępu (`owners`). Docelo
 ## 🚀 Funkcjonalności
 
 - 🏋️ **Rejestrowanie treningów** z szablonów — serie z ciężarem, powtórzeniami i RIR, notatki, czas trwania; porzucenie treningu z potwierdzeniem
-- 💾 **Szkic treningu w przeglądarce** — wpisane serie przetrwają odświeżenie strony
+- 💾 **Szkic treningu w przeglądarce** — wpisane serie i notatki przetrwają odświeżenie strony
 - 📅 **Plan tygodnia** i **historia treningów** — korekta serii i notatek, usuwanie z potwierdzeniem
 - 📋 **Szablony** domyślne i własne (własne zapisane w koncie, widoczne na każdym urządzeniu)
 - ⚖️ **Pomiary ciała** — waga i obwód talii, zmiany w czasie, edycja i usuwanie z potwierdzeniem

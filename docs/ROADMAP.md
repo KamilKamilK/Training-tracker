@@ -14,7 +14,7 @@ Główna przewaga nad Excelem: plan i wykonanie są w jednym miejscu, porównani
 
 ## Stan wyjściowy
 
-Co już działa: zapis treningu z szablonu ze szkicem odpornym na odświeżenie, plan tygodnia, historia, pomiary, szablony własne w koncie, logowanie Google albo e-mailem z hasłem (potwierdzenie adresu, reset hasła), zgoda na dane o zdrowiu i Ustawienia, dane każdego konta w `users/{uid}/…`, reguły Firestore z walidacją, adresy URL zakładek, dane na żywo i otwieranie aplikacji offline po pierwszej wizycie online, testy jednostkowe, reguł i end-to-end. Budowa aplikacji: [ARCHITECTURE.md](ARCHITECTURE.md).
+Co już działa: zapis treningu z szablonu ze szkicem odpornym na odświeżenie, notatkami, czasem trwania i porzuceniem z potwierdzeniem, plan tygodnia, historia, pomiary, szablony własne w koncie, logowanie Google albo e-mailem z hasłem (potwierdzenie adresu, reset hasła), zgoda na dane o zdrowiu i Ustawienia, dane każdego konta w `users/{uid}/…`, reguły Firestore z walidacją, adresy URL zakładek, dane na żywo i otwieranie aplikacji offline po pierwszej wizycie online, testy jednostkowe, reguł i end-to-end. Budowa aplikacji: [ARCHITECTURE.md](ARCHITECTURE.md).
 
 Co ogranicza rozwój:
 
