@@ -147,7 +147,7 @@ Reguły w `firestore.rules` składają się z trzech warunków dostępu i walida
 | Testy | te same emulatory | `npm run test:rules`, `npm run test:e2e` |
 | Produkcja | `training-tracker-6d13b` | Vercel buduje `main`; podglądy PR nie logują się do produkcji |
 
-- Wersję Node.js wyznacza pole `engines.node` w `package.json` (`^24.12.0`, minimum pakietów Firebase); z niego korzysta Vercel przy buildzie i `actions/setup-node` w CI.
+- Wersję Node.js wyznacza pole `engines.node` w `package.json` (`^26.0.0`, aktywna linia LTS); z niego korzysta Vercel przy buildzie i `actions/setup-node` w CI.
 - Vite dzieli kod zewnętrzny na części `react`, `zod`, `react-router`, `firebase-app` (wspólna podstawa Firebase), `firebase-auth`, `re2js` (silnik wyrażeń regularnych używany przez Firestore), `firebase-firestore` i `vendor` (pozostałe biblioteki). Wspólne zależności są wydzielane przed bibliotekami, które z nich korzystają, aby uniknąć cykli importów. Test `e2e/bundle.spec.ts` pilnuje limitu 500 kB na plik JavaScript po minifikacji w zbudowanej aplikacji testowej; limit ostrzeżenia Vite pozostaje domyślny.
 - `vercel.json` kieruje każdy adres do `index.html`, więc odświeżenie zakładki działa.
 - Build generuje `sw.js` i plik Workbox; `sw.js` importuje `sw-network-routes.js` z `public/`. `sw.js` ma nagłówek `Cache-Control: no-store` na Vercel. Service worker działa na HTTPS i localhost, w buildach produkcyjnych oraz E2E; w `npm run dev` jest wyłączony.
@@ -155,11 +155,12 @@ Reguły w `firestore.rules` składają się z trzech warunków dostępu i walida
 
 ### Wymuszone wersje zależności pośrednich
 
-`overrides` w `package.json` zastępuje podatne wersje, których wymagają pakiety nadrzędne:
+`overrides` w `package.json` zastępuje wersje wymagane przez pakiety nadrzędne, gdy są podatne albo niezgodne z wersją Node.js projektu:
 
 - `@firebase/firestore` używa `@grpc/grpc-js` od 1.14.7 zamiast `~1.9.0`. gRPC działa tylko w Node.js (testy reguł); zbudowana aplikacja go nie zawiera.
 - `@modelcontextprotocol/sdk` używa `body-parser` od 2.4, `@google-cloud/pubsub` — `@opentelemetry/core` od 2.8, a `gaxios` — `uuid` od 11.1.1. Te same poprawki deklaruje `firebase-tools` we własnym `package.json`, ale [npm stosuje tylko overrides z głównego projektu](https://docs.npmjs.com/cli/configuring-npm/package-json/#overrides).
 - `glob` jest w wersji od 14.0.4, a `minimatch` z zakresu 7–11.0.0 — od 11.0.5 (ESLint, `typescript-eslint`, `workbox-build`, `firebase-tools`). Linie `minimatch` 3, 5 i 6 zostają bez zmian.
+- `firebase-tools` używa `superstatic` od 11.1 zamiast `^10.0.0`, bo wersja 10 deklaruje `engines.node` tylko do Node.js 24. `superstatic` obsługuje emulator Hostingu i `firebase serve`, których projekt nie używa ([#32](KNOWN_ISSUES.md)).
 
 Wpis usuwamy, gdy pakiet nadrzędny sam wymaga poprawionej wersji. Zmiana `overrides` wymaga czystej instalacji (`npm ci`), `npm audit` i wszystkich kontroli z [AGENTS.md](../AGENTS.md#weryfikacja), w tym porównania listy plików sprawdzanych przez ESLint i listy precache w `dist/sw.js` przed zmianą i po niej.
 

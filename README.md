@@ -31,7 +31,7 @@ React 19, TypeScript (strict), Vite 8, React Router, Zod, Tailwind CSS 4, Lucide
 
 ## 🧑‍💻 Uruchomienie lokalne
 
-Wymagania: Node.js 24 (od 24.12; zakres w polu `engines` w `package.json`), a do emulatorów, testów reguł i testów end-to-end — Java 21. Przeglądarkę dla testów end-to-end instaluje się raz: `npx playwright install chromium`.
+Wymagania: Node.js 26 (zakres w polu `engines` w `package.json`), a do emulatorów, testów reguł i testów end-to-end — Java 21. Przeglądarkę dla testów end-to-end instaluje się raz: `npx playwright install chromium`.
 
 ```bash
 git clone https://github.com/KamilKamilK/Training-tracker.git
