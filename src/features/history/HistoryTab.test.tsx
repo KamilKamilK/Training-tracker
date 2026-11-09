@@ -15,6 +15,16 @@ const props = () => ({
   onDelete: vi.fn().mockResolvedValue(true), error: null, onDismissError: vi.fn(),
 });
 
+describe('HistoryTab list', () => {
+  it('shows the duration of a workout that has one', () => {
+    const { rerender } = render(<HistoryTab {...props()} />);
+    expect(screen.getByText(/1 ćwiczeń · 1 serii · 45 min/)).toBeTruthy();
+
+    rerender(<HistoryTab {...props()} workouts={[{ ...workout, duration: undefined }]} />);
+    expect(screen.queryByText(/min/)).toBeNull();
+  });
+});
+
 describe('HistoryTab corrections', () => {
   it('opens workout details as a named dialog and returns focus after closing', async () => {
     const user = userEvent.setup();
@@ -24,6 +34,8 @@ describe('HistoryTab corrections', () => {
     const dialog = screen.getByRole('dialog', { name: workout.type });
     expect(dialog.contains(document.activeElement)).toBe(true);
     expect(screen.getByText('80 kg × 8 powt.')).toBeTruthy();
+    expect(dialog.textContent).toContain('czas trwania: 45 min');
+    expect(dialog.textContent).toContain('Notatka');
     await user.click(screen.getByRole('button', { name: 'Zamknij' }));
     expect(screen.queryByRole('dialog')).toBeNull();
     expect(document.activeElement).toBe(preview);

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Workout } from '../../types/index.js';
 import { Trash2, Eye, Pencil } from 'lucide-react';
-import { formatDate } from '../../utils/date.utils.js';
+import { formatDate, formatDuration } from '../../utils/date.utils.js';
 import { getTotalSets, getExerciseCount, sortByDateDesc } from '../workouts/workout.utils.js';
 import { useModal } from '../../hooks/useModal.js';
 import { WorkoutModal } from './WorkoutModal.js';
@@ -75,6 +75,7 @@ export const HistoryTab: React.FC<HistoryTabProps> = ({ workouts, onSave, onDele
             </div>
             <div className="text-sm text-slate-400">
               {getExerciseCount(workout)} ćwiczeń · {getTotalSets(workout)} serii
+              {workout.duration !== undefined && <> · {formatDuration(workout.duration)}</>}
             </div>
           </div>
         ))}

@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef } from 'react';
 import { Workout, WorkoutSet, WorkoutTemplate } from '../../types/index.js';
-import { getCurrentDate } from '../../utils/date.utils.js';
+import { getCurrentDate, getMinutesBetween } from '../../utils/date.utils.js';
 import { parseWorkoutDraft } from '../../utils/parse.utils.js';
 import { LocalStorageService } from '../../services/storage/localStorage.service.js';
 import { STORAGE_KEYS } from '../../constants/config.js';
@@ -88,10 +88,26 @@ export const useWorkoutDraft = () => {
     setCurrentWorkout(updateSets(currentWorkout, exIdx, sets => sets.filter((_, index) => index !== setIdx)));
   };
 
+  const updateNotes = (notes: string) => {
+    if (!currentWorkout) return;
+    setCurrentWorkout({ ...currentWorkout, notes });
+  };
+
   /**
-   * Marks the workout as completed and passes it to `save`. The draft is cleared only
-   * when `save` resolves to true, so a failed write keeps every entered set, and only if it is
-   * still the saved workout, so a workout started meanwhile stays. While a save is pending
+   * Discards the draft without saving it. Ignored while a save is pending: that workout is already
+   * handed to Firestore, so discarding the draft would not stop it from being stored.
+   */
+  const abandonWorkout = () => {
+    if (!currentWorkout || isFinishing) return;
+    setCurrentWorkout(null);
+  };
+
+  /**
+   * Marks the workout as completed and passes it to `save`. The draft's `date` is the start time,
+   * so the saved workout gets the finish time as `date` and the time in between as `duration`
+   * (whole minutes). The draft is cleared only when `save` resolves to true, so a failed write
+   * keeps every entered set, and only if it is still the saved workout, so a workout started
+   * meanwhile stays. While a save is pending
    * (Firestore waits for the connection when offline) further calls are ignored, so the workout
    * cannot be stored twice.
    */
@@ -101,7 +117,15 @@ export const useWorkoutDraft = () => {
     try {
       const draftId = currentWorkout.id;
       const id = draftId || crypto.randomUUID();
-      const saved = await save({ ...currentWorkout, id, completed: true, date: getCurrentDate() });
+      const finishedAt = getCurrentDate();
+      const duration = getMinutesBetween(currentWorkout.date, finishedAt);
+      const saved = await save({
+        ...currentWorkout,
+        id,
+        completed: true,
+        date: finishedAt,
+        ...(duration !== undefined && { duration }),
+      });
       if (saved && draftRef.current?.id === draftId) setCurrentWorkout(null);
       return saved;
     } finally {
@@ -109,5 +133,15 @@ export const useWorkoutDraft = () => {
     }
   };
 
-  return { currentWorkout, isFinishing, startWorkout, addSet, updateSet, removeSet, finishWorkout };
+  return {
+    currentWorkout,
+    isFinishing,
+    startWorkout,
+    addSet,
+    updateSet,
+    removeSet,
+    updateNotes,
+    abandonWorkout,
+    finishWorkout,
+  };
 };

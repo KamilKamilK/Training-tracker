@@ -1,7 +1,7 @@
 import React from 'react';
 import { Modal } from '../../components/common/Modal.js';
 import { Workout } from '../../types/index.js';
-import { formatDate } from '../../utils/date.utils.js';
+import { formatDate, formatDuration } from '../../utils/date.utils.js';
 
 interface WorkoutModalProps {
   workout: Workout;
@@ -11,7 +11,10 @@ interface WorkoutModalProps {
 export const WorkoutModal: React.FC<WorkoutModalProps> = ({ workout, onClose }) => {
   return (
     <Modal isOpen onClose={onClose} title={workout.type}>
-      <p className="text-slate-400 -mt-4 mb-4">{formatDate(workout.date)}</p>
+      <p className="text-slate-400 -mt-4 mb-4">
+        {formatDate(workout.date)}
+        {workout.duration !== undefined && <> · czas trwania: {formatDuration(workout.duration)}</>}
+      </p>
 
       <div className="space-y-4">
         {workout.exercises.filter(e => e.sets.length > 0).map((exercise, idx) => (

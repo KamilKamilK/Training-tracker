@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { isThisWeek } from './date.utils.js';
+import { formatDuration, getMinutesBetween, isThisWeek } from './date.utils.js';
 
 const local = (year: number, month: number, day: number, hours = 0, minutes = 0, ms = 0) =>
   new Date(year, month - 1, day, hours, minutes, 0, ms);
@@ -47,5 +47,27 @@ describe('isThisWeek', () => {
     at(new Date('2026-11-08T23:00:00.000Z'));
     expect(isThisWeek('2026-11-08T16:00:00.000Z')).toBe(true);
     expect(isThisWeek('2026-11-08T14:59:00.000Z')).toBe(false);
+  });
+});
+
+describe('getMinutesBetween', () => {
+  it('rounds the elapsed time to whole minutes', () => {
+    expect(getMinutesBetween('2026-11-09T10:00:00.000Z', '2026-11-09T11:02:29.000Z')).toBe(62);
+    expect(getMinutesBetween('2026-11-09T10:00:00.000Z', '2026-11-09T10:00:31.000Z')).toBe(1);
+    expect(getMinutesBetween('2026-11-09T10:00:00.000Z', '2026-11-09T10:00:00.000Z')).toBe(0);
+  });
+
+  it('has no value for an invalid date or an end before the start', () => {
+    expect(getMinutesBetween('not a date', '2026-11-09T10:00:00.000Z')).toBeUndefined();
+    expect(getMinutesBetween('2026-11-09T10:00:00.000Z', '2026-11-09T09:59:00.000Z')).toBeUndefined();
+  });
+});
+
+describe('formatDuration', () => {
+  it('shows minutes, and hours from one hour on', () => {
+    expect(formatDuration(0)).toBe('< 1 min');
+    expect(formatDuration(45)).toBe('45 min');
+    expect(formatDuration(60)).toBe('1 h');
+    expect(formatDuration(95)).toBe('1 h 35 min');
   });
 });

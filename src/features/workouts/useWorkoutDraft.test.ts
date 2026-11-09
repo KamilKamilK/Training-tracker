@@ -1,5 +1,5 @@
 import { act, renderHook } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { useWorkoutDraft } from './useWorkoutDraft.js';
 import { STORAGE_KEYS } from '../../constants/config.js';
 import { WorkoutTemplate } from '../../types/index.js';
@@ -208,5 +208,106 @@ describe('useWorkoutDraft workout id', () => {
     });
 
     expect(save.mock.calls[0][0].id).toMatch(/^[0-9a-f-]{36}$/);
+  });
+});
+
+describe('useWorkoutDraft notes and duration', () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('keeps notes in the draft and saves them with the workout', async () => {
+    const { result } = startedHook();
+    act(() => result.current.updateNotes('Lekki ból barku'));
+    expect(storedDraft().notes).toBe('Lekki ból barku');
+
+    const save = vi.fn().mockResolvedValue(true);
+    await act(async () => {
+      await result.current.finishWorkout(save);
+    });
+    expect(save).toHaveBeenCalledWith(expect.objectContaining({ notes: 'Lekki ból barku' }));
+  });
+
+  it('saves the finish time as the date and the minutes since the start as the duration', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2026-11-09T17:00:00.000Z'));
+    const { result } = startedHook();
+    expect(result.current.currentWorkout?.date).toBe('2026-11-09T17:00:00.000Z');
+
+    vi.setSystemTime(new Date('2026-11-09T18:12:20.000Z'));
+    const save = vi.fn().mockResolvedValue(true);
+    await act(async () => {
+      await result.current.finishWorkout(save);
+    });
+
+    expect(save).toHaveBeenCalledWith(
+      expect.objectContaining({ date: '2026-11-09T18:12:20.000Z', duration: 72, completed: true }),
+    );
+  });
+
+  it('measures the duration from the start again when a failed save is retried', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2026-11-09T17:00:00.000Z'));
+    const { result } = startedHook();
+    const save = vi.fn().mockResolvedValueOnce(false).mockResolvedValueOnce(true);
+
+    vi.setSystemTime(new Date('2026-11-09T17:30:00.000Z'));
+    await act(async () => {
+      await result.current.finishWorkout(save);
+    });
+    vi.setSystemTime(new Date('2026-11-09T17:40:00.000Z'));
+    await act(async () => {
+      await result.current.finishWorkout(save);
+    });
+
+    expect(save.mock.calls.map(([workout]) => workout.duration)).toEqual([30, 40]);
+  });
+
+  it('saves no duration when the start time of the draft is not a valid date', async () => {
+    localStorage.setItem(
+      STORAGE_KEYS.currentWorkoutDraft,
+      JSON.stringify({ id: 'w1', type: 'A', date: 'unknown', exercises: [], notes: '' }),
+    );
+    const { result } = renderHook(() => useWorkoutDraft());
+    const save = vi.fn().mockResolvedValue(true);
+
+    await act(async () => {
+      await result.current.finishWorkout(save);
+    });
+
+    expect(save.mock.calls[0][0]).not.toHaveProperty('duration');
+  });
+});
+
+describe('useWorkoutDraft abandoning a workout', () => {
+  it('removes the workout and its draft without saving', () => {
+    const { result } = startedHook();
+    act(() => result.current.updateSet(0, 0, 'weight', '80'));
+
+    act(() => result.current.abandonWorkout());
+
+    expect(result.current.currentWorkout).toBeNull();
+    expect(localStorage.getItem(STORAGE_KEYS.currentWorkoutDraft)).toBeNull();
+    expect(renderHook(() => useWorkoutDraft()).result.current.currentWorkout).toBeNull();
+  });
+
+  it('keeps the workout while its save is pending', async () => {
+    const { result } = startedHook();
+    let resolveSave: (saved: boolean) => void = () => {};
+    const save = vi.fn(() => new Promise<boolean>(resolve => (resolveSave = resolve)));
+
+    let finishing: Promise<boolean> = Promise.resolve(false);
+    act(() => {
+      finishing = result.current.finishWorkout(save);
+    });
+    act(() => result.current.abandonWorkout());
+    expect(result.current.currentWorkout?.type).toBe('Trening A');
+    expect(storedDraft().type).toBe('Trening A');
+
+    await act(async () => {
+      resolveSave(false);
+      await finishing;
+    });
+    expect(result.current.currentWorkout?.type).toBe('Trening A');
   });
 });

@@ -23,3 +23,17 @@ export const isThisMonth = (dateStr: string): boolean => {
 export const getCurrentDate = (): string => {
   return new Date().toISOString();
 };
+/** Whole minutes from `start` to `end`; undefined when either date is invalid or `end` is earlier. */
+export const getMinutesBetween = (start: string, end: string): number | undefined => {
+  const elapsed = new Date(end).getTime() - new Date(start).getTime();
+  if (!Number.isFinite(elapsed) || elapsed < 0) return undefined;
+  return Math.round(elapsed / 60_000);
+};
+
+export const formatDuration = (minutes: number): string => {
+  if (minutes < 1) return '< 1 min';
+  const hours = Math.floor(minutes / 60);
+  const rest = minutes % 60;
+  if (hours === 0) return `${rest} min`;
+  return rest === 0 ? `${hours} h` : `${hours} h ${rest} min`;
+};

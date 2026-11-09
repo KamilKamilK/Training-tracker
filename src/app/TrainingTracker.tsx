@@ -112,7 +112,17 @@ const TrainingTracker: React.FC<TrainingTrackerProps> = ({
     error: templatesError,
     clearError: clearTemplatesError,
   } = useTemplates(uid);
-  const { currentWorkout, isFinishing, startWorkout, addSet, updateSet, removeSet, finishWorkout } = useWorkoutDraft();
+  const {
+    currentWorkout,
+    isFinishing,
+    startWorkout,
+    addSet,
+    updateSet,
+    removeSet,
+    updateNotes,
+    abandonWorkout,
+    finishWorkout,
+  } = useWorkoutDraft();
 
   const handleStartWorkout = (template: WorkoutTemplate) => {
     if (startWorkout(template)) {
@@ -147,6 +157,11 @@ const TrainingTracker: React.FC<TrainingTrackerProps> = ({
     if (await finishWorkout(saveWorkout)) {
       navigate(ROUTES.history);
     }
+  };
+
+  const handleAbandonWorkout = () => {
+    abandonWorkout();
+    navigate(ROUTES.dashboard);
   };
 
   const openMeasurementForm = (measurement?: Measurement) => {
@@ -230,6 +245,8 @@ const TrainingTracker: React.FC<TrainingTrackerProps> = ({
                       onAddSet={addSet}
                       onUpdateSet={updateSet}
                       onRemoveSet={removeSet}
+                      onUpdateNotes={updateNotes}
+                      onAbandonWorkout={handleAbandonWorkout}
                       onFinishWorkout={handleFinishWorkout}
                     />
                   }
