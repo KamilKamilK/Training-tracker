@@ -164,6 +164,16 @@ Reguły w `firestore.rules` składają się z trzech warunków dostępu i walida
 
 Wpis usuwamy, gdy pakiet nadrzędny sam wymaga poprawionej wersji. Zmiana `overrides` wymaga czystej instalacji (`npm ci`), `npm audit` i wszystkich kontroli z [AGENTS.md](../AGENTS.md#weryfikacja), w tym porównania listy plików sprawdzanych przez ESLint i listy precache w `dist/sw.js` przed zmianą i po niej.
 
+### Skrypty instalacyjne zależności
+
+Pole `allowScripts` w `package.json` mówi, którym zależnościom npm pozwala uruchamiać skrypty instalacyjne (`preinstall`, `install`, `postinstall`). Wszystkie trzy obecne wpisy blokują skrypt, bo nie jest on potrzebny aplikacji ani testom:
+
+- `@firebase/util` (`postinstall`) zapisuje konfigurację aplikacji ze zmiennej `FIREBASE_WEBAPP_CONFIG`. Projekt tej zmiennej nie używa, bo konfiguracja pochodzi ze zmiennych `VITE_*`.
+- `protobufjs` (`postinstall`) tylko ostrzega, gdy główny projekt deklaruje ten pakiet z innym schematem wersji.
+- `re2` (`install`) pobiera albo kompiluje moduł natywny. `superstatic` ładuje go opcjonalnie i bez niego wraca do `RegExp`. Używają go tylko emulator Hostingu i `firebase serve`, których projekt nie uruchamia.
+
+Gdy nowa zależność ma skrypt instalacyjny, `npm ci` wypisze ją na końcu instalacji, a `npm install-scripts ls` pokaże pakiety jeszcze nieocenione. Po przejrzeniu skryptu zapisz decyzję poleceniem `npm install-scripts approve <pakiet>` (domyślnie zatwierdza tylko zainstalowaną wersję) albo `npm install-scripts deny <pakiet>` i opisz ją na tej liście.
+
 ## Testy i kontrola jakości
 
 | Rodzaj | Narzędzie | Gdzie | Co sprawdza |
