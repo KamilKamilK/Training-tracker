@@ -75,6 +75,7 @@ Nowy przypadek: warunki wstępne, kroki, oczekiwany wynik.
 - [ ] 2.9 Warunki: właściciel, zapisany pomiar. „Edytuj pomiar” na Starcie → formularz zawiera zapisaną datę, wagę i talię; „Anuluj” nie zmienia danych. Popraw datę, wagę (także z przecinkiem) i talię, zapisz, odśwież → jeden poprawiony wpis, aktualne statystyki i „Postępy”
 - [ ] 2.10 Warunki: więcej niż pięć pomiarów. „Pokaż wszystkie pomiary” → także starsze wpisy mają przyciski edycji i usuwania; popraw najstarszy i odśwież → korekta pozostaje
 - [ ] 2.11 Warunki: zapisany pomiar. „Usuń pomiar” → okno z datą; „Anuluj” zostawia wpis; potwierdzenie usuwa go także po odświeżeniu. Przy odrzuconym usunięciu w emulatorze → błąd w oknie, można ponowić, dane na serwerze pozostają
+- [ ] 2.12 Warunki: bez rozpoczętego treningu, klawiatura i czytnik ekranu. Na „Start” przejdź Tabem do karty szablonu → widoczny fokus, czytnik ogłasza przycisk z nazwą szablonu i opisem (czas, liczba ćwiczeń, „Ostatnio”); Enter albo Spacja otwiera zakładkę „Trening” z ćwiczeniami tego szablonu
 
 ## 3. Trening
 
@@ -84,6 +85,7 @@ Nowy przypadek: warunki wstępne, kroki, oczekiwany wynik.
 - [ ] 3.4 Zapis odrzucony przez Firestore (np. usunięty dokument `owners/{uid}` w emulatorze) → komunikat nad przyciskiem „Zakończ trening”, wpisane serie pozostają
 - [ ] 3.5 Ponowne „Zakończ trening” po usunięciu przyczyny → przejście do „Historii”, trening na górze listy, szkic usunięty
 - [ ] 3.6 Bez sieci (DevTools → Offline) „Zakończ trening” → przycisk „Zapisywanie...” jest nieaktywny, trening zostaje w zakładce; po przywróceniu sieci zapis kończy się przejściem do „Historii”, trening zapisany raz
+- [ ] 3.7 Warunki: rozpoczęty trening z dodaną serią, telefon (albo DevTools, widok dotykowy 375 px) i czytnik ekranu. Dotknięcie pola kg i RIR otwiera klawiaturę numeryczną z separatorem dziesiętnym, pola powtórzeń — klawiaturę numeryczną; wiersz serii z „✕” mieści się w karcie ćwiczenia bez przewijania w bok. Czytnik ogłasza pola jako „Ciężar (kg)”, „Powtórzenia” i „RIR” z numerem serii i nazwą ćwiczenia, a „✕” jako „Usuń serię N” z nazwą ćwiczenia; to samo w oknie „Edytuj trening” w Historii
 
 ## 4. Historia
 

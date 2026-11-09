@@ -198,23 +198,33 @@ test('a saved workout can be corrected and deleted without touching the active w
   await expect(page.getByPlaceholder('kg')).toHaveValue('50');
 });
 
-test('a workout survives a reload and a rejected save, then saves on retry', async ({ page }) => {
+test('a workout started from the keyboard survives a reload and a rejected save, then saves on retry', async ({ page }) => {
   await openAsOwner(page);
   const workoutTab = page.getByRole('link', { name: 'Trening', exact: true });
+  const firstWeight = page.getByLabel(/^Ciężar \(kg\), seria 1, Rozgrzewka: Wioślarz/);
 
-  await page.getByText('Trening A - Klatka + Barki').click();
+  await page.getByRole('button', { name: 'Trening A - Klatka + Barki' }).focus();
+  await page.keyboard.press('Enter');
+  await expect(page).toHaveURL(/\/workout$/);
   await workoutTab.click();
   await page.getByRole('button', { name: 'Dodaj serię' }).first().click();
-  await page.getByPlaceholder('kg').fill('80');
+  await expect(firstWeight).toHaveAttribute('inputmode', 'decimal');
+  await firstWeight.fill('80');
+
+  await page.setViewportSize({ width: 375, height: 800 });
+  const removeSet = page.getByRole('button', { name: /^Usuń serię 1, Rozgrzewka: Wioślarz/ });
+  const exerciseCard = await removeSet.locator('xpath=ancestor::div[contains(@class, "rounded-lg")][1]').boundingBox();
+  const removeBox = await removeSet.boundingBox();
+  expect(removeBox!.x + removeBox!.width).toBeLessThanOrEqual(exerciseCard!.x + exerciseCard!.width);
 
   await page.reload();
   await expect(page).toHaveURL(/\/workout$/);
-  await expect(page.getByPlaceholder('kg')).toHaveValue('80');
+  await expect(firstWeight).toHaveValue('80');
 
   await rejectWorkoutWrites();
   await page.getByRole('button', { name: 'Zakończ trening' }).click();
   await expect(page.getByRole('alert')).toContainText('Nie udało się zapisać treningu');
-  await expect(page.getByPlaceholder('kg')).toHaveValue('80');
+  await expect(firstWeight).toHaveValue('80');
 
   await restoreRules();
   await page.getByRole('button', { name: 'Zakończ trening' }).click();

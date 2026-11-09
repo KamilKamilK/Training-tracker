@@ -26,6 +26,7 @@ export const ExerciseItem: React.FC<ExerciseItemProps> = ({
       exercise.sets.map((set, idx) => (
         <SetInput
           key={idx}
+          exerciseName={exercise.name}
           setIndex={idx}
           weight={set.weight}
           reps={set.reps}
