@@ -281,13 +281,28 @@ export const TemplatesTab: React.FC<TemplatesTabProps> = ({
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-2xl">{template.icon}</span>
                   <div className="flex gap-2">
-                    <button onClick={() => handleEdit(template)} className="text-yellow-300 hover:text-yellow-400">
+                    <button
+                      type="button"
+                      aria-label={`Edytuj szablon ${template.name}`}
+                      onClick={() => handleEdit(template)}
+                      className="text-yellow-300 hover:text-yellow-400"
+                    >
                       <Edit size={18} />
                     </button>
-                    <button onClick={() => onDuplicateTemplate(template.id)} className="text-blue-300 hover:text-blue-400">
+                    <button
+                      type="button"
+                      aria-label={`Kopiuj szablon ${template.name}`}
+                      onClick={() => onDuplicateTemplate(template.id)}
+                      className="text-blue-300 hover:text-blue-400"
+                    >
                       <Copy size={18} />
                     </button>
-                    <button onClick={() => onDeleteTemplate(template.id)} className="text-red-400 hover:text-red-500">
+                    <button
+                      type="button"
+                      aria-label={`Usuń szablon ${template.name}`}
+                      onClick={() => onDeleteTemplate(template.id)}
+                      className="text-red-400 hover:text-red-500"
+                    >
                       <Trash2 size={18} />
                     </button>
                   </div>
@@ -312,6 +327,8 @@ export const TemplatesTab: React.FC<TemplatesTabProps> = ({
               <div className="flex items-center justify-between mb-2">
                 <span className="text-2xl">{template.icon}</span>
                 <button
+                  type="button"
+                  aria-label={`Kopiuj szablon ${template.name}`}
                   onClick={() => onDuplicateTemplate(template.id)}
                   className="text-blue-300 hover:text-blue-400"
                 >

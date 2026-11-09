@@ -677,6 +677,37 @@ test('custom templates are stored in the account, including ones saved before in
   await expect(page.getByText('Basen')).toBeVisible();
 });
 
+test('template card actions have names and work from the keyboard', async ({ page }) => {
+  await openAsOwner(page);
+  await page.getByRole('link', { name: 'Szablony', exact: true }).click();
+  const defaultName = 'Trening A - Klatka + Barki';
+  const copyName = `${defaultName} (kopia)`;
+  const defaultCopy = page.getByRole('button', { name: `Kopiuj szablon ${defaultName}`, exact: true });
+  await expect(defaultCopy).toHaveAttribute('type', 'button');
+  await defaultCopy.focus();
+  await page.keyboard.press('Enter');
+
+  const edit = page.getByRole('button', { name: `Edytuj szablon ${copyName}`, exact: true });
+  const copy = page.getByRole('button', { name: `Kopiuj szablon ${copyName}`, exact: true });
+  const remove = page.getByRole('button', { name: `Usuń szablon ${copyName}`, exact: true });
+  for (const button of [edit, copy, remove]) {
+    await expect(button).toHaveAttribute('type', 'button');
+  }
+  await edit.focus();
+  await page.keyboard.press('Enter');
+  await expect(page.getByLabel('Nazwa')).toHaveValue(copyName);
+  await page.getByRole('button', { name: 'Anuluj', exact: true }).click();
+
+  await copy.focus();
+  await page.keyboard.press('Space');
+  await expect(page.getByRole('heading', { name: `${copyName} (kopia)`, exact: true })).toBeVisible();
+  await remove.focus();
+  await page.keyboard.press('Enter');
+  await expect(page.getByRole('heading', { name: copyName, exact: true })).toHaveCount(0);
+  await expect(page.getByRole('heading', { name: defaultName, exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: `${copyName} (kopia)`, exact: true })).toBeVisible();
+});
+
 test('"Ostatnio" follows the template after a rename and ignores another template with the old name', async ({ page }) => {
   const createTemplate = async (name: string) => {
     await page.getByRole('link', { name: 'Szablony', exact: true }).click();
@@ -701,11 +732,13 @@ test('"Ostatnio" follows the template after a rename and ignores another templat
   await expect(startCard('Basen')).toHaveAccessibleDescription(/Ostatnio:/);
 
   await page.getByRole('link', { name: 'Szablony', exact: true }).click();
-  const card = page.locator('div.rounded-lg', { has: page.getByRole('heading', { name: 'Basen', exact: true }) });
-  await card.getByRole('button').first().click();
+  await page.getByRole('button', { name: 'Edytuj szablon Basen', exact: true }).click();
   await page.getByLabel('Nazwa').fill('Basen długi');
   await page.getByRole('button', { name: /Zapisz zmiany/ }).click();
   await expect(page.getByRole('heading', { name: 'Basen długi', exact: true })).toBeVisible();
+  for (const action of ['Edytuj', 'Kopiuj', 'Usuń']) {
+    await expect(page.getByRole('button', { name: `${action} szablon Basen długi`, exact: true })).toBeVisible();
+  }
   await createTemplate('Basen');
 
   await page.reload();
