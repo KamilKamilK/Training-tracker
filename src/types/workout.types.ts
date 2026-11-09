@@ -14,10 +14,13 @@ export const ExerciseSchema = z.object({
 
 /**
  * Workout document as stored in Firestore and in the LocalStorage draft. Documents written before
- * `exercises` and `notes` were required default to empty values.
+ * `exercises` and `notes` were required default to empty values. `type` is the template name at the
+ * start of the workout; `templateId` links it to the template and is missing in workouts started
+ * before it was stored.
  */
 export const WorkoutDocumentSchema = z.object({
   type: z.string(),
+  templateId: z.string().optional(),
   date: z.string(),
   exercises: z.array(ExerciseSchema).default([]),
   notes: z.string().default(''),

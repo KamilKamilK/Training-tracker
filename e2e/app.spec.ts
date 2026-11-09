@@ -629,3 +629,40 @@ test('custom templates are stored in the account, including ones saved before in
   await expect(page.getByText('Stary szablon')).toBeVisible();
   await expect(page.getByText('Basen')).toBeVisible();
 });
+
+test('"Ostatnio" follows the template after a rename and ignores another template with the old name', async ({ page }) => {
+  const createTemplate = async (name: string) => {
+    await page.getByRole('link', { name: 'Szablony', exact: true }).click();
+    await page.getByRole('button', { name: /Nowy Szablon/ }).click();
+    await page.getByLabel('Nazwa').fill(name);
+    await page.getByRole('button', { name: /Dodaj ćwiczenie/ }).click();
+    await page.getByPlaceholder('Ćwiczenie 1').fill('Kraul');
+    await page.getByRole('button', { name: /Utwórz/ }).click();
+    await expect(page.getByRole('heading', { name, exact: true })).toBeVisible();
+  };
+  const startCard = (name: string) => page.getByRole('button', { name, exact: true });
+
+  await openAsOwner(page);
+  await createTemplate('Basen');
+  await page.getByRole('link', { name: 'Start', exact: true }).click();
+  await startCard('Basen').click();
+  await page.getByRole('button', { name: 'Dodaj serię' }).first().click();
+  await page.getByPlaceholder('kg').fill('0');
+  await page.getByRole('button', { name: 'Zakończ trening' }).click();
+  await expect(page).toHaveURL(/\/history$/);
+  await page.getByRole('link', { name: 'Start', exact: true }).click();
+  await expect(startCard('Basen')).toHaveAccessibleDescription(/Ostatnio:/);
+
+  await page.getByRole('link', { name: 'Szablony', exact: true }).click();
+  const card = page.locator('div.rounded-lg', { has: page.getByRole('heading', { name: 'Basen', exact: true }) });
+  await card.getByRole('button').first().click();
+  await page.getByLabel('Nazwa').fill('Basen długi');
+  await page.getByRole('button', { name: /Zapisz zmiany/ }).click();
+  await expect(page.getByRole('heading', { name: 'Basen długi', exact: true })).toBeVisible();
+  await createTemplate('Basen');
+
+  await page.reload();
+  await page.getByRole('link', { name: 'Start', exact: true }).click();
+  await expect(startCard('Basen długi')).toHaveAccessibleDescription(/Ostatnio:/);
+  await expect(startCard('Basen')).not.toHaveAccessibleDescription(/Ostatnio:/);
+});

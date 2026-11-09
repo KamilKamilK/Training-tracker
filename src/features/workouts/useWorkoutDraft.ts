@@ -59,6 +59,7 @@ export const useWorkoutDraft = () => {
     setCurrentWorkout({
       id: crypto.randomUUID(),
       type: template.name,
+      templateId: template.id,
       date: getCurrentDate(),
       exercises: template.exercises.map(name => ({ name, sets: [] })),
       notes: '',

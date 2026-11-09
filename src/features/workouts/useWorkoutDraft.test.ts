@@ -45,6 +45,12 @@ describe('useWorkoutDraft', () => {
     expect(result.current.currentWorkout!.exercises[0].sets).toEqual([{ weight: '80', reps: '', rir: '' }]);
   });
 
+  it('links the workout to its template by id and name', () => {
+    const { result } = startedHook();
+    expect(result.current.currentWorkout).toMatchObject({ type: 'Trening A', templateId: 't1' });
+    expect(storedDraft()).toMatchObject({ type: 'Trening A', templateId: 't1' });
+  });
+
   it('keeps the draft in LocalStorage after every change', () => {
     const { result } = startedHook();
     act(() => result.current.updateSet(0, 0, 'reps', '8'));

@@ -98,7 +98,7 @@ Dane konta leżą w `users/{uid}/…` ([ADR-0005](adr/0005-data-model-and-access
 | Ścieżka | Schemat (`src/types/`) | Reguła | Zawartość |
 |---|---|---|---|
 | `users/{uid}` | `UserProfileDocumentSchema` | `isValidProfile` | imię, zgoda `consents.health` (stan, wersja, czas serwera), `roles` |
-| `users/{uid}/sessions/{id}` | `WorkoutDocumentSchema` | `isValidWorkout` | trening: typ, data zakończenia (w szkicu — rozpoczęcia), czas trwania w minutach (`duration`), ćwiczenia z nazwą i seriami (`weight`, `reps`, `rir` jako napisy), notatki |
+| `users/{uid}/sessions/{id}` | `WorkoutDocumentSchema` | `isValidWorkout` | trening: typ (nazwa szablonu przy rozpoczęciu), `templateId` (brak w treningach zapisanych wcześniej), data zakończenia (w szkicu — rozpoczęcia), czas trwania w minutach (`duration`, brak w treningach zapisanych wcześniej), ćwiczenia z nazwą i seriami (`weight`, `reps`, `rir` jako napisy), notatki |
 | `users/{uid}/measurements/{id}` | `MeasurementDocumentSchema` | `isValidMeasurement` | data, waga, obwód talii |
 | `users/{uid}/weekPlans/default_week_plan` | `WeekPlanDocumentSchema` | `isValidWeekPlan` | dzień tygodnia → id szablonu albo `null` (odpoczynek) |
 | `users/{uid}/templates/{id}` | `WorkoutTemplateSchema` | `isValidTemplate` | szablony własne: nazwa, lista ćwiczeń (tekst), kategoria, wygląd |
@@ -147,6 +147,7 @@ Reguły w `firestore.rules` składają się z trzech warunków dostępu i walida
 | Testy | te same emulatory | `npm run test:rules`, `npm run test:e2e` |
 | Produkcja | `training-tracker-6d13b` | Vercel buduje `main`; podglądy PR nie logują się do produkcji |
 
+- Wersję Node.js wyznacza pole `engines.node` w `package.json` (`^24.12.0`, minimum pakietów Firebase); z niego korzysta Vercel przy buildzie i `actions/setup-node` w CI.
 - Vite dzieli kod zewnętrzny na części `react`, `zod`, `react-router`, `firebase-app` (wspólna podstawa Firebase), `firebase-auth`, `re2js` (silnik wyrażeń regularnych używany przez Firestore), `firebase-firestore` i `vendor` (pozostałe biblioteki). Wspólne zależności są wydzielane przed bibliotekami, które z nich korzystają, aby uniknąć cykli importów. Test `e2e/bundle.spec.ts` pilnuje limitu 500 kB na plik JavaScript po minifikacji w zbudowanej aplikacji testowej; limit ostrzeżenia Vite pozostaje domyślny.
 - `vercel.json` kieruje każdy adres do `index.html`, więc odświeżenie zakładki działa.
 - Build generuje `sw.js` i plik Workbox. `sw.js` ma nagłówek `Cache-Control: no-store` na Vercel. Service worker działa na HTTPS i localhost, w buildach produkcyjnych oraz E2E; w `npm run dev` jest wyłączony.

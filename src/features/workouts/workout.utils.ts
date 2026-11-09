@@ -1,4 +1,4 @@
-import { Workout } from '../../types/index.js';
+import { Workout, WorkoutTemplate } from '../../types/index.js';
 import { isThisMonth, isThisWeek } from '../../utils/date.utils.js';
 
 export const getTotalSets = (workout: Workout): number => {
@@ -21,8 +21,13 @@ export const sortByDateDesc = (workouts: Workout[]): Workout[] => {
   return [...workouts].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 };
 
-export const getLastWorkout = (workouts: Workout[], templateName: string): Workout | undefined => {
-  return workouts
-    .filter(w => w.type === templateName)
-    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
+/**
+ * The latest workout started from the template, matched by template id, so renaming the template
+ * keeps its history. Workouts saved before the id was stored have only the template name and are
+ * matched by it.
+ */
+export const getLastWorkout = (workouts: Workout[], template: WorkoutTemplate): Workout | undefined => {
+  return sortByDateDesc(
+    workouts.filter(w => (w.templateId === undefined ? w.type === template.name : w.templateId === template.id)),
+  )[0];
 };
