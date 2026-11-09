@@ -59,7 +59,7 @@ Kod jest podzielony według funkcji ([ADR-0010](adr/0010-web-app-architecture.md
 | `src/features/auth/` | logowanie, rejestracja, potwierdzenie adresu, reset hasła, sprawdzenie `owners` |
 | `src/features/profile/` | profil, zgoda na dane o zdrowiu, ekran zgody, Ustawienia (`/settings`) |
 | `src/features/dashboard/` | Start (`/`): szybkie statystyki, ostatnie pomiary, szablony do rozpoczęcia treningu |
-| `src/features/workouts/` | trening (`/workout`): szkic w LocalStorage, serie, zapis do `sessions` |
+| `src/features/workouts/` | trening (`/workout`): szkic w LocalStorage, serie, notatki, porzucenie, zapis do `sessions` z czasem trwania |
 | `src/features/history/` | historia (`/history`): lista i szczegóły treningów, edycja serii i notatek, usuwanie z potwierdzeniem |
 | `src/features/templates/` | szablony (`/templates`): domyślne w kodzie, własne w Firestore, import z przeglądarki |
 | `src/features/plan/` | plan tygodnia (`/plan`): szablon przypisany do dnia |
@@ -98,7 +98,7 @@ Dane konta leżą w `users/{uid}/…` ([ADR-0005](adr/0005-data-model-and-access
 | Ścieżka | Schemat (`src/types/`) | Reguła | Zawartość |
 |---|---|---|---|
 | `users/{uid}` | `UserProfileDocumentSchema` | `isValidProfile` | imię, zgoda `consents.health` (stan, wersja, czas serwera), `roles` |
-| `users/{uid}/sessions/{id}` | `WorkoutDocumentSchema` | `isValidWorkout` | trening: typ (nazwa szablonu przy rozpoczęciu), `templateId` (brak w treningach zapisanych wcześniej), data, ćwiczenia z nazwą i seriami (`weight`, `reps`, `rir` jako napisy), notatki |
+| `users/{uid}/sessions/{id}` | `WorkoutDocumentSchema` | `isValidWorkout` | trening: typ (nazwa szablonu przy rozpoczęciu), `templateId` (brak w treningach zapisanych wcześniej), data zakończenia (w szkicu — rozpoczęcia), czas trwania w minutach (`duration`, brak w treningach zapisanych wcześniej), ćwiczenia z nazwą i seriami (`weight`, `reps`, `rir` jako napisy), notatki |
 | `users/{uid}/measurements/{id}` | `MeasurementDocumentSchema` | `isValidMeasurement` | data, waga, obwód talii |
 | `users/{uid}/weekPlans/default_week_plan` | `WeekPlanDocumentSchema` | `isValidWeekPlan` | dzień tygodnia → id szablonu albo `null` (odpoczynek) |
 | `users/{uid}/templates/{id}` | `WorkoutTemplateSchema` | `isValidTemplate` | szablony własne: nazwa, lista ćwiczeń (tekst), kategoria, wygląd |
@@ -107,7 +107,7 @@ Dane konta leżą w `users/{uid}/…` ([ADR-0005](adr/0005-data-model-and-access
 Poza Firestore:
 
 - **Szablony domyślne** są w kodzie (`src/features/templates/defaultTemplates.ts`), nie w bazie.
-- **LocalStorage**: `currentWorkoutDraft` — szkic trwającego treningu, usuwany po potwierdzonym zapisie albo przy wylogowaniu; `customTemplates` — szablony z dawnych wersji, przenoszone jednorazowo do Firestore i potem usuwane (`useTemplates`). `workouts` i `measurements` — dane z pierwszych wersji, już nieczytane. Szkic nie jest związany z kontem, dlatego wylogowanie usuwa wszystkie wpisy aplikacji (`STORAGE_KEYS`).
+- **LocalStorage**: `currentWorkoutDraft` — szkic trwającego treningu (data rozpoczęcia, serie, notatki), usuwany po potwierdzonym zapisie, po porzuceniu treningu z potwierdzeniem albo przy wylogowaniu; `customTemplates` — szablony z dawnych wersji, przenoszone jednorazowo do Firestore i potem usuwane (`useTemplates`). `workouts` i `measurements` — dane z pierwszych wersji, już nieczytane. Szkic nie jest związany z kontem, dlatego wylogowanie usuwa wszystkie wpisy aplikacji (`STORAGE_KEYS`).
 
 Ograniczenia obecnego modelu, które zmienia etap 1 ([ADR-0007](adr/0007-exercises-and-sets.md)):
 
@@ -169,7 +169,7 @@ Wpis usuwamy, gdy pakiet nadrzędny sam wymaga poprawionej wersji. Zmiana `overr
 |---|---|---|---|
 | Jednostkowe i komponentów | Vitest, Testing Library, jsdom | `src/**/*.test.ts(x)` | logika, hooki, formularze |
 | Reguły | Vitest + emulator Firestore | `tests/rules/` | dostęp własne/cudze, walidacja zapisów, odmowa dostępu do kolekcji sprzed migracji |
-| End-to-end | Playwright na zbudowanej aplikacji i emulatorach | `e2e/` | logowanie, zgoda, trening po odświeżeniu i offline, otwarcie karty offline z danymi i szkicem, aktualizacja za potwierdzeniem, trasy |
+| End-to-end | Playwright na zbudowanej aplikacji i emulatorach | `e2e/` | logowanie, zgoda, trening po odświeżeniu i offline, notatki i czas trwania, porzucenie treningu, otwarcie karty offline z danymi i szkicem, aktualizacja za potwierdzeniem, trasy |
 | Ręczne | lista kontrolna | [MANUAL_TESTING_CHECKLIST.md](MANUAL_TESTING_CHECKLIST.md) | scenariusze, których nie da się zautomatyzować |
 
 Hook `pre-push` w `.githooks/` uruchamia lint, build i testy jednostkowe. Testy reguł i E2E uruchamia, gdy zmiana ich dotyczy. Trzeba go włączyć raz na klon. CI w GitHub Actions robi to samo, ale uruchamiane jest tylko ręcznie. Polecenia: [AGENTS.md](../AGENTS.md#weryfikacja).

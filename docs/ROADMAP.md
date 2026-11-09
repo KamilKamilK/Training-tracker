@@ -14,7 +14,7 @@ Główna przewaga nad Excelem: plan i wykonanie są w jednym miejscu, porównani
 
 ## Stan wyjściowy
 
-Co już działa: zapis treningu z szablonu ze szkicem odpornym na odświeżenie, plan tygodnia, historia, pomiary, szablony własne w koncie, logowanie Google albo e-mailem z hasłem (potwierdzenie adresu, reset hasła), zgoda na dane o zdrowiu i Ustawienia, dane każdego konta w `users/{uid}/…`, reguły Firestore z walidacją, adresy URL zakładek, dane na żywo i otwieranie aplikacji offline po pierwszej wizycie online, testy jednostkowe, reguł i end-to-end. Budowa aplikacji: [ARCHITECTURE.md](ARCHITECTURE.md).
+Co już działa: zapis treningu z szablonu ze szkicem odpornym na odświeżenie, notatkami, czasem trwania i porzuceniem z potwierdzeniem, plan tygodnia, historia, pomiary, szablony własne w koncie, logowanie Google albo e-mailem z hasłem (potwierdzenie adresu, reset hasła), zgoda na dane o zdrowiu i Ustawienia, dane każdego konta w `users/{uid}/…`, reguły Firestore z walidacją, adresy URL zakładek, dane na żywo i otwieranie aplikacji offline po pierwszej wizycie online, testy jednostkowe, reguł i end-to-end. Budowa aplikacji: [ARCHITECTURE.md](ARCHITECTURE.md).
 
 Co ogranicza rozwój:
 
@@ -117,7 +117,7 @@ Kolejność pracy do końca etapu 1 i na początek etapu 2. 🖐️ — właści
 |---|---|---|---|---|
 | 1 | **Sprawdzenie po wdrożeniu (migracja, krok 1).** Reguły, kopia danych i wdrożenie są wykonane; zostało porównanie w aplikacji z danymi zapisanymi poza aplikacją — test dymny z [listy kontrolnej](MANUAL_TESTING_CHECKLIST.md#kiedy-i-co-sprawdzać) | 🖐️ | — | Wdrożona wersja pokazuje te same treningi, pomiary, plan i szablony co przed wdrożeniem |
 | 3 | **Biblioteka ćwiczeń** ([ADR-0016](adr/0016-roles-views-exercise-library.md), pkt 6). Najpierw arkusz 120–150 ćwiczeń z free-exercise-db i z obecnych szablonów (nazwa PL/EN, partie mięśni, sprzęt) do przeglądu przez właściciela. Potem kolekcja `exercises` z regułami (odczyt dla aktywnych kont, zapis tylko przez skrypt administratora) i testami. Na koniec skrypt wgrania z trybem próbnym. Ustalenia właściciela (2026-10-21): wariant ćwiczenia (np. wyciskanie na skosie) to osobne ćwiczenie, bo postęp liczy się osobno; nazwa polska główna, angielska pomocnicza; wideo techniki później | 💻🖐️ | — | Zatwierdzona lista jest w `exercises` na produkcji |
-| 4 | **Serie liczbowe i `exerciseId` (migracja, krok 2)** ([ADR-0007](adr/0007-exercises-and-sets.md)). Nowe schematy Zod i reguły, formularz serii przyjmujący liczby (także z przecinkiem), szablony domyślne rozdzielone na ćwiczenie i zalecenie. W tej samej zmianie kształtu `sessions`: czas rozpoczęcia i notatki ([KNOWN_ISSUES #28](KNOWN_ISSUES.md)). Tabela mapowań „nazwa → `exerciseId`” do przeglądu przez właściciela, skrypt z trybem próbnym i raportem liczby sesji i serii | 💻🖐️ | 3 | Każdy trening ma ćwiczenia z `exerciseId` i liczbowe serie, a raport liczby sesji i serii zgadza się przed i po |
+| 4 | **Serie liczbowe i `exerciseId` (migracja, krok 2)** ([ADR-0007](adr/0007-exercises-and-sets.md)). Nowe schematy Zod i reguły, formularz serii przyjmujący liczby (także z przecinkiem), szablony domyślne rozdzielone na ćwiczenie i zalecenie. Tabela mapowań „nazwa → `exerciseId`” do przeglądu przez właściciela, skrypt z trybem próbnym i raportem liczby sesji i serii | 💻🖐️ | 3 | Każdy trening ma ćwiczenia z `exerciseId` i liczbowe serie, a raport liczby sesji i serii zgadza się przed i po |
 | 5 | **Etap 2: postęp.** Wyniki z poprzedniego razu przy ćwiczeniu, e1RM, rekordy, objętość tygodniowa — jako czyste funkcje z testami | 💻 | 4 | Jak w tabeli etapów |
 | 6 | **Funkcje Vercel i usunięcie konta** ([ADR-0014](adr/0014-server-functions-and-email.md), [ADR-0015](adr/0015-accounts-roles-consent.md), pkt 7): katalog `api/`, weryfikacja tokenu, klucz serwisowy w Vercel. Wymagane przed pierwszym użytkownikiem spoza właściciela | 💻🖐️ | — (równolegle z 5) | Usunięcie konta w Ustawieniach usuwa dane i konto logowania, co potwierdzają testy |
 | 7 | **Sprawy z długim czasem oczekiwania:** projekt polityki prywatności i treści zgody do konsultacji z prawnikiem ([ADR-0012](adr/0012-personal-and-health-data.md), [ADR-0015](adr/0015-accounts-roles-consent.md), pkt 8); rozmowy z 3–5 trenerami przed etapem 3 | 🖐️ | — (zacząć teraz) | Opinia prawna i notatki z rozmów są gotowe przed etapem 3 |
@@ -128,7 +128,7 @@ Dlaczego tak:
 - Etap 2 daje wartość bez trenerów i korzysta z nowego modelu, więc sprawdza go w praktyce przed etapem 3.
 - Usunięcie konta i opinia prawna blokują otwarcie rejestracji dla innych osób, więc nie mogą czekać na koniec etapu 3.
 
-Między krokami warto zamykać drobne punkty z [KNOWN_ISSUES.md](KNOWN_ISSUES.md); #28 wchodzi do kroku 4.
+Między krokami warto zamykać drobne punkty z [KNOWN_ISSUES.md](KNOWN_ISSUES.md).
 
 ## Jakość — zasady przekrojowe
 

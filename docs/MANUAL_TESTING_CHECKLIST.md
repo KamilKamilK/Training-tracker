@@ -87,6 +87,8 @@ Nowy przypadek: warunki wstępne, kroki, oczekiwany wynik.
 - [ ] 3.5 Ponowne „Zakończ trening” po usunięciu przyczyny → przejście do „Historii”, trening na górze listy, szkic usunięty
 - [ ] 3.6 Bez sieci (DevTools → Offline) „Zakończ trening” → przycisk „Zapisywanie...” jest nieaktywny, trening zostaje w zakładce; po przywróceniu sieci zapis kończy się przejściem do „Historii”, trening zapisany raz
 - [ ] 3.7 Warunki: rozpoczęty trening z dodaną serią, telefon (albo DevTools, widok dotykowy 375 px) i czytnik ekranu. Dotknięcie pola kg i RIR otwiera klawiaturę numeryczną z separatorem dziesiętnym, pola powtórzeń — klawiaturę numeryczną; wiersz serii z „✕” mieści się w karcie ćwiczenia bez przewijania w bok. Czytnik ogłasza pola jako „Ciężar (kg)”, „Powtórzenia” i „RIR” z numerem serii i nazwą ćwiczenia, a „✕” jako „Usuń serię N” z nazwą ćwiczenia; to samo w oknie „Edytuj trening” w Historii
+- [ ] 3.8 Warunki: rozpoczęty trening. Wpisz „Notatki treningu”, odśwież → notatka pozostaje; „Zakończ trening” → w Historii przy treningu czas trwania od rozpoczęcia (np. „· 12 min”, krótszy niż minuta: „< 1 min”), a „Podgląd” pokazuje „czas trwania” i notatkę
+- [ ] 3.9 Warunki: rozpoczęty trening z wpisaną serią. „Porzuć trening” → okno „Porzucić trening?”; „Wróć do treningu” (albo „X”) zostawia trening z seriami. Ponów i „Porzuć trening” → Start, zakładka „Trening” pokazuje stan pusty także po odświeżeniu, Historia bez nowego wpisu. Podczas zapisu („Zapisywanie...”, np. bez sieci) przycisk „Porzuć trening” jest nieaktywny
 
 ## 4. Historia
 

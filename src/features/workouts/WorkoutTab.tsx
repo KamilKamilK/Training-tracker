@@ -10,6 +10,8 @@ interface WorkoutTabProps {
   onAddSet: (exerciseIndex: number) => void;
   onUpdateSet: (exIdx: number, setIdx: number, field: 'weight' | 'reps' | 'rir', value: string) => void;
   onRemoveSet: (exIdx: number, setIdx: number) => void;
+  onUpdateNotes: (notes: string) => void;
+  onAbandonWorkout: () => void;
   onFinishWorkout: () => void;
 }
 
@@ -21,6 +23,8 @@ export const WorkoutTab: React.FC<WorkoutTabProps> = ({
   onAddSet,
   onUpdateSet,
   onRemoveSet,
+  onUpdateNotes,
+  onAbandonWorkout,
   onFinishWorkout,
 }) => {
   if (!currentWorkout) {
@@ -40,6 +44,8 @@ export const WorkoutTab: React.FC<WorkoutTabProps> = ({
       onAddSet={onAddSet}
       onUpdateSet={onUpdateSet}
       onRemoveSet={onRemoveSet}
+      onUpdateNotes={onUpdateNotes}
+      onAbandonWorkout={onAbandonWorkout}
       onFinishWorkout={onFinishWorkout}
     />
   );

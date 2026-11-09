@@ -448,6 +448,49 @@ test('a new app version waits for confirmation and keeps the workout draft after
   }
 });
 
+test('a finished workout keeps its notes and duration, and an abandoned one is discarded after confirmation', async ({ page }) => {
+  const uid = await openAsOwner(page);
+  await page.getByText('Trening A - Klatka + Barki').click();
+  await page.getByRole('button', { name: 'Dodaj serię' }).first().click();
+  await page.getByPlaceholder('kg').fill('80');
+  await page.getByLabel('Notatki treningu').fill('Lekki ból barku');
+  // The draft's date is its start time: move it back to test the duration without waiting.
+  await page.evaluate(() => {
+    const draft = JSON.parse(localStorage.getItem('currentWorkoutDraft')!);
+    draft.date = new Date(Date.now() - 50 * 60_000).toISOString();
+    localStorage.setItem('currentWorkoutDraft', JSON.stringify(draft));
+  });
+  await page.reload();
+  await expect(page.getByLabel('Notatki treningu')).toHaveValue('Lekki ból barku');
+  await page.getByRole('button', { name: 'Zakończ trening' }).click();
+  await expect(page).toHaveURL(/\/history$/);
+  await expect(page.getByText(/serii · 50 min/)).toBeVisible();
+  await page.getByRole('button', { name: 'Podgląd' }).click();
+  await expect(page.getByText(/czas trwania: 50 min/)).toBeVisible();
+  await expect(page.getByText('Lekki ból barku')).toBeVisible();
+  await page.keyboard.press('Escape');
+  const savedIds = await journalDocumentIds(uid, 'sessions');
+  expect(savedIds).toHaveLength(1);
+
+  await page.getByRole('link', { name: 'Start', exact: true }).click();
+  await page.getByText('Trening B - Plecy + Barki Tylne').click();
+  await page.getByRole('button', { name: 'Dodaj serię' }).first().click();
+  await page.getByPlaceholder('kg').fill('50');
+  await page.getByRole('button', { name: 'Porzuć trening' }).click();
+  const confirm = page.getByRole('dialog', { name: 'Porzucić trening?' });
+  await confirm.getByRole('button', { name: 'Wróć do treningu' }).click();
+  await expect(page.getByPlaceholder('kg')).toHaveValue('50');
+
+  await page.getByRole('button', { name: 'Porzuć trening' }).click();
+  await confirm.getByRole('button', { name: 'Porzuć trening' }).click();
+  await expect(page).toHaveURL(/\/$/);
+  expect(await page.evaluate(() => localStorage.getItem('currentWorkoutDraft'))).toBeNull();
+  await page.reload();
+  await page.getByRole('link', { name: 'Trening', exact: true }).click();
+  await expect(page.getByText('Brak aktywnego treningu')).toBeVisible();
+  expect(await journalDocumentIds(uid, 'sessions')).toEqual(savedIds);
+});
+
 test('choosing a template during a workout asks before replacing it', async ({ page }) => {
   await openAsOwner(page);
   await page.getByText('Trening A - Klatka + Barki').click();
