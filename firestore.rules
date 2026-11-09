@@ -45,8 +45,9 @@ service cloud.firestore {
 
     function isValidWorkout(data) {
       return data.keys().hasAll(['type', 'date', 'exercises', 'notes'])
-        && data.keys().hasOnly(['type', 'date', 'exercises', 'notes', 'duration', 'completed'])
+        && data.keys().hasOnly(['type', 'templateId', 'date', 'exercises', 'notes', 'duration', 'completed'])
         && data.type is string && data.type.size() > 0 && data.type.size() <= 100
+        && (!('templateId' in data) || (data.templateId is string && data.templateId.size() > 0 && data.templateId.size() <= 100))
         && data.date is string && data.date.size() <= 40
         && data.exercises is list && data.exercises.size() <= 50
         && data.notes is string && data.notes.size() <= 2000

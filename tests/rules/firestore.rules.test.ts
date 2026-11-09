@@ -173,9 +173,17 @@ describe('workout validation', () => {
     ['exercises not a list', { ...workout, exercises: 'Przysiad' }],
     ['unknown field', { ...workout, admin: true }],
     ['completed not a boolean', { ...workout, completed: 'yes' }],
+    ['template id not a string', { ...workout, templateId: 5 }],
+    ['empty template id', { ...workout, templateId: '' }],
+    ['template id over 100 characters', { ...workout, templateId: 'x'.repeat(101) }],
   ])('rejects %s', async (_, data) => {
     const clean = Object.fromEntries(Object.entries(data).filter(([, v]) => v !== undefined));
     await assertFails(addDoc(collection(ownerDb(), SESSIONS), clean));
+  });
+
+  it('accepts a workout with or without the template id', async () => {
+    await assertSucceeds(addDoc(collection(ownerDb(), SESSIONS), { ...workout, templateId: 'x'.repeat(100) }));
+    await assertSucceeds(addDoc(collection(ownerDb(), SESSIONS), workout));
   });
 
   it('validates the merged document on update', async () => {

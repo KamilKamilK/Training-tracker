@@ -76,6 +76,7 @@ Nowy przypadek: warunki wstępne, kroki, oczekiwany wynik.
 - [ ] 2.10 Warunki: więcej niż pięć pomiarów. „Pokaż wszystkie pomiary” → także starsze wpisy mają przyciski edycji i usuwania; popraw najstarszy i odśwież → korekta pozostaje
 - [ ] 2.11 Warunki: zapisany pomiar. „Usuń pomiar” → okno z datą; „Anuluj” zostawia wpis; potwierdzenie usuwa go także po odświeżeniu. Przy odrzuconym usunięciu w emulatorze → błąd w oknie, można ponowić, dane na serwerze pozostają
 - [ ] 2.12 Warunki: bez rozpoczętego treningu, klawiatura i czytnik ekranu. Na „Start” przejdź Tabem do karty szablonu → widoczny fokus, czytnik ogłasza przycisk z nazwą szablonu i opisem (czas, liczba ćwiczeń, „Ostatnio”); Enter albo Spacja otwiera zakładkę „Trening” z ćwiczeniami tego szablonu
+- [ ] 2.13 Warunki: szablon własny z zakończonym treningiem (na karcie na „Start” widać „Ostatnio”). Zmień nazwę szablonu w „Szablonach” → karta z nową nazwą nadal pokazuje tę samą datę „Ostatnio”. Utwórz drugi szablon o tej samej nazwie → jego karta nie pokazuje „Ostatnio”
 
 ## 3. Trening
 

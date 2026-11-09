@@ -14,6 +14,10 @@ describe('parseWorkout', () => {
     expect(parseWorkout('w1', workout)).toEqual({ id: 'w1', ...workout });
   });
 
+  it('keeps the template id of the workout', () => {
+    expect(parseWorkout('w1', { ...workout, templateId: 't1' })).toEqual({ id: 'w1', ...workout, templateId: 't1' });
+  });
+
   it('defaults exercises and notes missing from older documents', () => {
     expect(parseWorkout('w1', { type: 'A', date: '2026-01-01' })).toEqual({
       id: 'w1',
@@ -31,6 +35,7 @@ describe('parseWorkout', () => {
     ['set value as number', { ...workout, exercises: [{ name: 'X', sets: [{ weight: 80, reps: '8', rir: '' }] }] }],
     ['exercise without sets', { ...workout, exercises: [{ name: 'X' }] }],
     ['completed as text', { ...workout, completed: 'yes' }],
+    ['template id as number', { ...workout, templateId: 1 }],
   ])('rejects %s', (_, value) => {
     expect(parseWorkout('w1', value)).toBeNull();
   });
