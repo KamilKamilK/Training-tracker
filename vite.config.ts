@@ -23,6 +23,8 @@ export default defineConfig({
       navigateFallback: 'index.html',
       // Reserved endpoints (including Firebase Auth helpers) must reach the server.
       navigateFallbackDenylist: [/^\/__/],
+      // Sends requests to other origins (Firebase) straight to the network, bypassing the worker.
+      importScripts: ['sw-network-routes.js'],
     },
   })],
   build: {
