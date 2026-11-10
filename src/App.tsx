@@ -26,6 +26,8 @@ function App() {
             defaultName={account.profile?.displayName ?? auth.displayName ?? ''}
             error={account.error}
             onDismissError={account.clearError}
+            authError={auth.isSignOutWarningOpen ? null : auth.error}
+            onDismissAuthError={auth.clearError}
             onActivate={account.activate}
             onSignOut={auth.signOut}
           />
@@ -38,6 +40,8 @@ function App() {
           profile={account.profile}
           profileError={account.error}
           onDismissProfileError={account.clearError}
+          authError={auth.isSignOutWarningOpen ? null : auth.error}
+          onDismissAuthError={auth.clearError}
           onUpdateDisplayName={account.updateDisplayName}
           onWithdrawHealthConsent={account.withdrawHealthConsent}
           onSignOut={auth.signOut}

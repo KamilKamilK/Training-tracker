@@ -6,7 +6,7 @@ import { ConsentScreen } from './ConsentScreen.js';
 describe('ConsentScreen', () => {
   it('activates the account only with a name and the checked consent', async () => {
     const onActivate = vi.fn().mockResolvedValue(true);
-    render(<ConsentScreen defaultName="" error={null} onDismissError={vi.fn()} onActivate={onActivate} onSignOut={vi.fn()} />);
+    render(<ConsentScreen defaultName="" error={null} onDismissError={vi.fn()} authError={null} onDismissAuthError={vi.fn()} onActivate={onActivate} onSignOut={vi.fn()} />);
     const user = userEvent.setup();
 
     const checkbox = screen.getByRole('checkbox');

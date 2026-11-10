@@ -525,6 +525,45 @@ test('signing out removes the local data cache', async ({ page }) => {
   expect(await cacheNames()).toEqual([]);
 });
 
+for (const view of ['journal', 'consent'] as const) {
+  test(`a failed sign-out on the ${view} screen shows a dismissible error and allows a retry`, async ({ page }) => {
+    if (view === 'journal') {
+      await openAsOwner(page);
+    } else {
+      await page.goto('/');
+      await grantOwner(await signIn(page, OWNER));
+      await page.reload();
+      await expect(page.getByRole('button', { name: 'Aktywuj konto' })).toBeVisible();
+    }
+
+    // Simulate a browser storage failure when Firebase Auth removes the saved session.
+    await page.evaluate(() => {
+      const originalDelete = IDBObjectStore.prototype.delete;
+      sessionStorage.setItem('e2e-fail-signout', 'true');
+      IDBObjectStore.prototype.delete = function (key) {
+        if (this.transaction.db.name === 'firebaseLocalStorageDb'
+          && typeof key === 'string' && key.startsWith('firebase:authUser:')
+          && sessionStorage.getItem('e2e-fail-signout')) {
+          throw new DOMException('Simulated storage failure', 'UnknownError');
+        }
+        return originalDelete.call(this, key);
+      };
+    });
+    await page.getByRole('button', { name: 'Wyloguj' }).click();
+
+    const alert = page.getByRole('alert');
+    await expect(alert).toHaveText('Nie udało się wykonać operacji. Spróbuj ponownie.');
+    await expect(page.getByRole('heading', { name: view === 'journal' ? 'Rozpocznij Trening' : 'Aktywuj konto' })).toBeVisible();
+    await alert.getByRole('button', { name: 'Zamknij' }).click();
+    await expect(alert).toHaveCount(0);
+
+    await page.evaluate(() => sessionStorage.removeItem('e2e-fail-signout'));
+    await Promise.all([page.waitForEvent('load'), page.getByRole('button', { name: 'Wyloguj' }).click()]);
+    await expect(page.getByRole('button', { name: 'Kontynuuj z Google' })).toBeVisible();
+    await expect(page.getByRole('alert')).toHaveCount(0);
+  });
+}
+
 const addMeasurementOffline = async (page: Page) => {
   await page.getByRole('button', { name: 'Dodaj', exact: true }).click();
   await page.getByLabel('Waga (kg)').fill('83');
