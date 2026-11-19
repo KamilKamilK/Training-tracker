@@ -24,7 +24,7 @@ Co ogranicza rozwój:
 | Ćwiczenie to tekst, a ciężar i powtórzenia to napisy | `src/types/workout.types.ts` | Nie da się policzyć postępu dla ćwiczenia (e1RM, objętość) ani porównać z planem |
 | Plan tygodnia jako jeden dokument z identyfikatorami szablonów | `src/features/plan/useWeekPlan.ts` | Brak planów wielotygodniowych z progresją |
 | Kod serwerowy tylko dla filmów techniki | `api/exercise-videos.ts` | Nie da się usunąć konta, założyć konta podopiecznego ani nadać roli z aplikacji ([ADR-0014](adr/0014-server-functions-and-email.md)) |
-| Filmy techniki w wersji testowej, przypięte do nazwy ćwiczenia | `src/features/exerciseVideos/`, [ADR-0019](adr/0019-exercise-technique-videos.md) | Zmiana nazwy ćwiczenia odłącza film; bez limitu wywołań i sprzątania plików, więc wgrywa tylko jedno konto |
+| Filmy techniki w wersji testowej, przypięte do nazwy ćwiczenia | `src/features/exerciseVideos/`, [ADR-0019](adr/0019-exercise-technique-videos.md) | Zmiana nazwy ćwiczenia odłącza film; wgrywa tylko jedno konto z rolą `admin` |
 
 ## Role i uprawnienia
 

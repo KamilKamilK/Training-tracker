@@ -20,5 +20,5 @@ export const ERROR_MESSAGES = {
   uploadExerciseVideo: 'Nie udało się wgrać filmu. Sprawdź połączenie i spróbuj ponownie.',
   removeReplacedExerciseVideo: 'Nowy film jest zapisany, ale nie udało się usunąć pliku poprzedniego filmu.',
   deleteExerciseVideo: 'Nie udało się usunąć filmu. Spróbuj ponownie.',
-  removeOrphanedExerciseVideoFiles: 'Nie udało się usunąć plików bez filmu. Spróbuj ponownie później.',
+  removeUnusedExerciseVideoFiles: 'Nie udało się usunąć zbędnych plików. Spróbuj ponownie później.',
 };

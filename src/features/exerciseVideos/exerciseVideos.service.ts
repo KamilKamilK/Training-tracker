@@ -95,9 +95,9 @@ export class ExerciseVideosService {
     });
   }
 
-  /** Removes bucket files no document refers to (left by a failed upload); resolves to their count. */
-  static removeOrphanedFiles(): Promise<number> {
-    return logged('removeOrphanedFiles', async () => {
+  /** Removes the bucket files that are not the video of any exercise; resolves to their count. */
+  static removeUnusedFiles(): Promise<number> {
+    return logged('removeUnusedFiles', async () => {
       const parsed = CleanupResponseSchema.safeParse(await (await callFunction({ action: 'cleanup' })).json());
       if (!parsed.success) throw new Error('Unexpected cleanup response');
       return parsed.data.removed;
