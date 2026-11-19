@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { createHandler, type Access, type Dependencies } from '../../api/exercise-videos.js';
+import { createHandler, POST, type Access, type Dependencies } from '../../api/exercise-videos.js';
 
 const MEDIA_ID = '0b5c4b8e-6a51-4c1f-9d2e-8f3a1c7e2b40';
 const ACCOUNTS: Record<string, { emailVerified: boolean; access: Access }> = {
@@ -95,5 +95,15 @@ describe('exercise-videos function', () => {
     const response = await handle({ action: 'view', mediaId: MEDIA_ID }, 'owner-token');
     expect(response.status).toBe(500);
     expect(await response.json()).toEqual({ error: 'internal' });
+  });
+
+  it('reports a malformed service account key without quoting it', () => {
+    vi.stubEnv('FIREBASE_SERVICE_ACCOUNT', '{"private_key": MIIEsecret}');
+    try {
+      const request = new Request('http://localhost/api/exercise-videos', { method: 'POST', body: '{}' });
+      expect(() => POST(request)).toThrow(new Error('FIREBASE_SERVICE_ACCOUNT is not valid JSON'));
+    } finally {
+      vi.unstubAllEnvs();
+    }
   });
 });
