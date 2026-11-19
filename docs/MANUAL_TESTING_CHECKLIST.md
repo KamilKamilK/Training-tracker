@@ -109,6 +109,7 @@ Nowy przypadek: warunki wstępne, kroki, oczekiwany wynik.
 - [ ] Nowy szablon z nazwą i ćwiczeniami → widoczny na liście i w siatce na „Start”
 - [ ] Edycja, duplikacja („(kopia)”) i usunięcie szablonu własnego działają; szablon domyślny można tylko zduplikować
 - [ ] Warunki: zalogowany właściciel, co najmniej dwa szablony własne o różnych nazwach, klawiatura i czytnik ekranu. W „Szablonach” przejdź Tabem przez akcje kart → czytnik ogłasza „Edytuj szablon [nazwa]”, „Kopiuj szablon [nazwa]” i „Usuń szablon [nazwa]” dla właściwej karty; karta domyślna ma tylko „Kopiuj szablon [nazwa]”. Uruchom akcje klawiszem Enter lub Spacja → dotyczą wybranego szablonu; po zmianie nazwy czytnik używa nowej nazwy we wszystkich trzech akcjach
+- [ ] Warunki: formularz nowego szablonu z trzema wypełnionymi ćwiczeniami, klawiatura i czytnik ekranu. Przejdź Tabem przez listę ćwiczeń → czytnik ogłasza przyciski „Usuń ćwiczenie 1”, „Usuń ćwiczenie 2” i „Usuń ćwiczenie 3”. Na „Usuń ćwiczenie 2” naciśnij Enter → znika drugie ćwiczenie, pozostałe zachowują wpisane nazwy, a przyciski mają numery 1 i 2
 - [ ] Zmiana kategorii i poziomu w formularzu zostaje zapisana
 - [ ] Formularz szablonu: ikona wybierana z listy emoji, kolor karty z listy próbek kolorów (nazwa po najechaniu); wybrana opcja ma białą ramkę, a nowy szablon ma tę ikonę i kolor na liście
 - [ ] Edycja szablonu zapisanego wcześniej z kolorem lub ikoną spoza listy → pierwsza opcja „Obecny: …” jest zaznaczona, zapis bez zmiany ich nie zmienia

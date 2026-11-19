@@ -49,6 +49,28 @@ describe('TemplatesTab form', () => {
     expect(onAddTemplate).toHaveBeenCalledWith(expect.objectContaining({ name: 'Push A', exercises: ['Przysiad'] }));
   });
 
+  it('names each exercise remove button with its number and removes that field', async () => {
+    const user = userEvent.setup();
+    renderTab();
+
+    await user.click(screen.getByRole('button', { name: /Nowy Szablon/ }));
+    for (const exercise of ['Przysiad', 'Wiosłowanie', 'Pompki']) {
+      await user.click(screen.getByRole('button', { name: /Dodaj ćwiczenie/ }));
+      const fields = screen.getAllByPlaceholderText(/^Ćwiczenie \d+$/);
+      await user.type(fields[fields.length - 1], exercise);
+    }
+
+    const remove = screen.getByRole('button', { name: 'Usuń ćwiczenie 2' });
+    expect(remove.getAttribute('type')).toBe('button');
+    await user.click(remove);
+
+    const values = screen.getAllByPlaceholderText<HTMLInputElement>(/^Ćwiczenie \d+$/).map(field => field.value);
+    expect(values).toEqual(['Przysiad', 'Pompki']);
+    expect(screen.getByRole('button', { name: 'Usuń ćwiczenie 1' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Usuń ćwiczenie 2' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Usuń ćwiczenie 3' })).toBeNull();
+  });
+
   it('picks the icon and the card colour from the lists', async () => {
     const user = userEvent.setup();
     const onAddTemplate = renderTab();
