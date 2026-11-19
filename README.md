@@ -44,6 +44,13 @@ npm run dev            # http://localhost:5173
 
 Praca bez dotykania danych produkcyjnych: ustaw `VITE_USE_EMULATORS=true` w `.env`, uruchom `npm run emulators` w osobnym terminalu, a potem `npm run dev`. Dokument właściciela (patrz niżej) utwórz w emulatorze Firestore. Filmy techniki działają w `npm run dev`, gdy `.env` zawiera `SUPABASE_URL` i `SUPABASE_SECRET_KEY` projektu testowego Supabase; uprawnienia funkcja sprawdza wtedy w emulatorach, a rolę `admin` nadaj w emulatorze Firestore (patrz niżej).
 
+Dane pokazowe (ok. 12 tygodni treningów ABC z progresją ciężarów, cotygodniowe pomiary i trzy szablony własne) dodaje skrypt `scripts/seed-demo-data.ts`. Dokumenty mają identyfikatory `demo-…`, więc skrypt nie zmienia innych danych konta ani planu tygodnia i potrafi usunąć wyłącznie swoje wpisy. Bez flagi pokazuje tylko, co zapisze. Przy działającym `npm run emulators` dane trafiają do emulatora; bez zmiennej `FIRESTORE_EMULATOR_HOST` — do produkcji, z poświadczeniami `gcloud auth application-default login`:
+
+```bash
+FIRESTORE_EMULATOR_HOST=127.0.0.1:8080 node scripts/seed-demo-data.ts --project demo-training-tracker --uid <uid> --apply
+node scripts/seed-demo-data.ts --project <projekt> --uid <uid> --remove   # usuwa dokumenty demo-…
+```
+
 Service worker zapisuje pliki aplikacji tylko w zbudowanej wersji (`npm run build` i `npm run preview` albo hosting HTTPS). `npm run dev` go nie uruchamia. Do sprawdzania offline lokalnie użyj buildu z emulatorami: `npx vite build --mode e2e`, potem `npm run preview` przy działającym `npm run emulators`. Po komunikacie „Pliki aplikacji są gotowe do pracy bez sieci” można zamknąć kartę i otworzyć ją ponownie offline. Zalogowane konto i wcześniej wczytane dane muszą być zachowane w tej przeglądarce. Przy nowej wersji komunikat „Dostępna nowa wersja aplikacji” pozwala wybrać „Odśwież” albo „Później”; dokończ edycję formularza przed odświeżeniem. Szkic bieżącego treningu pozostaje zapisany.
 
 | Polecenie | Działanie |
@@ -52,7 +59,7 @@ Service worker zapisuje pliki aplikacji tylko w zbudowanej wersji (`npm run buil
 | `npm run lint` | ESLint |
 | `npm run build` | typecheck (`tsc -b`) i build produkcyjny do `dist/` |
 | `npm test` | testy jednostkowe (Vitest) |
-| `npm run test:rules` | testy `firestore.rules` i odczytu uprawnień funkcji `api/` na emulatorze Firestore |
+| `npm run test:rules` | testy `firestore.rules`, odczytu uprawnień funkcji `api/` i skryptów danych na emulatorze Firestore |
 | `npm run test:e2e` | testy end-to-end (Playwright) zbudowanej aplikacji na emulatorach |
 | `npm run emulators` | emulatory Authentication i Firestore do pracy lokalnej |
 
