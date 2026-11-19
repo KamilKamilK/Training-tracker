@@ -236,7 +236,9 @@ export const TemplatesTab: React.FC<TemplatesTabProps> = ({
                   placeholder={`Ćwiczenie ${idx + 1}`}
                 />
                 <button
+                  type="button"
                   onClick={() => removeExerciseField(idx)}
+                  aria-label={`Usuń ćwiczenie ${idx + 1}`}
                   className="text-red-500 hover:text-red-600"
                 >
                   <Trash2 size={18} />
