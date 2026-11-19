@@ -71,6 +71,7 @@ Kod jest podzielony według funkcji ([ADR-0010](adr/0010-web-app-architecture.md
 | `src/features/measurements/` | pomiary: dodawanie i edycja, widżet z dostępem do wszystkich wpisów, usuwanie z potwierdzeniem, różnice wagi i talii |
 | `src/features/progress/` | postępy (`/progress`): liczba treningów, zmiany pomiarów |
 | `src/features/exerciseVideos/` | filmy techniki: przycisk przy ćwiczeniu w treningu i Historii, odtwarzacz, wgrywanie dla roli `admin`, sprawdzenie pliku MP4 w przeglądarce; stan z `useExerciseVideos` przez kontekst z `TrainingTracker` |
+| `scripts/` | skrypty danych uruchamiane ręcznie przez Node.js z Firebase Admin SDK: `seed-demo-data.ts` dodaje do konta dane pokazowe (dokumenty `demo-…`) albo je usuwa |
 | `api/` | funkcje Vercel (Node.js): `exercise-videos.ts` sprawdza token i uprawnienia, wydaje podpisane linki Supabase; w `npm run dev` serwuje ją middleware z `vite.config.ts` |
 | `src/components/common/` | wspólne elementy UI: modal, toasty, formularz, nawigacja, nagłówek |
 | `src/hooks/` | hooki wspólne dla obszarów (`useModal`) |
@@ -195,6 +196,7 @@ Gdy nowa zależność ma skrypt instalacyjny, `npm ci` wypisze ją na końcu ins
 |---|---|---|---|
 | Jednostkowe i komponentów | Vitest, Testing Library, jsdom | `src/**/*.test.ts(x)` | logika, hooki, formularze |
 | Funkcje Vercel | Vitest (projekt `api`, środowisko Node.js) | `tests/api/` | token, uprawnienia według akcji, walidacja żądania, odpowiedzi bez szczegółów błędu |
+| Skrypty danych | Vitest + emulator Firestore | `tests/scripts/` | zgodność danych pokazowych ze schematami, regułami i szablonami domyślnymi, zapis bez naruszenia danych konta, usuwanie tylko dokumentów `demo-…` |
 | Reguły | Vitest + emulator Firestore | `tests/rules/` | dostęp własne/cudze, walidacja zapisów, odmowa dostępu do kolekcji sprzed migracji, filmy techniki tylko dla roli `admin`, odczyt uprawnień przez funkcję (`readAccess` z Admin SDK) |
 | End-to-end | Playwright na zbudowanej aplikacji i emulatorach | `e2e/` | logowanie, zgoda, trening po odświeżeniu i offline, notatki i czas trwania, porzucenie treningu, otwarcie karty offline z danymi i szkicem, aktualizacja za potwierdzeniem, trasy, filmy techniki (funkcja i Supabase zastąpione trasami Playwright) |
 | Ręczne | lista kontrolna | [MANUAL_TESTING_CHECKLIST.md](MANUAL_TESTING_CHECKLIST.md) | scenariusze, których nie da się zautomatyzować |
