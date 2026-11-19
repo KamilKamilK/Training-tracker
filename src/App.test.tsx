@@ -110,11 +110,11 @@ describe.each(['journal', 'consent'] as const)('sign-out errors on the %s screen
     render(<MemoryRouter><App /></MemoryRouter>);
     const user = userEvent.setup();
     await user.click(await screen.findByRole('button', { name: 'Wyloguj' }));
-    const dialog = screen.getByRole('dialog', { name: 'Niewysłane zmiany' });
+    const dialog = await screen.findByRole('dialog', { name: 'Niewysłane zmiany' });
     await user.click(within(dialog).getByRole('button', { name: 'Wyloguj i usuń zmiany' }));
 
+    expect((await within(dialog).findByRole('alert')).textContent).toBe(failureMessage);
     expect(screen.getAllByRole('alert')).toHaveLength(1);
-    expect(within(dialog).getByRole('alert').textContent).toBe(failureMessage);
     expect(assign).not.toHaveBeenCalled();
     await user.click(within(dialog).getByRole('button', { name: 'Anuluj' }));
     expect(screen.queryByRole('alert')).toBeNull();

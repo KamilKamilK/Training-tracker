@@ -14,6 +14,10 @@ export default defineConfig({
           environment: 'jsdom',
           include: ['src/**/*.test.{ts,tsx}'],
           setupFiles: ['src/test/setup.ts'],
+          // Component tests in jsdom are CPU-bound (0.1–0.4 s alone) and Vitest runs a worker per
+          // core, so the suite itself fills the processor. With a parallel build or another load the
+          // longer form tests pass 5 s, although nothing in them waits or hangs.
+          testTimeout: 15_000,
         },
       },
       {
