@@ -10,8 +10,9 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "noEmit": true
+    "noEmit": true,
+    "allowImportingTsExtensions": true
   },
-  "include": ["src", "api", "tests", "e2e"],
+  "include": ["src", "api", "tests", "e2e", "scripts"],
   "exclude": ["node_modules", "dist"]
 }
