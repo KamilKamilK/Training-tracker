@@ -346,6 +346,18 @@ describe('roles', () => {
   });
 });
 
+describe('api rate limits', () => {
+  it('gives the app no access to the call counters, not even to its own', async () => {
+    const counter = { windowStart: Timestamp.fromDate(new Date('2026-11-19T10:00:00Z')), count: 60 };
+    await env.withSecurityRulesDisabled(context => setDoc(doc(context.firestore(), 'apiRateLimits', OWNER), counter));
+    await assertFails(getDoc(doc(ownerDb(), 'apiRateLimits', OWNER)));
+    await assertFails(getDocs(collection(ownerDb(), 'apiRateLimits')));
+    await assertFails(setDoc(doc(ownerDb(), 'apiRateLimits', OWNER), { ...counter, count: 0 }));
+    await assertFails(deleteDoc(doc(ownerDb(), 'apiRateLimits', OWNER)));
+    await assertFails(setDoc(doc(strangerDb(), 'apiRateLimits', STRANGER), { ...counter, count: 0 }));
+  });
+});
+
 describe('exercise videos', () => {
   const ADMIN = 'admin-uid';
   const name = 'Wyciskanie hantli na ławce skośnej';

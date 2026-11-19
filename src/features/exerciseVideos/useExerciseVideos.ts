@@ -16,6 +16,8 @@ export interface ExerciseVideosState {
   /** Resolves to true once the file is in the bucket and Firestore confirmed the document. */
   uploadVideo: (exerciseName: string, file: File) => Promise<boolean>;
   deleteVideo: (video: ExerciseVideo) => Promise<boolean>;
+  /** Resolves to the number of removed files, or null with the error in `error`. */
+  removeOrphanedFiles: () => Promise<number | null>;
   /** Null when the link could not be obtained; the error is in `error`. */
   getPlaybackUrl: (mediaId: string) => Promise<string | null>;
 }
@@ -83,6 +85,17 @@ export const useExerciseVideos = (canManage: boolean): ExerciseVideosState => {
     }
   }, []);
 
+  const removeOrphanedFiles = useCallback(async (): Promise<number | null> => {
+    try {
+      const removed = await ExerciseVideosService.removeOrphanedFiles();
+      setError(null);
+      return removed;
+    } catch {
+      setError(ERROR_MESSAGES.removeOrphanedExerciseVideoFiles);
+      return null;
+    }
+  }, []);
+
   const getPlaybackUrl = useCallback(async (mediaId: string): Promise<string | null> => {
     try {
       return await ExerciseVideosService.playbackUrl(mediaId);
@@ -96,7 +109,9 @@ export const useExerciseVideos = (canManage: boolean): ExerciseVideosState => {
   const clearLoadError = useCallback(() => setLoadError(null), []);
 
   return useMemo(
-    () => ({ videos, canManage, loadError, clearLoadError, error, clearError, uploadVideo, deleteVideo, getPlaybackUrl }),
-    [videos, canManage, loadError, clearLoadError, error, clearError, uploadVideo, deleteVideo, getPlaybackUrl],
+    () => ({
+      videos, canManage, loadError, clearLoadError, error, clearError, uploadVideo, deleteVideo, removeOrphanedFiles, getPlaybackUrl,
+    }),
+    [videos, canManage, loadError, clearLoadError, error, clearError, uploadVideo, deleteVideo, removeOrphanedFiles, getPlaybackUrl],
   );
 };

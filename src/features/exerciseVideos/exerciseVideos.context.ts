@@ -10,6 +10,7 @@ const noVideos: ExerciseVideosState = {
   clearError: () => undefined,
   uploadVideo: async () => false,
   deleteVideo: async () => false,
+  removeOrphanedFiles: async () => null,
   getPlaybackUrl: async () => null,
 };
 

@@ -172,5 +172,11 @@ service cloud.firestore {
       allow create, update: if isAdmin() && isValidExerciseVideo(videoId, request.resource.data);
       allow delete: if isAdmin();
     }
+
+    // Call counters of api/exercise-videos.ts, written only by the function through the Admin SDK,
+    // which bypasses these rules; the app has no access, so an account cannot reset its limit.
+    match /apiRateLimits/{uid} {
+      allow read, write: if false;
+    }
   }
 }

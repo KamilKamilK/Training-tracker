@@ -1,7 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { createHandler, POST, type Access, type Dependencies } from '../../api/exercise-videos.js';
+import { createHandler, ORPHAN_MIN_AGE_MS, POST, type Access, type Dependencies } from '../../api/exercise-videos.js';
 
 const MEDIA_ID = '0b5c4b8e-6a51-4c1f-9d2e-8f3a1c7e2b40';
+const OTHER_MEDIA_ID = '7d1e9a42-3c5b-4f60-8a2d-6e4b1c9f0a73';
 const ACCOUNTS: Record<string, { emailVerified: boolean; access: Access }> = {
   'admin-token': { emailVerified: true, access: { active: true, admin: true } },
   'owner-token': { emailVerified: true, access: { active: true, admin: false } },
@@ -11,6 +12,8 @@ const ACCOUNTS: Record<string, { emailVerified: boolean; access: Access }> = {
 
 let storage: Dependencies['storage'];
 let readAccess: Dependencies['readAccess'];
+let consumeQuota: Dependencies['consumeQuota'];
+let readMediaIds: Dependencies['readMediaIds'];
 
 const handle = (body: unknown, token?: string) =>
   createHandler({
@@ -19,7 +22,9 @@ const handle = (body: unknown, token?: string) =>
       if (!account) throw new Error('invalid token');
       return { uid: value.replace('-token', ''), emailVerified: account.emailVerified };
     },
+    consumeQuota,
     readAccess,
+    readMediaIds,
     storage,
   })(
     new Request('http://localhost/api/exercise-videos', {
@@ -33,9 +38,12 @@ beforeEach(() => {
   vi.spyOn(console, 'warn').mockImplementation(() => undefined);
   vi.spyOn(console, 'error').mockImplementation(() => undefined);
   readAccess = vi.fn(async (uid: string) => ACCOUNTS[`${uid}-token`].access);
+  consumeQuota = vi.fn(async () => ({ allowed: true as const }));
+  readMediaIds = vi.fn(async () => new Set<string>());
   storage = {
     createUploadUrl: vi.fn(async path => `https://storage.test/upload/${path}?token=t`),
     createViewUrl: vi.fn(async path => `https://storage.test/view/${path}?token=t`),
+    list: vi.fn(async () => []),
     remove: vi.fn(async () => undefined),
   };
 });
@@ -87,7 +95,80 @@ describe('exercise-videos function', () => {
 
   it('lets the admin delete a file', async () => {
     expect((await handle({ action: 'delete', mediaId: MEDIA_ID }, 'admin-token')).status).toBe(204);
-    expect(storage.remove).toHaveBeenCalledWith(`${MEDIA_ID}.mp4`);
+    expect(storage.remove).toHaveBeenCalledWith([`${MEDIA_ID}.mp4`]);
+  });
+
+  it('counts every call of a verified account against its limit and answers 429 over it', async () => {
+    vi.mocked(consumeQuota).mockResolvedValueOnce({ allowed: false, retryAfterSeconds: 42 });
+    const response = await handle({ action: 'view', mediaId: MEDIA_ID }, 'owner-token');
+    expect(response.status).toBe(429);
+    expect(response.headers.get('Retry-After')).toBe('42');
+    expect(await response.json()).toEqual({ error: 'rate-limited' });
+    expect(consumeQuota).toHaveBeenCalledWith('owner');
+    expect(readAccess).not.toHaveBeenCalled();
+    expect(storage.createViewUrl).not.toHaveBeenCalled();
+
+    expect((await handle('not json', 'owner-token')).status).toBe(400);
+    expect(consumeQuota).toHaveBeenCalledTimes(2);
+  });
+
+  it('does not count a call without a valid token or a verified e-mail', async () => {
+    await handle({ action: 'view', mediaId: MEDIA_ID }, 'forged-token');
+    await handle({ action: 'view', mediaId: MEDIA_ID }, 'unverified-token');
+    expect(consumeQuota).not.toHaveBeenCalled();
+  });
+
+  it('answers a failure of the limit check with a code', async () => {
+    vi.mocked(consumeQuota).mockRejectedValueOnce(new Error('deadline exceeded'));
+    const response = await handle({ action: 'view', mediaId: MEDIA_ID }, 'owner-token');
+    expect(response.status).toBe(500);
+    expect(await response.json()).toEqual({ error: 'internal' });
+    expect(storage.createViewUrl).not.toHaveBeenCalled();
+  });
+
+  describe('cleanup', () => {
+    const old = new Date(Date.now() - ORPHAN_MIN_AGE_MS - 60_000);
+    const recent = new Date(Date.now() - ORPHAN_MIN_AGE_MS + 60_000);
+
+    it('removes the old files without a document and keeps the files with one', async () => {
+      const orphan = '3f9a6c1e-2b4d-4e8f-9a0b-5c7d1e3f2a64';
+      vi.mocked(readMediaIds).mockResolvedValue(new Set([MEDIA_ID, OTHER_MEDIA_ID]));
+      vi.mocked(storage.list).mockResolvedValue([
+        { name: `${MEDIA_ID}.mp4`, createdAt: old },
+        { name: `${orphan}.mp4`, createdAt: old },
+        { name: `${OTHER_MEDIA_ID}.mp4`, createdAt: recent },
+      ]);
+      const response = await handle({ action: 'cleanup' }, 'admin-token');
+      expect(response.status).toBe(200);
+      expect(await response.json()).toEqual({ removed: 1 });
+      expect(storage.remove).toHaveBeenCalledExactlyOnceWith([`${orphan}.mp4`]);
+    });
+
+    it('keeps a file without a document while it may still be uploading, and files it did not create', async () => {
+      vi.mocked(storage.list).mockResolvedValue([
+        { name: `${MEDIA_ID}.mp4`, createdAt: recent },
+        { name: '.emptyFolderPlaceholder', createdAt: old },
+        { name: 'notes.txt', createdAt: old },
+      ]);
+      const response = await handle({ action: 'cleanup' }, 'admin-token');
+      expect(await response.json()).toEqual({ removed: 0 });
+      expect(storage.remove).not.toHaveBeenCalled();
+    });
+
+    it('is allowed only with the admin role', async () => {
+      expect((await handle({ action: 'cleanup' }, 'owner-token')).status).toBe(403);
+      expect(storage.list).not.toHaveBeenCalled();
+      expect(storage.remove).not.toHaveBeenCalled();
+    });
+
+    it('removes nothing when the documents cannot be read', async () => {
+      vi.mocked(readMediaIds).mockRejectedValue(new Error('exerciseVideos/x has no valid mediaId'));
+      vi.mocked(storage.list).mockResolvedValue([{ name: `${MEDIA_ID}.mp4`, createdAt: old }]);
+      const response = await handle({ action: 'cleanup' }, 'admin-token');
+      expect(response.status).toBe(500);
+      expect(await response.json()).toEqual({ error: 'internal' });
+      expect(storage.remove).not.toHaveBeenCalled();
+    });
   });
 
   it('answers a storage failure with a code, without the details of the error', async () => {
