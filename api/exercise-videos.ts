@@ -7,7 +7,7 @@ import { z } from 'zod';
 // Server-side gate for exercise technique videos (ADR-0019). The files are in a private Supabase
 // Storage bucket; the browser never holds a Supabase key and gets only short-lived signed URLs.
 // Permissions come from the same Firestore documents the security rules read: watching needs an
-// active account, uploading, deleting and removing orphaned files also the `admin` role in
+// active account, uploading, deleting and removing unused files also the `admin` role in
 // users/{uid} (ADR-0016). Every account has a call limit kept in apiRateLimits/{uid}.
 
 const RequestSchema = z.union([
@@ -20,7 +20,7 @@ const DEFAULT_BUCKET = 'exercise-videos';
 export const RATE_LIMIT = { calls: 60, windowMs: 10 * 60 * 1000 };
 // A file reaches the bucket before its document is written, so a younger file without a document
 // may be an upload still in progress.
-export const ORPHAN_MIN_AGE_MS = 60 * 60 * 1000;
+export const UNUSED_FILE_MIN_AGE_MS = 60 * 60 * 1000;
 const MEDIA_FILE = /^([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\.mp4$/;
 
 export interface Access {
@@ -31,6 +31,7 @@ export interface Access {
 export type Quota = { allowed: true } | { allowed: false; retryAfterSeconds: number };
 
 export interface StoredFile {
+  /** Path from the bucket root, with folders, e.g. `a/b.txt`. */
   name: string;
   createdAt: Date;
 }
@@ -38,7 +39,7 @@ export interface StoredFile {
 export interface VideoStorage {
   createUploadUrl(path: string): Promise<string>;
   createViewUrl(path: string, expiresInSeconds: number): Promise<string>;
-  /** All files in the bucket, without folders. */
+  /** All files in the bucket, also those inside folders. */
   list(): Promise<StoredFile[]>;
   /** Removing a file that is already gone succeeds. */
   remove(paths: string[]): Promise<void>;
@@ -103,18 +104,22 @@ export const readMediaIds = async (db: Firestore): Promise<Set<string>> => {
   }));
 };
 
-/** Removes the `{mediaId}.mp4` files no document refers to, once they are old enough. */
-const removeOrphanedFiles = async (deps: Dependencies): Promise<number> => {
+/**
+ * The bucket holds only the app's videos, `{mediaId}.mp4` in its root. Every other file old enough
+ * is removed: a video no document refers to (failed upload, replaced video) and anything added
+ * outside the app, also inside folders. A folder disappears with its last file.
+ */
+const removeUnusedFiles = async (deps: Dependencies): Promise<number> => {
   const [files, mediaIds] = await Promise.all([deps.storage.list(), deps.readMediaIds()]);
-  const cutoff = Date.now() - ORPHAN_MIN_AGE_MS;
-  const orphans = files
+  const cutoff = Date.now() - UNUSED_FILE_MIN_AGE_MS;
+  const unused = files
     .filter(file => {
       const mediaId = MEDIA_FILE.exec(file.name)?.[1];
-      return mediaId !== undefined && !mediaIds.has(mediaId) && file.createdAt.getTime() < cutoff;
+      return !(mediaId !== undefined && mediaIds.has(mediaId)) && file.createdAt.getTime() < cutoff;
     })
     .map(file => file.name);
-  if (orphans.length > 0) await deps.storage.remove(orphans);
-  return orphans.length;
+  if (unused.length > 0) await deps.storage.remove(unused);
+  return unused.length;
 };
 
 const json = (status: number, body: unknown, headers?: HeadersInit) => Response.json(body, { status, headers });
@@ -163,7 +168,7 @@ export const createHandler = (deps: Dependencies) => async (request: Request): P
         await deps.storage.remove([`${body.mediaId}.mp4`]);
         return new Response(null, { status: 204 });
       case 'cleanup':
-        return json(200, { removed: await removeOrphanedFiles(deps) });
+        return json(200, { removed: await removeUnusedFiles(deps) });
     }
   } catch (error) {
     console.error(`exercise-videos.${body.action} error${subject}:`, error);
@@ -172,6 +177,37 @@ export const createHandler = (deps: Dependencies) => async (request: Request): P
 };
 
 const LIST_PAGE_SIZE = 100;
+// Supabase Storage removes at most 1000 objects in one request.
+const REMOVE_BATCH_SIZE = 1000;
+
+/** A bucket entry as Supabase lists it: a folder has no id and no creation time. */
+export interface BucketEntry {
+  name: string;
+  id: string | null;
+  created_at: string | null;
+}
+
+/** Lists every file under the prefix, going into folders; `listPage` reads one page of one folder. */
+export const listFiles = async (
+  listPage: (prefix: string, offset: number, limit: number) => Promise<BucketEntry[]>,
+  prefix = '',
+): Promise<StoredFile[]> => {
+  const files: StoredFile[] = [];
+  for (let offset = 0; ; offset += LIST_PAGE_SIZE) {
+    const entries = await listPage(prefix, offset, LIST_PAGE_SIZE);
+    for (const entry of entries) {
+      const name = `${prefix}${entry.name}`;
+      if (entry.id === null) {
+        files.push(...(await listFiles(listPage, `${name}/`)));
+        continue;
+      }
+      const createdAt = new Date(entry.created_at ?? Number.NaN);
+      if (Number.isNaN(createdAt.getTime())) throw new Error(`File ${name} has no creation time`);
+      files.push({ name, createdAt });
+    }
+    if (entries.length < LIST_PAGE_SIZE) return files;
+  }
+};
 
 const requiredEnv = (env: NodeJS.ProcessEnv, name: string): string => {
   const value = env[name];
@@ -224,23 +260,18 @@ const createDependencies = (env: NodeJS.ProcessEnv): Dependencies => {
         if (error) throw error;
         return data.signedUrl;
       },
-      async list() {
-        const files: StoredFile[] = [];
-        for (let offset = 0; ; offset += LIST_PAGE_SIZE) {
-          const { data, error } = await bucket.list('', { limit: LIST_PAGE_SIZE, offset, sortBy: { column: 'name', order: 'asc' } });
+      list: () =>
+        listFiles(async (prefix, offset, limit) => {
+          // Supabase lists the folder given without its trailing slash.
+          const { data, error } = await bucket.list(prefix.replace(/\/$/, ''), { limit, offset, sortBy: { column: 'name', order: 'asc' } });
           if (error) throw error;
-          for (const file of data) {
-            if (file.id === null) continue;
-            const createdAt = new Date(file.created_at ?? Number.NaN);
-            if (Number.isNaN(createdAt.getTime())) throw new Error(`File ${file.name} has no creation time`);
-            files.push({ name: file.name, createdAt });
-          }
-          if (data.length < LIST_PAGE_SIZE) return files;
-        }
-      },
+          return data;
+        }),
       async remove(paths) {
-        const { error } = await bucket.remove(paths);
-        if (error) throw error;
+        for (let start = 0; start < paths.length; start += REMOVE_BATCH_SIZE) {
+          const { error } = await bucket.remove(paths.slice(start, start + REMOVE_BATCH_SIZE));
+          if (error) throw error;
+        }
       },
     },
   };

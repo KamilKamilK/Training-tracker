@@ -16,14 +16,13 @@ interface ExerciseVideoModalProps {
 
 /** Plays the technique video; the admin also uploads, replaces and deletes it here. */
 export const ExerciseVideoModal = ({ exerciseName, video, onClose }: ExerciseVideoModalProps) => {
-  const { canManage, error, clearError, uploadVideo, deleteVideo, removeOrphanedFiles, getPlaybackUrl } = useExerciseVideosContext();
+  const { canManage, error, clearError, uploadVideo, deleteVideo, getPlaybackUrl } = useExerciseVideosContext();
   const fileInputId = useId();
   const [playback, setPlayback] = useState<{ mediaId: string; url: string } | null>(null);
   const [file, setFile] = useState<File | null>(null);
   // Changing the key empties the file input after an upload.
   const [fileInputKey, setFileInputKey] = useState(0);
-  const [pending, setPending] = useState<'upload' | 'delete' | 'cleanup' | null>(null);
-  const [removedFiles, setRemovedFiles] = useState<number | null>(null);
+  const [pending, setPending] = useState<'upload' | 'delete' | null>(null);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
 
   // The signed link expires after a few minutes, so it is fetched each time the video is shown.
@@ -57,14 +56,6 @@ export const ExerciseVideoModal = ({ exerciseName, video, onClose }: ExerciseVid
     const deleted = await deleteVideo(video);
     setPending(null);
     if (deleted) setIsDeleteConfirmOpen(false);
-  };
-
-  const cleanUp = async () => {
-    if (pending) return;
-    setPending('cleanup');
-    setRemovedFiles(null);
-    setRemovedFiles(await removeOrphanedFiles());
-    setPending(null);
   };
 
   const close = () => {
@@ -133,24 +124,6 @@ export const ExerciseVideoModal = ({ exerciseName, video, onClose }: ExerciseVid
               </button>
             </div>
           </fieldset>
-        )}
-
-        {canManage && (
-          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-600 pt-4">
-            <p role="status" className="text-sm text-slate-400">
-              {removedFiles === null
-                ? 'Pliki po nieudanym wgraniu lub zamianie filmu, starsze niż godzina.'
-                : `Usunięte pliki bez filmu: ${removedFiles}.`}
-            </p>
-            <button
-              type="button"
-              onClick={() => void cleanUp()}
-              disabled={pending !== null}
-              className="bg-slate-600 hover:bg-slate-500 disabled:bg-gray-600 rounded-lg px-4 py-2"
-            >
-              {pending === 'cleanup' ? 'Usuwanie...' : 'Usuń pliki bez filmu'}
-            </button>
-          </div>
         )}
       </div>
 

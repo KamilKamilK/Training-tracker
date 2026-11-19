@@ -15,7 +15,7 @@ vi.mock('./exerciseVideos.service.js', () => ({
     deleteFile: vi.fn(),
     save: vi.fn(),
     delete: vi.fn(),
-    removeOrphanedFiles: vi.fn(),
+    removeUnusedFiles: vi.fn(),
   },
 }));
 
@@ -117,14 +117,14 @@ describe('useExerciseVideos', () => {
     expect(result.current.error).toBeNull();
   });
 
-  it('returns the number of removed orphaned files or null with an error', async () => {
-    service.removeOrphanedFiles.mockResolvedValueOnce(3);
+  it('returns the number of removed unused files or null with an error', async () => {
+    service.removeUnusedFiles.mockResolvedValueOnce(3);
     const { result } = renderHook(() => useExerciseVideos(true));
-    await act(async () => { expect(await result.current.removeOrphanedFiles()).toBe(3); });
+    await act(async () => { expect(await result.current.removeUnusedFiles()).toBe(3); });
     expect(result.current.error).toBeNull();
-    service.removeOrphanedFiles.mockRejectedValueOnce(new Error('429'));
-    await act(async () => { expect(await result.current.removeOrphanedFiles()).toBeNull(); });
-    expect(result.current.error).toBe(ERROR_MESSAGES.removeOrphanedExerciseVideoFiles);
+    service.removeUnusedFiles.mockRejectedValueOnce(new Error('429'));
+    await act(async () => { expect(await result.current.removeUnusedFiles()).toBeNull(); });
+    expect(result.current.error).toBe(ERROR_MESSAGES.removeUnusedExerciseVideoFiles);
   });
 
   it('returns the playback link or null with an error', async () => {

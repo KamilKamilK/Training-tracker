@@ -6,6 +6,8 @@ import { HEALTH_CONSENT } from '../../constants/consent.js';
 import { UserProfile } from '../../types/index.js';
 import type { FieldErrors } from '../../utils/form.utils.js';
 import { DisplayNameInput, validateDisplayName } from './profile.validation.js';
+import { hasRole } from './profile.utils.js';
+import { ExerciseVideoStorageCleanup } from '../exerciseVideos/ExerciseVideoStorageCleanup.js';
 
 interface SettingsTabProps {
   email: string | null;
@@ -101,6 +103,14 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
           </button>
         </div>
       </section>
+
+      {/* Hidden for convenience only: the Vercel function checks the admin role again. */}
+      {hasRole(profile, 'admin') && (
+        <section className="space-y-3">
+          <h3 className="text-lg font-semibold">Administracja</h3>
+          <ExerciseVideoStorageCleanup />
+        </section>
+      )}
 
       <Modal isOpen={isWithdrawOpen} onClose={() => setIsWithdrawOpen(false)} title="Wycofać zgodę?">
         <p className="text-slate-300 mb-4">

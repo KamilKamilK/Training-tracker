@@ -86,6 +86,12 @@ test('an account without the admin role watches a video and has no upload option
   await expect(dialog.getByLabel(/Plik MP4/)).toHaveCount(0);
   await expect(dialog.getByRole('button', { name: 'Usuń film' })).toHaveCount(0);
   expect(calls).toEqual([{ action: 'view', mediaId }]);
+
+  await dialog.getByRole('button', { name: 'Zamknij' }).click();
+  await page.getByRole('link', { name: 'Ustawienia' }).click();
+  await expect(page.getByRole('heading', { name: 'Ustawienia' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Administracja' })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Usuń zbędne pliki' })).toHaveCount(0);
 });
 
 test('the admin uploads a video after an invalid file, then deletes it with confirmation', async ({ page }) => {
@@ -119,7 +125,24 @@ test('the admin uploads a video after an invalid file, then deletes it with conf
   expect(calls.at(-1)).toEqual({ action: 'delete', mediaId: upload.mediaId });
   expect(await exerciseVideoDocuments()).toEqual([]);
 
-  await dialog.getByRole('button', { name: 'Usuń pliki bez filmu' }).click();
-  await expect(dialog.getByRole('status')).toHaveText('Usunięte pliki bez filmu: 1.');
-  expect(calls.at(-1)).toEqual({ action: 'cleanup' });
+  await expect(dialog.getByRole('button', { name: /Usuń pliki/ })).toHaveCount(0);
+});
+
+test('the admin removes the unused video files from the settings after confirming', async ({ page }) => {
+  const { calls } = await stubVideoBackend(page);
+  await openWorkoutAs(page, { admin: true });
+  await page.getByRole('link', { name: 'Ustawienia' }).click();
+
+  await expect(page.getByRole('heading', { name: 'Administracja' })).toBeVisible();
+  await page.getByRole('button', { name: 'Usuń zbędne pliki' }).click();
+  const confirm = page.getByRole('dialog', { name: 'Usunąć zbędne pliki?' });
+  await confirm.getByRole('button', { name: 'Anuluj' }).click();
+  await expect(confirm).toHaveCount(0);
+  expect(calls).toEqual([]);
+
+  await page.getByRole('button', { name: 'Usuń zbędne pliki' }).click();
+  await confirm.getByRole('button', { name: 'Usuń pliki' }).click();
+  await expect(confirm).toHaveCount(0);
+  await expect(page.getByText('Usunięte pliki: 1.')).toBeVisible();
+  expect(calls).toEqual([{ action: 'cleanup' }]);
 });

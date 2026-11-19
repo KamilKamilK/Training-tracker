@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { createHandler, ORPHAN_MIN_AGE_MS, POST, type Access, type Dependencies } from '../../api/exercise-videos.js';
+import { createHandler, listFiles, POST, UNUSED_FILE_MIN_AGE_MS, type Access, type BucketEntry, type Dependencies } from '../../api/exercise-videos.js';
 
 const MEDIA_ID = '0b5c4b8e-6a51-4c1f-9d2e-8f3a1c7e2b40';
 const OTHER_MEDIA_ID = '7d1e9a42-3c5b-4f60-8a2d-6e4b1c9f0a73';
@@ -127,8 +127,8 @@ describe('exercise-videos function', () => {
   });
 
   describe('cleanup', () => {
-    const old = new Date(Date.now() - ORPHAN_MIN_AGE_MS - 60_000);
-    const recent = new Date(Date.now() - ORPHAN_MIN_AGE_MS + 60_000);
+    const old = new Date(Date.now() - UNUSED_FILE_MIN_AGE_MS - 60_000);
+    const recent = new Date(Date.now() - UNUSED_FILE_MIN_AGE_MS + 60_000);
 
     it('removes the old files without a document and keeps the files with one', async () => {
       const orphan = '3f9a6c1e-2b4d-4e8f-9a0b-5c7d1e3f2a64';
@@ -144,11 +144,29 @@ describe('exercise-videos function', () => {
       expect(storage.remove).toHaveBeenCalledExactlyOnceWith([`${orphan}.mp4`]);
     });
 
-    it('keeps a file without a document while it may still be uploading, and files it did not create', async () => {
+    it('removes the old files the app did not create, also inside folders', async () => {
+      vi.mocked(readMediaIds).mockResolvedValue(new Set([MEDIA_ID]));
+      vi.mocked(storage.list).mockResolvedValue([
+        { name: `${MEDIA_ID}.mp4`, createdAt: old },
+        { name: 'notes.txt', createdAt: old },
+        { name: 'test/.emptyFolderPlaceholder', createdAt: old },
+        { name: `test/${MEDIA_ID}.mp4`, createdAt: old },
+        { name: `test/nested/${OTHER_MEDIA_ID}.mp4`, createdAt: old },
+      ]);
+      const response = await handle({ action: 'cleanup' }, 'admin-token');
+      expect(await response.json()).toEqual({ removed: 4 });
+      expect(storage.remove).toHaveBeenCalledExactlyOnceWith([
+        'notes.txt',
+        'test/.emptyFolderPlaceholder',
+        `test/${MEDIA_ID}.mp4`,
+        `test/nested/${OTHER_MEDIA_ID}.mp4`,
+      ]);
+    });
+
+    it('keeps every file younger than the minimum age, since it may still be uploading', async () => {
       vi.mocked(storage.list).mockResolvedValue([
         { name: `${MEDIA_ID}.mp4`, createdAt: recent },
-        { name: '.emptyFolderPlaceholder', createdAt: old },
-        { name: 'notes.txt', createdAt: old },
+        { name: 'test/notes.txt', createdAt: recent },
       ]);
       const response = await handle({ action: 'cleanup' }, 'admin-token');
       expect(await response.json()).toEqual({ removed: 0 });
@@ -168,6 +186,32 @@ describe('exercise-videos function', () => {
       expect(response.status).toBe(500);
       expect(await response.json()).toEqual({ error: 'internal' });
       expect(storage.remove).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('listFiles', () => {
+    const file = (name: string): BucketEntry => ({ name, id: `id-${name}`, created_at: '2026-11-19T10:00:00.000Z' });
+    const folder = (name: string): BucketEntry => ({ name, id: null, created_at: null });
+
+    it('lists the files of every folder with their full paths', async () => {
+      const folders: Record<string, BucketEntry[]> = {
+        '': [folder('test'), file('a.mp4')],
+        'test/': [folder('nested'), file('.emptyFolderPlaceholder')],
+        'test/nested/': [file('b.txt')],
+      };
+      const files = await listFiles(async prefix => folders[prefix]);
+      expect(files.map(stored => stored.name)).toEqual(['test/nested/b.txt', 'test/.emptyFolderPlaceholder', 'a.mp4']);
+    });
+
+    it('reads the next page while a page is full', async () => {
+      const pages = [Array.from({ length: 100 }, (_, index) => file(`${index}.mp4`)), [file('last.mp4')]];
+      const listPage = vi.fn(async (_prefix: string, offset: number, limit: number) => pages[offset / limit]);
+      expect(await listFiles(listPage)).toHaveLength(101);
+      expect(listPage).toHaveBeenCalledTimes(2);
+    });
+
+    it('rejects a file without a creation time, so a cleanup never works on a partial list', async () => {
+      await expect(listFiles(async () => [{ name: 'a.mp4', id: 'x', created_at: null }])).rejects.toThrow('a.mp4');
     });
   });
 
