@@ -4,3 +4,6 @@ import { UserProfile } from '../../types/index.js';
 /** An account is active once the current version of the health consent is accepted (ADR-0015). */
 export const isActive = (profile: UserProfile): boolean =>
   profile.consents.health.accepted && profile.consents.health.version === HEALTH_CONSENT.version;
+
+/** Roles are set only by the administrator in the Firebase console; the rules check them again. */
+export const hasRole = (profile: UserProfile, role: 'admin'): boolean => profile.roles?.includes(role) ?? false;

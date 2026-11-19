@@ -3,3 +3,4 @@ export * from './measurement.types.js';
 export * from './template.types.js';
 export * from './weekPlan.types.js';
 export * from './profile.types.js';
+export * from './exerciseVideo.types.js';

@@ -1,7 +1,7 @@
 rules_version = '2';
 
 // The app has no backend, so these rules are the security boundary: an account reaches only its
-// own data in users/{uid}/…, and only when it is active — a verified e-mail, a document in
+// own data in users/{uid}/… and the shared technique videos, and only when it is active — a verified e-mail, a document in
 // `owners` (the access list until registration opens, ADR-0016) and the accepted health-data
 // consent in its profile. Every write is checked for shape and types. Measurement ranges mirror
 // VALIDATION_RULES.measurement in src/constants/validation.ts.
@@ -20,6 +20,12 @@ service cloud.firestore {
       return isVerified()
         && exists(/databases/$(database)/documents/owners/$(request.auth.uid))
         && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.consents.health.accepted == true;
+    }
+
+    // An active account with the `admin` role, set only in the Firebase console (ADR-0019).
+    function isAdmin() {
+      return isOwner()
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('roles', []).hasAny(['admin']);
     }
 
     function isValidConsent(consent) {
@@ -96,6 +102,20 @@ service cloud.firestore {
         && (!('createdAt' in data) || (data.createdAt is string && data.createdAt.size() <= 40));
     }
 
+    // Mirrors ExerciseVideoDocumentSchema and VALIDATION_RULES.exerciseVideo. The id is the SHA-256
+    // of the exercise text, so an exercise has at most one video.
+    function isValidExerciseVideo(videoId, data) {
+      return data.keys().hasAll(['exerciseName', 'mediaId', 'sizeBytes', 'durationSec', 'uploadedAt'])
+        && data.keys().hasOnly(['exerciseName', 'mediaId', 'sizeBytes', 'durationSec', 'uploadedAt'])
+        && data.exerciseName is string && data.exerciseName.size() > 0 && data.exerciseName.size() <= 200
+        && videoId == hashing.sha256(data.exerciseName).toHexString().lower()
+        && data.mediaId is string
+        && data.mediaId.matches('[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}')
+        && data.sizeBytes is int && data.sizeBytes > 0 && data.sizeBytes <= 10485760
+        && data.durationSec is number && data.durationSec > 0 && data.durationSec <= 30
+        && data.uploadedAt is string && data.uploadedAt.size() <= 40;
+    }
+
     // Any verified account keeps its own profile; a consent decision carries the server time of
     // the write, so it cannot be backdated.
     match /users/{uid} {
@@ -143,6 +163,14 @@ service cloud.firestore {
     // Created by the owner in the Firebase console; the app only checks its existence.
     match /owners/{uid} {
       allow get: if request.auth != null && request.auth.uid == uid;
+    }
+
+    // Technique videos shared by all active accounts; only the admin adds or removes them. The
+    // file itself is in Supabase Storage behind api/exercise-videos.ts (ADR-0019).
+    match /exerciseVideos/{videoId} {
+      allow read: if isOwner();
+      allow create, update: if isAdmin() && isValidExerciseVideo(videoId, request.resource.data);
+      allow delete: if isAdmin();
     }
   }
 }

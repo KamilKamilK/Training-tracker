@@ -15,4 +15,9 @@ export const ERROR_MESSAGES = {
   saveProfile: 'Nie udało się zapisać profilu. Sprawdź połączenie i spróbuj ponownie.',
   withdrawConsent: 'Nie udało się wycofać zgody. Sprawdź połączenie i spróbuj ponownie.',
   checkAccess: 'Nie udało się sprawdzić uprawnień. Odśwież stronę, aby spróbować ponownie.',
+  loadExerciseVideos: 'Nie udało się wczytać filmów techniki. Odśwież stronę, aby spróbować ponownie.',
+  playExerciseVideo: 'Nie udało się wczytać filmu. Sprawdź połączenie i spróbuj ponownie.',
+  uploadExerciseVideo: 'Nie udało się wgrać filmu. Sprawdź połączenie i spróbuj ponownie.',
+  removeReplacedExerciseVideo: 'Nowy film jest zapisany, ale nie udało się usunąć pliku poprzedniego filmu.',
+  deleteExerciseVideo: 'Nie udało się usunąć filmu. Spróbuj ponownie.',
 };

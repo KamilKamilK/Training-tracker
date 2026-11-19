@@ -1,6 +1,7 @@
 import React from 'react';
 import { Exercise } from '../../types/index.js';
 import { SetInput } from './SetInput.js';
+import { ExerciseVideoButton } from '../exerciseVideos/ExerciseVideoButton.js';
 import { Plus } from 'lucide-react';
 
 interface ExerciseItemProps {
@@ -18,7 +19,10 @@ export const ExerciseItem: React.FC<ExerciseItemProps> = ({
   onRemoveSet,
 }) => (
   <div className="bg-slate-700 rounded-lg p-4">
-    <h3 className="font-bold text-lg mb-2">{exercise.name}</h3>
+    <div className="flex items-start justify-between gap-3 mb-2">
+      <h3 className="font-bold text-lg min-w-0 break-words">{exercise.name}</h3>
+      <ExerciseVideoButton exerciseName={exercise.name} />
+    </div>
 
     {exercise.sets.length === 0 ? (
       <p className="text-slate-400 text-sm mb-2">Brak serii — dodaj pierwszą</p>

@@ -5,9 +5,26 @@ import { VitePWA } from 'vite-plugin-pwa'
 export default defineConfig({
   plugins: [react(), VitePWA({ disable: true })],
   test: {
-    environment: 'jsdom',
-    include: ['src/**/*.test.{ts,tsx}'],
     restoreMocks: true,
-    setupFiles: ['src/test/setup.ts'],
+    projects: [
+      {
+        extends: true,
+        test: {
+          name: 'app',
+          environment: 'jsdom',
+          include: ['src/**/*.test.{ts,tsx}'],
+          setupFiles: ['src/test/setup.ts'],
+        },
+      },
+      {
+        // Vercel functions in api/ run in Node.js, without the browser APIs of jsdom.
+        extends: true,
+        test: {
+          name: 'api',
+          environment: 'node',
+          include: ['tests/api/**/*.test.ts'],
+        },
+      },
+    ],
   },
 })

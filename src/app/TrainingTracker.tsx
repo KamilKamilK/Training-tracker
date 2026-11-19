@@ -6,6 +6,9 @@ import { useWorkoutHistory } from '../features/workouts/useWorkoutHistory.js';
 import { useMeasurements } from '../features/measurements/useMeasurements.js';
 import { useTemplates } from '../features/templates/useTemplates.js';
 import { useWorkoutDraft } from '../features/workouts/useWorkoutDraft.js';
+import { useExerciseVideos } from '../features/exerciseVideos/useExerciseVideos.js';
+import { ExerciseVideosContext } from '../features/exerciseVideos/exerciseVideos.context.js';
+import { hasRole } from '../features/profile/profile.utils.js';
 
 import { LoadingSpinner } from '../components/common/LoadingSpinner.js';
 import { ErrorBanner } from '../components/common/ErrorBanner.js';
@@ -127,6 +130,7 @@ const TrainingTracker: React.FC<TrainingTrackerProps> = ({
     abandonWorkout,
     finishWorkout,
   } = useWorkoutDraft();
+  const exerciseVideos = useExerciseVideos(hasRole(profile, 'admin'));
 
   const handleStartWorkout = (template: WorkoutTemplate) => {
     if (startWorkout(template)) {
@@ -203,79 +207,84 @@ const TrainingTracker: React.FC<TrainingTrackerProps> = ({
             <ErrorToast message={workoutsError} onDismiss={clearWorkoutsError} />
           )}
           {templatesError && <ErrorToast message={templatesError} onDismiss={clearTemplatesError} />}
+          {exerciseVideos.loadError && (
+            <ErrorToast message={exerciseVideos.loadError} onDismiss={exerciseVideos.clearLoadError} />
+          )}
           {measurementsError && !isMeasurementFormOpen && !pendingMeasurementDelete && (
             <ErrorToast message={measurementsError} onDismiss={clearMeasurementsError} />
           )}
 
           <div className="bg-slate-800 rounded-xl shadow-2xl p-6">
-            <Suspense fallback={<p className="text-slate-400 text-center py-12">Ładowanie...</p>}>
-              <Routes>
-                <Route
-                  path={ROUTES.dashboard}
-                  element={
-                    <DashboardTab
-                      workouts={workouts}
-                      measurements={measurements}
-                      templates={templates}
-                      onStartWorkout={handleStartWorkout}
-                      onAddMeasurement={() => openMeasurementForm()}
-                      onEditMeasurement={openMeasurementForm}
-                      onDeleteMeasurement={measurement => { clearMeasurementsError(); setPendingMeasurementDelete(measurement); }}
-                    />
-                  }
-                />
-                <Route
-                  path={ROUTES.templates}
-                  element={
-                    <TemplatesTab
-                      templates={templates}
-                      defaultTemplates={defaultTemplates}
-                      customTemplates={customTemplates}
-                      onAddTemplate={addTemplate}
-                      onUpdateTemplate={updateTemplate}
-                      onDeleteTemplate={deleteTemplate}
-                      onDuplicateTemplate={duplicateTemplate}
-                    />
-                  }
-                />
-                <Route path={ROUTES.plan} element={<PlanTab uid={uid} templates={templates} />} />
-                <Route
-                  path={ROUTES.workout}
-                  element={
-                    <WorkoutTab
-                      currentWorkout={currentWorkout}
-                      isFinishing={isFinishing}
-                      error={workoutsError}
-                      onDismissError={clearWorkoutsError}
-                      onAddSet={addSet}
-                      onUpdateSet={updateSet}
-                      onRemoveSet={removeSet}
-                      onUpdateNotes={updateNotes}
-                      onAbandonWorkout={handleAbandonWorkout}
-                      onFinishWorkout={handleFinishWorkout}
-                    />
-                  }
-                />
-                <Route path={ROUTES.history} element={
-                  <HistoryTab workouts={workouts} onSave={saveWorkout} onDelete={deleteWorkout} error={workoutsError} onDismissError={clearWorkoutsError} />
-                } />
-                <Route path={ROUTES.progress} element={<ProgressTab measurements={measurements} workouts={workouts} />} />
-                <Route
-                  path={ROUTES.settings}
-                  element={
-                    <SettingsTab
-                      email={email}
-                      profile={profile}
-                      error={profileError}
-                      onDismissError={onDismissProfileError}
-                      onUpdateDisplayName={onUpdateDisplayName}
-                      onWithdrawHealthConsent={onWithdrawHealthConsent}
-                    />
-                  }
-                />
-                <Route path="*" element={<Navigate to={ROUTES.dashboard} replace />} />
-              </Routes>
-            </Suspense>
+            <ExerciseVideosContext value={exerciseVideos}>
+              <Suspense fallback={<p className="text-slate-400 text-center py-12">Ładowanie...</p>}>
+                <Routes>
+                  <Route
+                    path={ROUTES.dashboard}
+                    element={
+                      <DashboardTab
+                        workouts={workouts}
+                        measurements={measurements}
+                        templates={templates}
+                        onStartWorkout={handleStartWorkout}
+                        onAddMeasurement={() => openMeasurementForm()}
+                        onEditMeasurement={openMeasurementForm}
+                        onDeleteMeasurement={measurement => { clearMeasurementsError(); setPendingMeasurementDelete(measurement); }}
+                      />
+                    }
+                  />
+                  <Route
+                    path={ROUTES.templates}
+                    element={
+                      <TemplatesTab
+                        templates={templates}
+                        defaultTemplates={defaultTemplates}
+                        customTemplates={customTemplates}
+                        onAddTemplate={addTemplate}
+                        onUpdateTemplate={updateTemplate}
+                        onDeleteTemplate={deleteTemplate}
+                        onDuplicateTemplate={duplicateTemplate}
+                      />
+                    }
+                  />
+                  <Route path={ROUTES.plan} element={<PlanTab uid={uid} templates={templates} />} />
+                  <Route
+                    path={ROUTES.workout}
+                    element={
+                      <WorkoutTab
+                        currentWorkout={currentWorkout}
+                        isFinishing={isFinishing}
+                        error={workoutsError}
+                        onDismissError={clearWorkoutsError}
+                        onAddSet={addSet}
+                        onUpdateSet={updateSet}
+                        onRemoveSet={removeSet}
+                        onUpdateNotes={updateNotes}
+                        onAbandonWorkout={handleAbandonWorkout}
+                        onFinishWorkout={handleFinishWorkout}
+                      />
+                    }
+                  />
+                  <Route path={ROUTES.history} element={
+                    <HistoryTab workouts={workouts} onSave={saveWorkout} onDelete={deleteWorkout} error={workoutsError} onDismissError={clearWorkoutsError} />
+                  } />
+                  <Route path={ROUTES.progress} element={<ProgressTab measurements={measurements} workouts={workouts} />} />
+                  <Route
+                    path={ROUTES.settings}
+                    element={
+                      <SettingsTab
+                        email={email}
+                        profile={profile}
+                        error={profileError}
+                        onDismissError={onDismissProfileError}
+                        onUpdateDisplayName={onUpdateDisplayName}
+                        onWithdrawHealthConsent={onWithdrawHealthConsent}
+                      />
+                    }
+                  />
+                  <Route path="*" element={<Navigate to={ROUTES.dashboard} replace />} />
+                </Routes>
+              </Suspense>
+            </ExerciseVideosContext>
           </div>
 
           <Footer />

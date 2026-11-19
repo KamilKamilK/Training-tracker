@@ -1,6 +1,6 @@
 # ADR-0004: Firebase jako platforma dla wersji z wieloma użytkownikami
 
-- **Status:** przyjęta 2026-10-10
+- **Status:** przyjęta 2026-10-10; Cloud Storage dla filmów techniki ćwiczeń zastąpiony przez [ADR-0019](0019-exercise-technique-videos.md) — Supabase Storage
 
 ## Kontekst
 

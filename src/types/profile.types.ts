@@ -16,7 +16,7 @@ const ConsentSchema = z.object({
 export const UserProfileDocumentSchema = z.object({
   displayName: z.string().min(1).max(60),
   consents: z.object({ health: ConsentSchema }),
-  /** Set only by the administrator in the Firebase console (ADR-0016); not yet used by the app. */
+  /** Set only by the administrator in the Firebase console (ADR-0016); `admin` manages the exercise videos (ADR-0019). */
   roles: z.array(z.string()).optional(),
 });
 

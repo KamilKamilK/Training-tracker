@@ -25,6 +25,40 @@ export const resetEmulators = async () => {
 export const grantOwner = (uid: string) =>
   request(`${FIRESTORE}/owners?documentId=${uid}`, { method: 'POST', headers: ADMIN, body: JSON.stringify({ fields: {} }) });
 
+/** Gives the account the `admin` role, as the owner does in the Firebase console (ADR-0019). */
+export const grantAdmin = (uid: string) =>
+  request(`${FIRESTORE}/users/${uid}?updateMask.fieldPaths=roles`, {
+    method: 'PATCH',
+    headers: ADMIN,
+    body: JSON.stringify({ fields: { roles: { arrayValue: { values: [{ stringValue: 'admin' }] } } } }),
+  });
+
+/** Stores a technique video document as the admin would, bypassing the rules. */
+export const storeExerciseVideo = (id: string, video: { exerciseName: string; mediaId: string }) =>
+  request(`${FIRESTORE}/exerciseVideos?documentId=${id}`, {
+    method: 'POST',
+    headers: ADMIN,
+    body: JSON.stringify({
+      fields: {
+        exerciseName: { stringValue: video.exerciseName },
+        mediaId: { stringValue: video.mediaId },
+        sizeBytes: { integerValue: '1000' },
+        durationSec: { doubleValue: 12 },
+        uploadedAt: { stringValue: '2026-11-19T10:00:00.000Z' },
+      },
+    }),
+  });
+
+export const exerciseVideoDocuments = async () => {
+  const response = await fetch(`${FIRESTORE}/exerciseVideos`, { headers: ADMIN });
+  if (!response.ok) throw new Error(`Reading emulator exercise videos failed with ${response.status}`);
+  const data = (await response.json()) as { documents?: { name: string; fields: { exerciseName: { stringValue: string } } }[] };
+  return (data.documents ?? []).map(document => ({
+    id: document.name.split('/').at(-1),
+    exerciseName: document.fields.exerciseName.stringValue,
+  }));
+};
+
 export const journalDocumentIds = async (uid: string, collection: 'measurements' | 'sessions') => {
   const response = await fetch(`${FIRESTORE}/users/${uid}/${collection}`, { headers: ADMIN });
   if (!response.ok) throw new Error(`Reading emulator journal failed with ${response.status}`);

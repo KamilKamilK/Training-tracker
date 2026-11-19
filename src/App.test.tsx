@@ -8,6 +8,7 @@ import { ProfileService } from './features/profile/profile.service.js';
 import { WorkoutsService } from './features/workouts/workouts.service.js';
 import { MeasurementsService } from './features/measurements/measurements.service.js';
 import { TemplatesService } from './features/templates/templates.service.js';
+import { ExerciseVideosService } from './features/exerciseVideos/exerciseVideos.service.js';
 import { HEALTH_CONSENT } from './constants/consent.js';
 import { ERROR_MESSAGES } from './constants/messages.js';
 import type { UserProfile } from './types/index.js';
@@ -22,6 +23,7 @@ vi.mock('./features/workouts/workouts.service.js', () => ({ WorkoutsService: { s
 vi.mock('./features/measurements/measurements.service.js', () => ({ MeasurementsService: { subscribe: vi.fn() } }));
 vi.mock('./features/templates/templates.service.js', () => ({ TemplatesService: { subscribe: vi.fn() } }));
 vi.mock('./features/plan/weekPlan.service.js', () => ({ WeekPlanService: {} }));
+vi.mock('./features/exerciseVideos/exerciseVideos.service.js', () => ({ ExerciseVideosService: { subscribe: vi.fn() } }));
 
 const auth = vi.mocked(AuthService);
 const profiles = vi.mocked(ProfileService);
@@ -56,6 +58,10 @@ beforeEach(() => {
     return () => undefined;
   });
   vi.mocked(TemplatesService.subscribe).mockImplementation((_uid, onChange) => {
+    onChange([]);
+    return () => undefined;
+  });
+  vi.mocked(ExerciseVideosService.subscribe).mockImplementation(onChange => {
     onChange([]);
     return () => undefined;
   });
