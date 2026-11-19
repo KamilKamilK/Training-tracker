@@ -81,7 +81,7 @@ Zasady dostępu: [ADR-0003](docs/adr/0003-owner-authentication.md); konta i logo
 
 Pliki leżą w prywatnym zasobniku Supabase Storage na planie Free, a dostęp wydaje funkcja Vercel `api/exercise-videos.ts` ([ADR-0019](docs/adr/0019-exercise-technique-videos.md)).
 
-1. **Supabase:** załóż projekt na planie Free w regionie **EU Central (Frankfurt)**. W **Storage** utwórz zasobnik `exercise-videos`: **Public bucket** wyłączone, **Restrict file size** 10 MB, **Allowed MIME types** `video/mp4`. Polityk RLS nie dodawaj — zasobnik obsługuje tylko funkcja kluczem secret.
+1. **Supabase:** załóż projekt na planie Free w regionie UE (produkcyjny projekt jest w West EU — Irlandia). Przycisku **Connect** i jego instrukcji (`VITE_SUPABASE_*`, klient w przeglądarce) nie używaj — aplikacja łączy się z Supabase tylko przez funkcję Vercel. W **Storage** utwórz zasobnik `exercise-videos`: **Public bucket** wyłączone, **Restrict file size** 10 MB, **Allowed MIME types** `video/mp4`. Polityk RLS nie dodawaj — zasobnik obsługuje tylko funkcja kluczem secret.
 2. **Supabase → Project Settings → API Keys:** skopiuj adres projektu i utwórz klucz **secret**.
 3. **Firebase → Project settings → Service accounts:** wygeneruj klucz konta serwisowego (JSON). Przechowuj go tylko w Vercel.
 4. **Vercel → Settings → Environment Variables** (środowisko Production, opcja **Sensitive**): `SUPABASE_URL`, `SUPABASE_SECRET_KEY`, `FIREBASE_SERVICE_ACCOUNT` (cały JSON w jednej linii). Opis zmiennych: `.env.example`.

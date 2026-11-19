@@ -19,7 +19,7 @@ flowchart LR
   V[Vercel Hobby] -. pliki aplikacji .-> UI
   S -->|token ID| API[funkcja Vercel<br/>api/exercise-videos.ts]
   API -->|Admin SDK: owners, roles| FS
-  API -->|podpisane linki| SB[(Supabase Storage<br/>Frankfurt)]
+  API -->|podpisane linki| SB[(Supabase Storage<br/>UE, Irlandia)]
   UI -. film przez podpisany link .-> SB
 ```
 
