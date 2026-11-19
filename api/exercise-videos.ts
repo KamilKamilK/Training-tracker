@@ -94,6 +94,16 @@ const requiredEnv = (env: NodeJS.ProcessEnv, name: string): string => {
   return value;
 };
 
+// JSON.parse quotes part of its input in the error message, and the input is a private key, so the
+// error that reaches the logs names only the variable.
+const parseServiceAccount = (json: string): object => {
+  try {
+    return JSON.parse(json) as object;
+  } catch {
+    throw new Error('FIREBASE_SERVICE_ACCOUNT is not valid JSON');
+  }
+};
+
 /**
  * Production: FIREBASE_SERVICE_ACCOUNT holds the service account key (JSON). Local development and
  * tests use the emulators (FIRESTORE_EMULATOR_HOST, FIREBASE_AUTH_EMULATOR_HOST) with
@@ -102,7 +112,7 @@ const requiredEnv = (env: NodeJS.ProcessEnv, name: string): string => {
 const createDependencies = (env: NodeJS.ProcessEnv): Dependencies => {
   const app = getApps()[0] ?? initializeApp(
     env.FIREBASE_SERVICE_ACCOUNT
-      ? { credential: cert(JSON.parse(env.FIREBASE_SERVICE_ACCOUNT) as object) }
+      ? { credential: cert(parseServiceAccount(env.FIREBASE_SERVICE_ACCOUNT)) }
       : { projectId: requiredEnv(env, 'GCLOUD_PROJECT') },
   );
   const db = getFirestore(app);
