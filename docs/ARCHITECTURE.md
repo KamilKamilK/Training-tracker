@@ -4,7 +4,7 @@ Jak aplikacja jest zbudowana teraz: części, przepływ danych, model danych i g
 
 ## Przegląd
 
-Jednostronicowa aplikacja (SPA) bez własnego backendu ([ADR-0002](adr/0002-spa-firebase.md)). Przeglądarka rozmawia bezpośrednio z Firebase, a granicą bezpieczeństwa są reguły `firestore.rules`.
+Jednostronicowa aplikacja (SPA) bez własnego backendu ([ADR-0002](adr/0002-spa-firebase.md)). Przeglądarka rozmawia bezpośrednio z Firebase, a granicą bezpieczeństwa są reguły `firestore.rules`. Jedyny kod serwerowy to funkcja Vercel `api/exercise-videos.ts`, która wydaje podpisane linki do filmów techniki w Supabase Storage ([ADR-0019](adr/0019-exercise-technique-videos.md)).
 
 ```mermaid
 flowchart LR
@@ -17,6 +17,10 @@ flowchart LR
   S --> AUTH[Firebase Authentication]
   SDK <-->|reguły firestore.rules| FS[(Cloud Firestore<br/>europe-central2)]
   V[Vercel Hobby] -. pliki aplikacji .-> UI
+  S -->|token ID| API[funkcja Vercel<br/>api/exercise-videos.ts]
+  API -->|Admin SDK: owners, roles| FS
+  API -->|podpisane linki| SB[(Supabase Storage<br/>Frankfurt)]
+  UI -. film przez podpisany link .-> SB
 ```
 
 | Element | Technologia | Gdzie w repozytorium |
@@ -27,6 +31,7 @@ flowchart LR
 | Logowanie | Firebase Authentication: Google albo e-mail z hasłem ([ADR-0008](adr/0008-accounts-and-invitations.md)) | `src/features/auth/` |
 | Dane | Cloud Firestore na planie Spark ([ADR-0009](adr/0009-cloud-functions-aggregates.md)) | serwisy w `src/features/*/` |
 | Bezpieczeństwo | reguły z walidacją zapisów | `firestore.rules`, testy w `tests/rules/` |
+| Filmy techniki | Supabase Storage Free za funkcją Vercel z Firebase Admin SDK ([ADR-0019](adr/0019-exercise-technique-videos.md)) | `api/exercise-videos.ts`, `src/features/exerciseVideos/` |
 | Hosting | Vercel, wdrożenie z gałęzi `main` ([ADR-0011](adr/0011-environments-hosting-monitoring.md)) | `vercel.json` |
 | Pliki aplikacji offline | `vite-plugin-pwa`, Workbox: precache plików buildu, bez manifestu instalacji ([ADR-0013](adr/0013-offline-app-shell.md)) | `vite.config.ts`, `src/components/common/ServiceWorkerPrompt.tsx` |
 
@@ -47,7 +52,7 @@ flowchart TD
 
 - **Lista `owners`** to tymczasowa lista dostępu do czasu polityki prywatności ([ADR-0016](adr/0016-roles-views-exercise-library.md), pkt 8). Dokument zakłada się ręcznie w konsoli.
 - **Zgoda** jest warunkiem aktywacji konta ([ADR-0015](adr/0015-accounts-roles-consent.md)). `App.tsx` czeka na profil potwierdzony przez serwer, bo reguły czytają zapisany profil i odrzuciłyby zapytania wysłane wcześniej.
-- **Role** (`roles` w `users/{uid}`) zapisuje tylko administrator w konsoli. Aplikacja jeszcze ich nie używa: wszystkie konta widzą te same zakładki.
+- **Role** (`roles` w `users/{uid}`) zapisuje tylko administrator w konsoli. Wszystkie konta widzą te same zakładki; rola `admin` pokazuje tylko wgrywanie i usuwanie filmów techniki ([ADR-0019](adr/0019-exercise-technique-videos.md)).
 
 ## Struktura kodu
 
@@ -65,6 +70,8 @@ Kod jest podzielony według funkcji ([ADR-0010](adr/0010-web-app-architecture.md
 | `src/features/plan/` | plan tygodnia (`/plan`): szablon przypisany do dnia |
 | `src/features/measurements/` | pomiary: dodawanie i edycja, widżet z dostępem do wszystkich wpisów, usuwanie z potwierdzeniem, różnice wagi i talii |
 | `src/features/progress/` | postępy (`/progress`): liczba treningów, zmiany pomiarów |
+| `src/features/exerciseVideos/` | filmy techniki: przycisk przy ćwiczeniu w treningu i Historii, odtwarzacz, wgrywanie dla roli `admin`, sprawdzenie pliku MP4 w przeglądarce; stan z `useExerciseVideos` przez kontekst z `TrainingTracker` |
+| `api/` | funkcje Vercel (Node.js): `exercise-videos.ts` sprawdza token i uprawnienia, wydaje podpisane linki Supabase; w `npm run dev` serwuje ją middleware z `vite.config.ts` |
 | `src/components/common/` | wspólne elementy UI: modal, toasty, formularz, nawigacja, nagłówek |
 | `src/hooks/` | hooki wspólne dla obszarów (`useModal`) |
 | `src/types/` | schematy Zod — jedyne źródło prawdy o kształcie danych ([AGENTS.md](../AGENTS.md#7-kontrakt-danych)) |
@@ -103,9 +110,11 @@ Dane konta leżą w `users/{uid}/…` ([ADR-0005](adr/0005-data-model-and-access
 | `users/{uid}/weekPlans/default_week_plan` | `WeekPlanDocumentSchema` | `isValidWeekPlan` | dzień tygodnia → id szablonu albo `null` (odpoczynek) |
 | `users/{uid}/templates/{id}` | `WorkoutTemplateSchema` | `isValidTemplate` | szablony własne: nazwa, lista ćwiczeń (tekst), kategoria, wygląd |
 | `owners/{uid}` | — | tylko `get` własnego | lista dostępu, zakładana w konsoli |
+| `exerciseVideos/{sha256 nazwy ćwiczenia}` | `ExerciseVideoDocumentSchema` | `isValidExerciseVideo` | film techniki wspólny dla wszystkich aktywnych kont: dokładna nazwa ćwiczenia, `mediaId` (plik `{mediaId}.mp4` w Supabase), rozmiar, czas trwania, data wgrania |
 
 Poza Firestore:
 
+- **Pliki filmów techniki** są w prywatnym zasobniku Supabase `exercise-videos` (`{mediaId}.mp4`); przeglądarka dostaje je tylko przez podpisane linki z funkcji `api/exercise-videos.ts`.
 - **Szablony domyślne** są w kodzie (`src/features/templates/defaultTemplates.ts`), nie w bazie.
 - **LocalStorage**: `currentWorkoutDraft` — szkic trwającego treningu (data rozpoczęcia, serie, notatki), usuwany po potwierdzonym zapisie, po porzuceniu treningu z potwierdzeniem albo przy wylogowaniu; `customTemplates` — szablony z dawnych wersji, przenoszone jednorazowo do Firestore i potem usuwane (`useTemplates`). `workouts` i `measurements` — dane z pierwszych wersji, już nieczytane. Szkic nie jest związany z kontem, dlatego wylogowanie usuwa wszystkie wpisy aplikacji (`STORAGE_KEYS`).
 
@@ -118,17 +127,19 @@ Docelowy model (biblioteka `exercises`, `programs`, `coaching`, `invites`) jest 
 
 ## Bezpieczeństwo
 
-Reguły w `firestore.rules` składają się z trzech warunków dostępu i walidatora dla każdej kolekcji:
+Reguły w `firestore.rules` składają się z czterech warunków dostępu i walidatora dla każdej kolekcji:
 
 | Funkcja | Warunek |
 |---|---|
 | `isVerified()` | zalogowany, adres e-mail potwierdzony |
 | `isOwner()` | `isVerified()` + dokument `owners/{uid}` + `consents.health.accepted == true` w profilu |
 | `isActiveSelf()` | `isOwner()` i ścieżka `users/{uid}` należy do zalogowanego |
+| `isAdmin()` | `isOwner()` + `roles` w profilu zawiera `admin` (zapis i usuwanie `exerciseVideos`) |
 
 - Własny profil zapisze każde konto z potwierdzonym adresem. Nie może go jednak utworzyć z polem `roles` ani zmienić tego pola przy aktualizacji, a czas zgody musi być czasem serwera (`request.time`).
 - Każdy zapis ma walidator kształtu i zakresów. Zakresy pomiarów odpowiadają `VALIDATION_RULES` w `src/constants/validation.ts`.
 - Konfiguracja `VITE_*` trafia do bundla i nie jest tajna. Klucze serwisowe nigdy nie trafiają do repozytorium ([AGENTS.md](../AGENTS.md#4-bezpieczeństwo)).
+- **Pliki filmów chroni funkcja Vercel**, nie reguły: `readAccess` czyta te same dokumenty co `isOwner()` i `isAdmin()`. `view` wymaga aktywnego konta, `upload` i `delete` — roli `admin`. Klucz Supabase (secret) i klucz konta serwisowego Firebase są tylko w zmiennych Vercel oznaczonych jako Sensitive; przeglądarka nie zna żadnego klucza Supabase. Link do odtwarzania działa 5 minut.
 - **Reguł nie wdraża Vercel.** Po zmianie `firestore.rules` trzeba je opublikować osobno: w konsoli Firebase albo przez `npx firebase deploy --only firestore:rules`.
 
 ## Offline i dane na żywo
@@ -144,13 +155,13 @@ Reguły w `firestore.rules` składają się z trzech warunków dostępu i walida
 
 | Środowisko | Projekt Firebase | Jak uruchomić |
 |---|---|---|
-| Lokalnie | emulatory `demo-training-tracker` (Auth, Firestore) | `npm run emulators` + `npm run dev` z `VITE_USE_EMULATORS=true` |
+| Lokalnie | emulatory `demo-training-tracker` (Auth, Firestore); filmy w projekcie Supabase z `.env` | `npm run emulators` + `npm run dev` z `VITE_USE_EMULATORS=true` |
 | Testy | te same emulatory | `npm run test:rules`, `npm run test:e2e` |
 | Produkcja | `training-tracker-6d13b` | Vercel buduje `main`; podglądy PR nie logują się do produkcji |
 
 - Wersję Node.js wyznacza pole `engines.node` w `package.json` (`^26.0.0`, aktywna linia LTS); z niego korzysta Vercel przy buildzie i `actions/setup-node` w CI.
 - Vite dzieli kod zewnętrzny na części `react`, `zod`, `react-router`, `firebase-app` (wspólna podstawa Firebase), `firebase-auth`, `re2js` (silnik wyrażeń regularnych używany przez Firestore), `firebase-firestore` i `vendor` (pozostałe biblioteki). Wspólne zależności są wydzielane przed bibliotekami, które z nich korzystają, aby uniknąć cykli importów. Test `e2e/bundle.spec.ts` pilnuje limitu 500 kB na plik JavaScript po minifikacji w zbudowanej aplikacji testowej; limit ostrzeżenia Vite pozostaje domyślny.
-- `vercel.json` kieruje każdy adres do `index.html`, więc odświeżenie zakładki działa.
+- `vercel.json` kieruje każdy adres poza `/api/` do `index.html`, więc odświeżenie zakładki działa, a funkcje działają w regionie `fra1`. Funkcja czyta zmienne `FIREBASE_SERVICE_ACCOUNT`, `SUPABASE_URL`, `SUPABASE_SECRET_KEY` i opcjonalnie `SUPABASE_BUCKET` (`.env.example`). W `npm run dev` middleware z `vite.config.ts` ładuje ją z `.env`, a przy `VITE_USE_EMULATORS=true` kieruje Admin SDK na emulatory.
 - Build generuje `sw.js` i plik Workbox; `sw.js` importuje `sw-network-routes.js` z `public/`. `sw.js` ma nagłówek `Cache-Control: no-store` na Vercel. Service worker działa na HTTPS i localhost, w buildach produkcyjnych oraz E2E; w `npm run dev` jest wyłączony.
 - `npm run build` sprawdza typy TypeScriptem 7: polecenie `tsc` pochodzi z aliasu `@typescript/native` (`npm:typescript@7`). Pakiet `typescript` jest aliasem `@typescript/typescript6`, bo `typescript-eslint` korzysta z API TypeScriptu 6, którego wersja 7 nie udostępnia. To [sposób zalecany przez Microsoft](https://devblogs.microsoft.com/typescript/announcing-typescript-7-0/); alias usuniemy, gdy `typescript-eslint` zacznie obsługiwać TypeScript 7.
 
@@ -182,8 +193,9 @@ Gdy nowa zależność ma skrypt instalacyjny, `npm ci` wypisze ją na końcu ins
 | Rodzaj | Narzędzie | Gdzie | Co sprawdza |
 |---|---|---|---|
 | Jednostkowe i komponentów | Vitest, Testing Library, jsdom | `src/**/*.test.ts(x)` | logika, hooki, formularze |
-| Reguły | Vitest + emulator Firestore | `tests/rules/` | dostęp własne/cudze, walidacja zapisów, odmowa dostępu do kolekcji sprzed migracji |
-| End-to-end | Playwright na zbudowanej aplikacji i emulatorach | `e2e/` | logowanie, zgoda, trening po odświeżeniu i offline, notatki i czas trwania, porzucenie treningu, otwarcie karty offline z danymi i szkicem, aktualizacja za potwierdzeniem, trasy |
+| Funkcje Vercel | Vitest (projekt `api`, środowisko Node.js) | `tests/api/` | token, uprawnienia według akcji, walidacja żądania, odpowiedzi bez szczegółów błędu |
+| Reguły | Vitest + emulator Firestore | `tests/rules/` | dostęp własne/cudze, walidacja zapisów, odmowa dostępu do kolekcji sprzed migracji, filmy techniki tylko dla roli `admin`, odczyt uprawnień przez funkcję (`readAccess` z Admin SDK) |
+| End-to-end | Playwright na zbudowanej aplikacji i emulatorach | `e2e/` | logowanie, zgoda, trening po odświeżeniu i offline, notatki i czas trwania, porzucenie treningu, otwarcie karty offline z danymi i szkicem, aktualizacja za potwierdzeniem, trasy, filmy techniki (funkcja i Supabase zastąpione trasami Playwright) |
 | Ręczne | lista kontrolna | [MANUAL_TESTING_CHECKLIST.md](MANUAL_TESTING_CHECKLIST.md) | scenariusze, których nie da się zautomatyzować |
 
 Hook `pre-push` w `.githooks/` uruchamia lint, build i testy jednostkowe. Testy reguł i E2E uruchamia, gdy zmiana ich dotyczy. Trzeba go włączyć raz na klon. CI w GitHub Actions robi to samo, ale uruchamiane jest tylko ręcznie. Polecenia: [AGENTS.md](../AGENTS.md#weryfikacja).

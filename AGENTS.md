@@ -32,7 +32,7 @@ Instrukcje dla agentów (Claude Code, Codex i inne) oraz osób pracujących nad 
 
 ### 4. Bezpieczeństwo
 
-- Aplikacja nie ma własnego backendu: granicą bezpieczeństwa są reguły `firestore.rules`, nie kod frontendu. Każde ograniczenie w UI (walidacja, ukrycie akcji) wymaga odpowiednika w regułach.
+- Aplikacja nie ma własnego backendu: granicą bezpieczeństwa są reguły `firestore.rules`, nie kod frontendu. Każde ograniczenie w UI (walidacja, ukrycie akcji) wymaga odpowiednika w regułach, a dla zasobów poza Firestore (pliki filmów w Supabase, [ADR-0019](docs/adr/0019-exercise-technique-videos.md)) — w funkcji Vercel w `api/`, która weryfikuje token ID i uprawnienia z tych samych dokumentów co reguły.
 - Reguły Firestore dają dostęp wyłącznie właścicielowi danych ([ADR-0003](docs/adr/0003-owner-authentication.md)) i walidują kształt oraz typy pól zapisu. Reguła czasowa ani `allow read, write: if true` nie są dopuszczalne. Nowa kolekcja wymaga reguły z walidacją i testów reguł.
 - Konfiguracja Firebase tylko przez zmienne `VITE_*` z `.env` (nie commitowany); wartości `VITE_*` trafiają do bundla, więc nigdy nie umieszczaj w nich prawdziwych sekretów (klucze serwisowe, tokeny).
 - Nie renderuj danych użytkownika jako HTML (`dangerouslySetInnerHTML`); polegaj na escapingu Reacta.

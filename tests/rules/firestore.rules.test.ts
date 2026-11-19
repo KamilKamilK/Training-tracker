@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { afterAll, beforeAll, beforeEach, describe, it } from 'vitest';
 import {
@@ -342,5 +343,83 @@ describe('roles', () => {
     // Accepting the consent again (as ProfileService.activate does) keeps the roles.
     await assertSucceeds(setDoc(doc(ownerDb(), 'users', OWNER), profile(), { merge: true }));
     await assertFails(setDoc(doc(ownerDb(), 'users', OWNER), profile()));
+  });
+});
+
+describe('exercise videos', () => {
+  const ADMIN = 'admin-uid';
+  const name = 'Wyciskanie hantli na ławce skośnej';
+  const videoId = (exerciseName: string) => createHash('sha256').update(exerciseName).digest('hex');
+  const video = {
+    exerciseName: name,
+    mediaId: '0f8c2d5e-3b1a-4c7d-9e2f-1a2b3c4d5e6f',
+    sizeBytes: 4_200_000,
+    durationSec: 18.5,
+    uploadedAt: '2026-11-19T10:00:00.000Z',
+  };
+  const adminDb = () => env.authenticatedContext(ADMIN, VERIFIED).firestore();
+  const videoDoc = (db: ReturnType<typeof ownerDb>, id = videoId(name)) => doc(db, 'exerciseVideos', id);
+
+  beforeEach(async () => {
+    await env.withSecurityRulesDisabled(async context => {
+      const db = context.firestore();
+      await setDoc(doc(db, 'owners', ADMIN), {});
+      await setDoc(doc(db, 'users', ADMIN), { ...storedProfile(true), roles: ['admin'] });
+      await setDoc(doc(db, 'exerciseVideos', videoId('Przysiad')), { ...video, exerciseName: 'Przysiad' });
+    });
+  });
+
+  it('lets every active account watch the videos and nobody else', async () => {
+    await assertSucceeds(getDocs(collection(ownerDb(), 'exerciseVideos')));
+    await assertSucceeds(getDocs(collection(adminDb(), 'exerciseVideos')));
+    await assertFails(getDocs(collection(strangerDb(), 'exerciseVideos')));
+    await assertFails(getDocs(collection(unverifiedOwnerDb(), 'exerciseVideos')));
+    await assertFails(getDocs(collection(anonymousDb(), 'exerciseVideos')));
+  });
+
+  it('lets only the admin add, replace and delete a video', async () => {
+    await assertFails(setDoc(videoDoc(ownerDb()), video));
+    await assertFails(deleteDoc(videoDoc(ownerDb(), videoId('Przysiad'))));
+    await assertFails(setDoc(videoDoc(strangerDb()), video));
+
+    await assertSucceeds(setDoc(videoDoc(adminDb()), video));
+    await assertSucceeds(setDoc(videoDoc(adminDb()), { ...video, mediaId: '1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d' }));
+    await assertSucceeds(deleteDoc(videoDoc(adminDb())));
+  });
+
+  it('denies the admin role without an active account', async () => {
+    await env.withSecurityRulesDisabled(context =>
+      setDoc(doc(context.firestore(), 'users', ADMIN), { ...storedProfile(false), roles: ['admin'] }),
+    );
+    await assertFails(setDoc(videoDoc(adminDb()), video));
+    await env.withSecurityRulesDisabled(context =>
+      setDoc(doc(context.firestore(), 'users', ADMIN), { ...storedProfile(true), roles: ['admin'] }),
+    );
+    await assertFails(setDoc(videoDoc(env.authenticatedContext(ADMIN, { email_verified: false }).firestore()), video));
+  });
+
+  it('accepts the limit boundaries', async () => {
+    const longName = 'a'.repeat(200);
+    await assertSucceeds(setDoc(videoDoc(adminDb()), { ...video, sizeBytes: 10 * 1024 * 1024, durationSec: 30 }));
+    await assertSucceeds(setDoc(videoDoc(adminDb(), videoId(longName)), { ...video, exerciseName: longName }));
+  });
+
+  it('requires the id to be the SHA-256 of the exercise name', async () => {
+    await assertFails(setDoc(videoDoc(adminDb(), videoId('Przysiad')), video));
+    await assertFails(setDoc(videoDoc(adminDb(), videoId(name).toUpperCase()), video));
+  });
+
+  it.each([
+    ['an empty exercise name', { ...video, exerciseName: '' }],
+    ['an exercise name over 200 characters', { ...video, exerciseName: 'a'.repeat(201) }],
+    ['a media id that is not a UUID', { ...video, mediaId: '../other-file' }],
+    ['a file over 10 MB', { ...video, sizeBytes: 10 * 1024 * 1024 + 1 }],
+    ['a fractional size', { ...video, sizeBytes: 1000.5 }],
+    ['a duration over 30 s', { ...video, durationSec: 30.1 }],
+    ['a zero duration', { ...video, durationSec: 0 }],
+    ['a missing field', { exerciseName: name, mediaId: video.mediaId, sizeBytes: 1000, durationSec: 10 }],
+    ['an unknown field', { ...video, url: 'https://example.com/v.mp4' }],
+  ])('rejects a video with %s', async (_, data) => {
+    await assertFails(setDoc(videoDoc(adminDb(), videoId(data.exerciseName)), data));
   });
 });

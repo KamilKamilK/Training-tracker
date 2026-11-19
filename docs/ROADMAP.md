@@ -20,10 +20,11 @@ Co ogranicza rozwój:
 
 | Ograniczenie | Gdzie | Skutek |
 |---|---|---|
-| Dostęp tylko z listy `owners`; pole `roles` istnieje, ale aplikacja go nie używa | `firestore.rules`, `src/features/auth/` | Brak kont trenera i podopiecznego ([ADR-0016](adr/0016-roles-views-exercise-library.md)) |
+| Dostęp tylko z listy `owners`; pole `roles` służy tylko do wgrywania filmów techniki (`admin`) | `firestore.rules`, `src/features/auth/` | Brak kont trenera i podopiecznego ([ADR-0016](adr/0016-roles-views-exercise-library.md)) |
 | Ćwiczenie to tekst, a ciężar i powtórzenia to napisy | `src/types/workout.types.ts` | Nie da się policzyć postępu dla ćwiczenia (e1RM, objętość) ani porównać z planem |
 | Plan tygodnia jako jeden dokument z identyfikatorami szablonów | `src/features/plan/useWeekPlan.ts` | Brak planów wielotygodniowych z progresją |
-| Brak kodu serwerowego | brak katalogu `api/` | Nie da się usunąć konta, założyć konta podopiecznego ani nadać roli z aplikacji ([ADR-0014](adr/0014-server-functions-and-email.md)) |
+| Kod serwerowy tylko dla filmów techniki | `api/exercise-videos.ts` | Nie da się usunąć konta, założyć konta podopiecznego ani nadać roli z aplikacji ([ADR-0014](adr/0014-server-functions-and-email.md)) |
+| Filmy techniki w wersji testowej, przypięte do nazwy ćwiczenia | `src/features/exerciseVideos/`, [ADR-0019](adr/0019-exercise-technique-videos.md) | Zmiana nazwy ćwiczenia odłącza film; bez limitu wywołań i sprzątania plików, więc wgrywa tylko jedno konto |
 
 ## Role i uprawnienia
 
@@ -91,8 +92,9 @@ Wszystkie decyzje potrzebne do etapów 1–3 są przyjęte (2026-10-10):
 | [0012](adr/0012-personal-and-health-data.md) | Zrozumiałe zgody; dane o zdrowiu tylko dla własnego trenera; eksport i usunięcie konta |
 | [0014](adr/0014-server-functions-and-email.md) | Funkcje Vercel z Firebase Admin SDK; e-maile przez Brevo po zakupie domeny |
 | [0015](adr/0015-accounts-roles-consent.md) | Zgoda na dane o zdrowiu warunkiem aktywacji; rola trenera od administratora; konta zakładane przez trenera; usunięcie konta |
+| [0019](adr/0019-exercise-technique-videos.md) | Filmy techniki w Supabase Storage Free za funkcją Vercel; wgrywa rola `admin` (wersja testowa) |
 
-Backlog decyzji: zdjęcia sylwetki (Cloud Storage na planie Blaze albo inny dostawca); drugi dostawca chmury, np. Azure z kolejką zadań — gdy pojawi się praca w tle (eksporty, przeliczanie statystyk), wymaga nowego ADR; własna domena: e-maile przez Brevo, adres aplikacji i strona `/konto/akcja` ([ADR-0014](adr/0014-server-functions-and-email.md)); plan Blaze (warunki w ADR-0009); model cenowy i operator płatności — przed etapem 5.
+Backlog decyzji: zdjęcia sylwetki (Cloud Storage na planie Blaze albo inny dostawca — przy wyborze uwzględnić Supabase Storage z [ADR-0019](adr/0019-exercise-technique-videos.md), ale zdjęcia to dane o zdrowiu); dalszy los filmów techniki po wersji testowej (wgrywanie przez trenerów, limit wywołań, kompresja, ADR-0019 — warunek rewizji); drugi dostawca chmury, np. Azure z kolejką zadań — gdy pojawi się praca w tle (eksporty, przeliczanie statystyk), wymaga nowego ADR; własna domena: e-maile przez Brevo, adres aplikacji i strona `/konto/akcja` ([ADR-0014](adr/0014-server-functions-and-email.md)); plan Blaze (warunki w ADR-0009); model cenowy i operator płatności — przed etapem 5.
 
 ## Etapy
 
@@ -116,10 +118,10 @@ Kolejność pracy do końca etapu 1 i na początek etapu 2. 🖐️ — właści
 | # | Krok | Wykonanie | Zależy od | Gotowe, gdy |
 |---|---|---|---|---|
 | 1 | **Sprawdzenie po wdrożeniu (migracja, krok 1).** Reguły, kopia danych i wdrożenie są wykonane; zostało porównanie w aplikacji z danymi zapisanymi poza aplikacją — test dymny z [listy kontrolnej](MANUAL_TESTING_CHECKLIST.md#kiedy-i-co-sprawdzać) | 🖐️ | — | Wdrożona wersja pokazuje te same treningi, pomiary, plan i szablony co przed wdrożeniem |
-| 3 | **Biblioteka ćwiczeń** ([ADR-0016](adr/0016-roles-views-exercise-library.md), pkt 6). Najpierw arkusz 120–150 ćwiczeń z free-exercise-db i z obecnych szablonów (nazwa PL/EN, partie mięśni, sprzęt) do przeglądu przez właściciela. Potem kolekcja `exercises` z regułami (odczyt dla aktywnych kont, zapis tylko przez skrypt administratora) i testami. Na koniec skrypt wgrania z trybem próbnym. Ustalenia właściciela (2026-10-21): wariant ćwiczenia (np. wyciskanie na skosie) to osobne ćwiczenie, bo postęp liczy się osobno; nazwa polska główna, angielska pomocnicza; wideo techniki później | 💻🖐️ | — | Zatwierdzona lista jest w `exercises` na produkcji |
-| 4 | **Serie liczbowe i `exerciseId` (migracja, krok 2)** ([ADR-0007](adr/0007-exercises-and-sets.md)). Nowe schematy Zod i reguły, formularz serii przyjmujący liczby (także z przecinkiem), szablony domyślne rozdzielone na ćwiczenie i zalecenie. Tabela mapowań „nazwa → `exerciseId`” do przeglądu przez właściciela, skrypt z trybem próbnym i raportem liczby sesji i serii | 💻🖐️ | 3 | Każdy trening ma ćwiczenia z `exerciseId` i liczbowe serie, a raport liczby sesji i serii zgadza się przed i po |
+| 3 | **Biblioteka ćwiczeń** ([ADR-0016](adr/0016-roles-views-exercise-library.md), pkt 6). Najpierw arkusz 120–150 ćwiczeń z free-exercise-db i z obecnych szablonów (nazwa PL/EN, partie mięśni, sprzęt) do przeglądu przez właściciela. Potem kolekcja `exercises` z regułami (odczyt dla aktywnych kont, zapis tylko przez skrypt administratora) i testami. Na koniec skrypt wgrania z trybem próbnym. Ustalenia właściciela (2026-10-21): wariant ćwiczenia (np. wyciskanie na skosie) to osobne ćwiczenie, bo postęp liczy się osobno; nazwa polska główna, angielska pomocnicza; filmy techniki są już przy nazwie ćwiczenia ([ADR-0019](adr/0019-exercise-technique-videos.md)) | 💻🖐️ | — | Zatwierdzona lista jest w `exercises` na produkcji |
+| 4 | **Serie liczbowe i `exerciseId` (migracja, krok 2)** ([ADR-0007](adr/0007-exercises-and-sets.md)). Nowe schematy Zod i reguły, formularz serii przyjmujący liczby (także z przecinkiem), szablony domyślne rozdzielone na ćwiczenie i zalecenie. Tabela mapowań „nazwa → `exerciseId`” do przeglądu przez właściciela, skrypt z trybem próbnym i raportem liczby sesji i serii; to samo mapowanie przenosi dokumenty `exerciseVideos` z nazwy na `exerciseId` | 💻🖐️ | 3 | Każdy trening ma ćwiczenia z `exerciseId` i liczbowe serie, a raport liczby sesji i serii zgadza się przed i po |
 | 5 | **Etap 2: postęp.** Wyniki z poprzedniego razu przy ćwiczeniu, e1RM, rekordy, objętość tygodniowa — jako czyste funkcje z testami | 💻 | 4 | Jak w tabeli etapów |
-| 6 | **Funkcje Vercel i usunięcie konta** ([ADR-0014](adr/0014-server-functions-and-email.md), [ADR-0015](adr/0015-accounts-roles-consent.md), pkt 7): katalog `api/`, weryfikacja tokenu, klucz serwisowy w Vercel. Wymagane przed pierwszym użytkownikiem spoza właściciela | 💻🖐️ | — (równolegle z 5) | Usunięcie konta w Ustawieniach usuwa dane i konto logowania, co potwierdzają testy |
+| 6 | **Funkcje Vercel i usunięcie konta** ([ADR-0014](adr/0014-server-functions-and-email.md), [ADR-0015](adr/0015-accounts-roles-consent.md), pkt 7): funkcja w `api/` według wzorca z `api/exercise-videos.ts` (weryfikacja tokenu, uprawnienia z Firestore, klucz serwisowy w Vercel) i limit wywołań z [#40](KNOWN_ISSUES.md). Wymagane przed pierwszym użytkownikiem spoza właściciela | 💻🖐️ | — (równolegle z 5) | Usunięcie konta w Ustawieniach usuwa dane i konto logowania, co potwierdzają testy |
 | 7 | **Sprawy z długim czasem oczekiwania:** projekt polityki prywatności i treści zgody do konsultacji z prawnikiem ([ADR-0012](adr/0012-personal-and-health-data.md), [ADR-0015](adr/0015-accounts-roles-consent.md), pkt 8); rozmowy z 3–5 trenerami przed etapem 3 | 🖐️ | — (zacząć teraz) | Opinia prawna i notatki z rozmów są gotowe przed etapem 3 |
 
 Dlaczego tak:

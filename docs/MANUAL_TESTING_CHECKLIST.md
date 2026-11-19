@@ -1,11 +1,11 @@
 # Dziennik Treningowy — ręczna lista kontrolna testów
 
 **Ostatnie pełne przejście:** brak.
-**Automatyzacja:** ekran logowania, brak dostępu, aktywacja konta i wycofanie zgody, sekcja 1a (bez produkcji i ręcznego odsłuchu czytnikiem ekranu), 2.2–2.3, 2.7–2.9, 2.11, 3.3–3.6, edycja i usuwanie z sekcji 4 oraz wybrane przypadki sekcji 8 (synchronizacja kart, przechowanie zapisu offline, wylogowanie i szybkie wczytanie przy pozostawionej dzierżawie) są testami end-to-end w `e2e/` (`npm run test:e2e`, na zbudowanej wersji); ręcznie sprawdzamy pozostałe i całość na produkcji.
+**Automatyzacja:** ekran logowania, brak dostępu, aktywacja konta i wycofanie zgody, sekcja 1a (bez produkcji i ręcznego odsłuchu czytnikiem ekranu), 2.2–2.3, 2.7–2.9, 2.11, 3.3–3.6, edycja i usuwanie z sekcji 4 oraz wybrane przypadki sekcji 8 (synchronizacja kart, przechowanie zapisu offline, wylogowanie i szybkie wczytanie przy pozostawionej dzierżawie) oraz 9.1–9.4 (z funkcją i Supabase zastąpionymi w przeglądarce) są testami end-to-end w `e2e/` (`npm run test:e2e`, na zbudowanej wersji); ręcznie sprawdzamy pozostałe i całość na produkcji.
 **Znane rozbieżności:** punkt z numerem KNOWN_ISSUES (np. „#1”) opisuje zachowanie docelowe, którego środowisko jeszcze nie spełnia — niepowodzenie potwierdza zgłoszony problem.
 **Cel:** weryfikacja funkcji aplikacji przed wdrożeniem na Vercel lub po większych zmianach.
 **Środowisko:** `npm run emulators` i `npm run dev` z `VITE_USE_EMULATORS=true` ([README](../README.md#-uruchomienie-lokalne)); przeglądarka desktopowa i widok mobilny (DevTools, szerokość 375 px).
-**Konta:** konto właściciela (dokument `owners/{uid}` w Firestore, profil z zaakceptowaną zgodą w `users/{uid}`) i drugie konto bez dokumentu w `owners`.
+**Konta:** konto właściciela (dokument `owners/{uid}` w Firestore, profil z zaakceptowaną zgodą w `users/{uid}`) i drugie konto bez dokumentu w `owners`; do sekcji 9 także rola `admin` (pole `roles` w profilu) i drugie aktywne konto bez niej.
 
 Nowy przypadek: warunki wstępne, kroki, oczekiwany wynik.
 
@@ -144,3 +144,18 @@ Nowy przypadek: warunki wstępne, kroki, oczekiwany wynik.
 - [ ] Lista „Progresja Wagi i Talii” pokazuje ostatnie pomiary w kolejności dat, z różnicą względem poprzedniego
 - [ ] Kafelki „Treningi Łącznie”, „Ten Miesiąc”, „Ten Tydzień” zgadzają się z historią
 - [ ] Warunki: w historii jest trening z niedzieli i trening z bieżącego tygodnia. W poniedziałek (albo po zmianie daty systemowej na poniedziałek) otwórz „Start” i „Postępy” → „Ten Tydzień” liczy tylko treningi od poniedziałku 00:00 czasu lokalnego, niedzielny trening nie jest wliczony
+
+## 9. Filmy techniki
+
+Warunki: `.env` z `SUPABASE_URL` i `SUPABASE_SECRET_KEY` projektu testowego Supabase z zasobnikiem `exercise-videos` ([README](../README.md#-filmy-techniki-jednorazowo-supabase-i-vercel)); krótki film MP4 nagrany telefonem (H.264, do 30 s i 10 MB) oraz film HEVC z iPhone'a albo dłuższy niż 30 s.
+
+- [ ] 9.1 Aktywne konto bez roli `admin`, rozpoczęty trening → przy ćwiczeniach bez filmu nie ma przycisku „Dodaj film” ani innej opcji wgrywania
+- [ ] 9.2 Konto z rolą `admin`, rozpoczęty trening → przy każdym ćwiczeniu przycisk „Dodaj film”; okno „Technika: …” z polem „Plik MP4 (H.264), do 30 s i 10 MB”; „Wgraj film” jest nieaktywne bez wybranego pliku
+- [ ] 9.3 Admin wybiera film HEVC albo dłuższy niż 30 s → komunikat o formacie lub długości, nic nie trafia do Supabase (Storage → `exercise-videos` bez nowego pliku); wybór poprawnego filmu i „Wgraj film” → „Wgrywanie...”, potem film odtwarza się w pętli bez dźwięku, a przycisk przy ćwiczeniu zmienia się na „Technika”
+- [ ] 9.4 Konto bez roli `admin` → przy tym samym ćwiczeniu „Technika”, film się odtwarza, w oknie nie ma pola pliku ani „Usuń film”; ten sam film jest przy ćwiczeniu o tej samej nazwie w innym szablonie i w „Podglądzie” zapisanego treningu w Historii
+- [ ] 9.5 Admin wgrywa nowy film do ćwiczenia z filmem („Wgraj nowy film”) → odtwarza się nowy film, a w Supabase zostaje jeden plik tego ćwiczenia (stary usunięty)
+- [ ] 9.6 Admin: „Usuń film” → okno „Usunąć film?”; „Anuluj” nic nie zmienia; potwierdzenie → „To ćwiczenie nie ma jeszcze filmu.”, plik znika z Supabase, a inne konto nie widzi już przycisku „Technika”
+- [ ] 9.7 Warunki: otwarty film, DevTools → Network. Skopiuj adres pliku filmu, odczekaj ponad 5 minut i otwórz go w nowej karcie → odmowa dostępu; ponowne otwarcie okna „Technika” odtwarza film z nowym adresem
+- [ ] 9.8 Wywołanie `POST /api/exercise-videos` z `{"action":"upload","mediaId":"<UUID>"}` i tokenem konta bez roli `admin` (DevTools → konsola, `fetch` z nagłówkiem `Authorization: Bearer <token>`) → odpowiedź 403; bez tokenu → 401
+- [ ] 9.9 Telefon (Safari na iOS i Chrome na Androidzie), szerokość 375 px → przycisk „Technika” mieści się obok długiej nazwy ćwiczenia, film odtwarza się w oknie bez przechodzenia na pełny ekran
+- [ ] 9.10 Produkcja po wdrożeniu: reguły wdrożone przed aplikacją, zmienne Vercel ustawione; konto właściciela z rolą `admin` wgrywa pierwszy film i odtwarza go na telefonie
