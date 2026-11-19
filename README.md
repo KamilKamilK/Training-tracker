@@ -83,7 +83,7 @@ Pliki leżą w prywatnym zasobniku Supabase Storage na planie Free, a dostęp wy
 
 1. **Supabase:** załóż projekt na planie Free w regionie UE (produkcyjny projekt jest w West EU — Irlandia). Przycisku **Connect** i jego instrukcji (`VITE_SUPABASE_*`, klient w przeglądarce) nie używaj — aplikacja łączy się z Supabase tylko przez funkcję Vercel. W **Storage** utwórz zasobnik `exercise-videos`: **Public bucket** wyłączone, **Restrict file size** 10 MB, **Allowed MIME types** `video/mp4`. Polityk RLS nie dodawaj — zasobnik obsługuje tylko funkcja kluczem secret.
 2. **Supabase → Project Settings → API Keys:** skopiuj adres projektu i utwórz klucz **secret**.
-3. **Firebase → Project settings → Service accounts:** wygeneruj klucz konta serwisowego (JSON). Przechowuj go tylko w Vercel.
+3. **Firebase → Project settings → Service accounts:** wygeneruj klucz konta serwisowego (JSON). Przechowuj go tylko w Vercel. Konto potrzebuje w **Google Cloud → IAM** roli **Cloud Datastore User**: funkcja czyta uprawnienia i zapisuje licznik wywołań w `apiRateLimits`, więc z rolą Cloud Datastore Viewer każde wywołanie kończy się błędem 500.
 4. **Vercel → Settings → Environment Variables** (środowisko Production, opcja **Sensitive**): `SUPABASE_URL`, `SUPABASE_SECRET_KEY`, `FIREBASE_SERVICE_ACCOUNT` (cały JSON w jednej linii). Opis zmiennych: `.env.example`.
 5. Wdróż reguły (`npx firebase deploy --only firestore:rules`) **przed** wdrożeniem aplikacji, bo bez reguły dla `exerciseVideos` lista filmów zwraca błąd.
 6. **Firestore → Data → `users/{twój UID}`:** dodaj pole `roles` typu array z wartością `admin`. Tylko to konto widzi „Dodaj film”; zmiana działa po odświeżeniu aplikacji.
