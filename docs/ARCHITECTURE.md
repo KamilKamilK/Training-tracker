@@ -71,7 +71,7 @@ Kod jest podzielony według funkcji ([ADR-0010](adr/0010-web-app-architecture.md
 | `src/features/measurements/` | pomiary: dodawanie i edycja, widżet z dostępem do wszystkich wpisów, usuwanie z potwierdzeniem, różnice wagi i talii |
 | `src/features/progress/` | postępy (`/progress`): liczba treningów, zmiany pomiarów |
 | `src/features/exerciseVideos/` | filmy techniki: przycisk przy ćwiczeniu w treningu i Historii, odtwarzacz, wgrywanie dla roli `admin`, sprawdzenie pliku MP4 w przeglądarce; stan z `useExerciseVideos` przez kontekst z `TrainingTracker` |
-| `api/` | funkcje Vercel (Node.js): `exercise-videos.ts` sprawdza token i uprawnienia, wydaje podpisane linki Supabase; w `npm run dev` serwuje ją middleware z `vite.config.ts` |
+| `api/` | funkcje Vercel (Node.js): `exercise-videos.ts` sprawdza token, limit wywołań i uprawnienia, wydaje podpisane linki Supabase i usuwa pliki bez dokumentu; w `npm run dev` serwuje ją middleware z `vite.config.ts` |
 | `src/components/common/` | wspólne elementy UI: modal, toasty, formularz, nawigacja, nagłówek |
 | `src/hooks/` | hooki wspólne dla obszarów (`useModal`) |
 | `src/types/` | schematy Zod — jedyne źródło prawdy o kształcie danych ([AGENTS.md](../AGENTS.md#7-kontrakt-danych)) |
@@ -111,6 +111,7 @@ Dane konta leżą w `users/{uid}/…` ([ADR-0005](adr/0005-data-model-and-access
 | `users/{uid}/templates/{id}` | `WorkoutTemplateSchema` | `isValidTemplate` | szablony własne: nazwa, lista ćwiczeń (tekst), kategoria, wygląd |
 | `owners/{uid}` | — | tylko `get` własnego | lista dostępu, zakładana w konsoli |
 | `exerciseVideos/{sha256 nazwy ćwiczenia}` | `ExerciseVideoDocumentSchema` | `isValidExerciseVideo` | film techniki wspólny dla wszystkich aktywnych kont: dokładna nazwa ćwiczenia, `mediaId` (plik `{mediaId}.mp4` w Supabase), rozmiar, czas trwania, data wgrania |
+| `apiRateLimits/{uid}` | — (schemat w `api/exercise-videos.ts`) | brak dostępu z aplikacji | licznik wywołań funkcji `api/exercise-videos.ts`: początek okna (`windowStart`) i liczba wywołań; zapisuje tylko funkcja przez Admin SDK |
 
 Poza Firestore:
 
@@ -139,7 +140,7 @@ Reguły w `firestore.rules` składają się z czterech warunków dostępu i wali
 - Własny profil zapisze każde konto z potwierdzonym adresem. Nie może go jednak utworzyć z polem `roles` ani zmienić tego pola przy aktualizacji, a czas zgody musi być czasem serwera (`request.time`).
 - Każdy zapis ma walidator kształtu i zakresów. Zakresy pomiarów odpowiadają `VALIDATION_RULES` w `src/constants/validation.ts`.
 - Konfiguracja `VITE_*` trafia do bundla i nie jest tajna. Klucze serwisowe nigdy nie trafiają do repozytorium ([AGENTS.md](../AGENTS.md#4-bezpieczeństwo)).
-- **Pliki filmów chroni funkcja Vercel**, nie reguły: `readAccess` czyta te same dokumenty co `isOwner()` i `isAdmin()`. `view` wymaga aktywnego konta, `upload` i `delete` — roli `admin`. Klucz Supabase (secret) i klucz konta serwisowego Firebase są tylko w zmiennych Vercel oznaczonych jako Sensitive; przeglądarka nie zna żadnego klucza Supabase. Link do odtwarzania działa 5 minut.
+- **Pliki filmów chroni funkcja Vercel**, nie reguły: `readAccess` czyta te same dokumenty co `isOwner()` i `isAdmin()`. `view` wymaga aktywnego konta, `upload`, `delete` i `cleanup` (usunięcie plików bez dokumentu w `exerciseVideos`, starszych niż godzina) — roli `admin`. Każde konto ma limit 60 wywołań na 10 minut liczony w `apiRateLimits/{uid}`; ponad limit funkcja odpowiada 429 z `Retry-After`. Klucz Supabase (secret) i klucz konta serwisowego Firebase są tylko w zmiennych Vercel oznaczonych jako Sensitive; przeglądarka nie zna żadnego klucza Supabase. Link do odtwarzania działa 5 minut.
 - **Reguł nie wdraża Vercel.** Po zmianie `firestore.rules` trzeba je opublikować osobno: w konsoli Firebase albo przez `npx firebase deploy --only firestore:rules`.
 
 ## Offline i dane na żywo
@@ -194,8 +195,8 @@ Gdy nowa zależność ma skrypt instalacyjny, `npm ci` wypisze ją na końcu ins
 | Rodzaj | Narzędzie | Gdzie | Co sprawdza |
 |---|---|---|---|
 | Jednostkowe i komponentów | Vitest, Testing Library, jsdom | `src/**/*.test.ts(x)` | logika, hooki, formularze |
-| Funkcje Vercel | Vitest (projekt `api`, środowisko Node.js) | `tests/api/` | token, uprawnienia według akcji, walidacja żądania, odpowiedzi bez szczegółów błędu |
-| Reguły | Vitest + emulator Firestore | `tests/rules/` | dostęp własne/cudze, walidacja zapisów, odmowa dostępu do kolekcji sprzed migracji, filmy techniki tylko dla roli `admin`, odczyt uprawnień przez funkcję (`readAccess` z Admin SDK) |
+| Funkcje Vercel | Vitest (projekt `api`, środowisko Node.js) | `tests/api/` | token, limit wywołań, uprawnienia według akcji, walidacja żądania, sprzątanie plików bez dokumentu, odpowiedzi bez szczegółów błędu |
+| Reguły | Vitest + emulator Firestore | `tests/rules/` | dostęp własne/cudze, walidacja zapisów, odmowa dostępu do kolekcji sprzed migracji, filmy techniki tylko dla roli `admin`, brak dostępu aplikacji do `apiRateLimits`, odczyt uprawnień, licznik wywołań i lista `mediaId` funkcji (Admin SDK) |
 | End-to-end | Playwright na zbudowanej aplikacji i emulatorach | `e2e/` | logowanie, zgoda, trening po odświeżeniu i offline, notatki i czas trwania, porzucenie treningu, otwarcie karty offline z danymi i szkicem, aktualizacja za potwierdzeniem, trasy, filmy techniki (funkcja i Supabase zastąpione trasami Playwright) |
 | Ręczne | lista kontrolna | [MANUAL_TESTING_CHECKLIST.md](MANUAL_TESTING_CHECKLIST.md) | scenariusze, których nie da się zautomatyzować |
 

@@ -94,7 +94,7 @@ Wszystkie decyzje potrzebne do etapów 1–3 są przyjęte (2026-10-10):
 | [0015](adr/0015-accounts-roles-consent.md) | Zgoda na dane o zdrowiu warunkiem aktywacji; rola trenera od administratora; konta zakładane przez trenera; usunięcie konta |
 | [0019](adr/0019-exercise-technique-videos.md) | Filmy techniki w Supabase Storage Free za funkcją Vercel; wgrywa rola `admin` (wersja testowa) |
 
-Backlog decyzji: zdjęcia sylwetki (Cloud Storage na planie Blaze albo inny dostawca — przy wyborze uwzględnić Supabase Storage z [ADR-0019](adr/0019-exercise-technique-videos.md), ale zdjęcia to dane o zdrowiu); dalszy los filmów techniki po wersji testowej (wgrywanie przez trenerów, limit wywołań, kompresja, ADR-0019 — warunek rewizji); drugi dostawca chmury, np. Azure z kolejką zadań — gdy pojawi się praca w tle (eksporty, przeliczanie statystyk), wymaga nowego ADR; własna domena: e-maile przez Brevo, adres aplikacji i strona `/konto/akcja` ([ADR-0014](adr/0014-server-functions-and-email.md)); plan Blaze (warunki w ADR-0009); model cenowy i operator płatności — przed etapem 5.
+Backlog decyzji: zdjęcia sylwetki (Cloud Storage na planie Blaze albo inny dostawca — przy wyborze uwzględnić Supabase Storage z [ADR-0019](adr/0019-exercise-technique-videos.md), ale zdjęcia to dane o zdrowiu); dalszy los filmów techniki po wersji testowej (wgrywanie przez trenerów, kompresja, ADR-0019 — warunek rewizji); drugi dostawca chmury, np. Azure z kolejką zadań — gdy pojawi się praca w tle (eksporty, przeliczanie statystyk), wymaga nowego ADR; własna domena: e-maile przez Brevo, adres aplikacji i strona `/konto/akcja` ([ADR-0014](adr/0014-server-functions-and-email.md)); plan Blaze (warunki w ADR-0009); model cenowy i operator płatności — przed etapem 5.
 
 ## Etapy
 

@@ -27,6 +27,7 @@ const renderButton = (overrides: Partial<ExerciseVideosState>) => {
     clearError: vi.fn(),
     uploadVideo: vi.fn().mockResolvedValue(true),
     deleteVideo: vi.fn().mockResolvedValue(true),
+    removeOrphanedFiles: vi.fn().mockResolvedValue(2),
     getPlaybackUrl: vi.fn().mockResolvedValue(playbackUrl),
     ...overrides,
   };
@@ -54,6 +55,20 @@ describe('ExerciseVideoButton', () => {
     expect(state.getPlaybackUrl).toHaveBeenCalledWith(video.mediaId);
     expect(within(dialog).queryByLabelText(/Plik MP4/)).toBeNull();
     expect(within(dialog).queryByRole('button', { name: 'Usuń film' })).toBeNull();
+    expect(within(dialog).queryByRole('button', { name: 'Usuń pliki bez filmu' })).toBeNull();
+  });
+
+  it('lets the admin remove the files left without a video and shows how many were removed', async () => {
+    const user = userEvent.setup();
+    const state = renderButton({ canManage: true, videos: new Map([['Przysiad', video]]) });
+    await user.click(screen.getByRole('button', { name: 'Technika: Przysiad' }));
+    const dialog = screen.getByRole('dialog', { name: 'Technika: Przysiad' });
+
+    await user.click(within(dialog).getByRole('button', { name: 'Usuń pliki bez filmu' }));
+
+    expect(state.removeOrphanedFiles).toHaveBeenCalledOnce();
+    expect((await within(dialog).findByRole('status')).textContent).toBe('Usunięte pliki bez filmu: 2.');
+    expect(state.deleteVideo).not.toHaveBeenCalled();
   });
 
   it('lets the admin add a video to an exercise without one', async () => {

@@ -18,7 +18,7 @@ test.use({ serviceWorkers: 'block' });
 
 interface ApiCall {
   action: string;
-  mediaId: string;
+  mediaId?: string;
 }
 
 const stubVideoBackend = async (page: Page) => {
@@ -29,6 +29,7 @@ const stubVideoBackend = async (page: Page) => {
     expect(route.request().headers().authorization).toMatch(/^Bearer \S+$/);
     calls.push(call);
     if (call.action === 'delete') return route.fulfill({ status: 204 });
+    if (call.action === 'cleanup') return route.fulfill({ json: { removed: 1 } });
     return route.fulfill({ json: { url: `${STORAGE}/${call.action}/${call.mediaId}.mp4?token=t` } });
   });
   await page.route(`${STORAGE}/**`, async route => {
@@ -117,4 +118,8 @@ test('the admin uploads a video after an invalid file, then deletes it with conf
   await expect(dialog.getByText('To ćwiczenie nie ma jeszcze filmu.')).toBeVisible();
   expect(calls.at(-1)).toEqual({ action: 'delete', mediaId: upload.mediaId });
   expect(await exerciseVideoDocuments()).toEqual([]);
+
+  await dialog.getByRole('button', { name: 'Usuń pliki bez filmu' }).click();
+  await expect(dialog.getByRole('status')).toHaveText('Usunięte pliki bez filmu: 1.');
+  expect(calls.at(-1)).toEqual({ action: 'cleanup' });
 });

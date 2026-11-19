@@ -1,4 +1,5 @@
 import { collection, deleteDoc, doc, onSnapshot, setDoc } from 'firebase/firestore';
+import { z } from 'zod';
 import { auth, db } from '../../lib/firebaseConfig.js';
 import { ExerciseVideo, ExerciseVideoDocument } from '../../types/index.js';
 import { parseExerciseVideo } from '../../utils/parse.utils.js';
@@ -19,27 +20,30 @@ const logged = async <T>(operation: string, action: () => Promise<T>): Promise<T
   }
 };
 
+type FunctionRequest = { action: 'upload' | 'view' | 'delete'; mediaId: string } | { action: 'cleanup' };
+
 /** Calls the Vercel function (api/exercise-videos.ts) as the signed-in account. */
-const callFunction = async (action: 'upload' | 'view' | 'delete', mediaId: string): Promise<Response> => {
+const callFunction = async (request: FunctionRequest): Promise<Response> => {
   const token = await auth.currentUser?.getIdToken();
   if (!token) throw new Error('No signed-in user');
   const response = await fetch(FUNCTION_URL, {
     method: 'POST',
     headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ action, mediaId }),
+    body: JSON.stringify(request),
   });
-  if (!response.ok) throw new Error(`${action} failed with status ${response.status}`);
+  if (!response.ok) throw new Error(`${request.action} failed with status ${response.status}`);
   return response;
 };
 
+const UrlResponseSchema = z.object({ url: z.string() });
+const CleanupResponseSchema = z.object({ removed: z.number().int().nonnegative() });
+
 /** The Vercel function holds the Supabase key and answers with a signed URL. */
 const signedUrl = async (action: 'upload' | 'view', mediaId: string): Promise<string> => {
-  const response = await callFunction(action, mediaId);
-  const body: unknown = await response.json();
-  if (typeof body !== 'object' || body === null || !('url' in body) || typeof body.url !== 'string') {
-    throw new Error(`Unexpected ${action} response`);
-  }
-  return body.url;
+  const response = await callFunction({ action, mediaId });
+  const parsed = UrlResponseSchema.safeParse(await response.json());
+  if (!parsed.success) throw new Error(`Unexpected ${action} response`);
+  return parsed.data.url;
 };
 
 export class ExerciseVideosService {
@@ -87,7 +91,16 @@ export class ExerciseVideosService {
   /** Removing a file that is already gone succeeds, so a failed deletion can be repeated. */
   static deleteFile(mediaId: string): Promise<void> {
     return logged('deleteFile', async () => {
-      await callFunction('delete', mediaId);
+      await callFunction({ action: 'delete', mediaId });
+    });
+  }
+
+  /** Removes bucket files no document refers to (left by a failed upload); resolves to their count. */
+  static removeOrphanedFiles(): Promise<number> {
+    return logged('removeOrphanedFiles', async () => {
+      const parsed = CleanupResponseSchema.safeParse(await (await callFunction({ action: 'cleanup' })).json());
+      if (!parsed.success) throw new Error('Unexpected cleanup response');
+      return parsed.data.removed;
     });
   }
 
